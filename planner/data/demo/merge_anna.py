@@ -8,7 +8,7 @@ import json
 from copy import deepcopy
 from pathlib import Path
 
-from build_fixtures import integrate_anna_shipments, replace_synthetic_label_rules
+from build_fixtures import integrate_anna_shipments, integrate_regulators, replace_synthetic_label_rules
 
 
 HERE = Path(__file__).resolve().parent
@@ -23,6 +23,7 @@ def merge(path, evidence_rules=()):
     known_rule_ids = {rule["id"] for rule in payload["rules"]}
     payload["rules"].extend(deepcopy(rule) for rule in evidence_rules if rule["id"] not in known_rule_ids)
     integrate_anna_shipments(payload)
+    integrate_regulators(payload)
     replace_synthetic_label_rules(payload)
     # The frontend inventory seed is now canonical API data. It is still sample
     # operational data and must not be presented as live inventory telemetry.

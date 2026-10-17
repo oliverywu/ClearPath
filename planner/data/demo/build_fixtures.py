@@ -23,6 +23,41 @@ COUNTRIES = [
 ROOT = Path(__file__).resolve().parents[3]
 ANNA_SHIPMENTS = ROOT / "messaging/data/shipments.json"
 
+REGULATORS = {
+    "AR": ("National Administration of Drugs, Foods and Medical Devices (ANMAT)", "https://www.argentina.gob.ar/anmat"),
+    "AT": ("Federal Office for Safety in Health Care (BASG)", "https://www.basg.gv.at/en/"),
+    "AU": ("Therapeutic Goods Administration (TGA)", "https://www.tga.gov.au/"),
+    "BE": ("Federal Agency for Medicines and Health Products (FAMHP)", "https://www.famhp.be/en"),
+    "BR": ("Brazilian Health Regulatory Agency (ANVISA)", "https://www.gov.br/anvisa/pt-br"),
+    "CA": ("Health Canada", "https://www.canada.ca/en/health-canada.html"),
+    "CH": ("Swissmedic", "https://www.swissmedic.ch/swissmedic/en/home.html"),
+    "CN": ("National Medical Products Administration (NMPA)", "https://english.nmpa.gov.cn/"),
+    "DE": ("Federal Institute for Drugs and Medical Devices (BfArM)", "https://www.bfarm.de/EN/"),
+    "DK": ("Danish Medicines Agency", "https://laegemiddelstyrelsen.dk/en/"),
+    "ES": ("Spanish Agency of Medicines and Medical Devices (AEMPS)", "https://www.aemps.gob.es/"),
+    "FI": ("Finnish Medicines Agency (Fimea)", "https://fimea.fi/en/frontpage"),
+    "FR": ("National Agency for the Safety of Medicines and Health Products (ANSM)", "https://ansm.sante.fr/"),
+    "GB": ("Medicines and Healthcare products Regulatory Agency (MHRA)", "https://www.gov.uk/government/organisations/medicines-and-healthcare-products-regulatory-agency"),
+    "IE": ("Health Products Regulatory Authority (HPRA)", "https://www.hpra.ie/"),
+    "IN": ("Central Drugs Standard Control Organisation (CDSCO)", "https://cdsco.gov.in/"),
+    "IT": ("Italian Medicines Agency (AIFA)", "https://www.aifa.gov.it/en/"),
+    "JP": ("Pharmaceuticals and Medical Devices Agency (PMDA)", "https://www.pmda.go.jp/english/"),
+    "KR": ("Ministry of Food and Drug Safety (MFDS)", "https://www.mfds.go.kr/eng/"),
+    "MX": ("Federal Commission for Protection against Health Risks (COFEPRIS)", "https://www.gob.mx/cofepris"),
+    "NL": ("Medicines Evaluation Board (CBG-MEB)", "https://english.cbg-meb.nl/"),
+    "NZ": ("Medsafe", "https://www.medsafe.govt.nz/"),
+    "SG": ("Health Sciences Authority (HSA)", "https://www.hsa.gov.sg/"),
+    "US": ("U.S. Food and Drug Administration (FDA)", "https://www.fda.gov/"),
+}
+
+
+def integrate_regulators(payload):
+    """Replace placeholder jurisdiction metadata with official authorities."""
+    for jurisdiction in payload.get("jurisdictions", []):
+        regulator = REGULATORS.get(jurisdiction["iso_code"])
+        if regulator:
+            jurisdiction.update(regulator_name=regulator[0], regulator_url=regulator[1], source_tier="official")
+
 
 def integrate_anna_shipments(payload):
     """Keep the 24-country plan, but make Anna's four operational rows authoritative
@@ -168,6 +203,7 @@ def event(identifier, country, title, description, as_of, **fields):
 
 demo = dataset("demo", COUNTRIES, "2026-10-19", "2026-12-04", "CFT-201 (fictional IMP)", {"city": "Boston", "country_code": "US", "latitude": 42.36, "longitude": -71.06})
 integrate_anna_shipments(demo)
+integrate_regulators(demo)
 # Demo lane details stay in fixture data. Depot qualification/release buffers
 # preserve the original end-to-end synthetic schedule and route tradeoff.
 for route in demo["routes"]:

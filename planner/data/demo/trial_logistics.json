@@ -1680,9 +1680,9 @@
       "latitude": 38,
       "longitude": -97,
       "name": "United States",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/us",
-      "source_tier": "synthetic"
+      "regulator_name": "U.S. Food and Drug Administration (FDA)",
+      "regulator_url": "https://www.fda.gov/",
+      "source_tier": "official"
     },
     {
       "id": "DE",
@@ -1690,9 +1690,9 @@
       "latitude": 51,
       "longitude": 10,
       "name": "Germany",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/de",
-      "source_tier": "synthetic"
+      "regulator_name": "Federal Institute for Drugs and Medical Devices (BfArM)",
+      "regulator_url": "https://www.bfarm.de/EN/",
+      "source_tier": "official"
     },
     {
       "id": "CA",
@@ -1700,9 +1700,9 @@
       "latitude": 56,
       "longitude": -106,
       "name": "Canada",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/ca",
-      "source_tier": "synthetic"
+      "regulator_name": "Health Canada",
+      "regulator_url": "https://www.canada.ca/en/health-canada.html",
+      "source_tier": "official"
     },
     {
       "id": "JP",
@@ -1710,9 +1710,9 @@
       "latitude": 36,
       "longitude": 138,
       "name": "Japan",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/jp",
-      "source_tier": "synthetic"
+      "regulator_name": "Pharmaceuticals and Medical Devices Agency (PMDA)",
+      "regulator_url": "https://www.pmda.go.jp/english/",
+      "source_tier": "official"
     },
     {
       "id": "GB",
@@ -1720,9 +1720,9 @@
       "latitude": 55,
       "longitude": -3,
       "name": "United Kingdom",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/gb",
-      "source_tier": "synthetic"
+      "regulator_name": "Medicines and Healthcare products Regulatory Agency (MHRA)",
+      "regulator_url": "https://www.gov.uk/government/organisations/medicines-and-healthcare-products-regulatory-agency",
+      "source_tier": "official"
     },
     {
       "id": "AU",
@@ -1730,9 +1730,9 @@
       "latitude": -25,
       "longitude": 134,
       "name": "Australia",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/au",
-      "source_tier": "synthetic"
+      "regulator_name": "Therapeutic Goods Administration (TGA)",
+      "regulator_url": "https://www.tga.gov.au/",
+      "source_tier": "official"
     },
     {
       "id": "FR",
@@ -1740,9 +1740,9 @@
       "latitude": 46,
       "longitude": 2,
       "name": "France",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/fr",
-      "source_tier": "synthetic"
+      "regulator_name": "National Agency for the Safety of Medicines and Health Products (ANSM)",
+      "regulator_url": "https://ansm.sante.fr/",
+      "source_tier": "official"
     },
     {
       "id": "ES",
@@ -1750,9 +1750,9 @@
       "latitude": 40,
       "longitude": -4,
       "name": "Spain",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/es",
-      "source_tier": "synthetic"
+      "regulator_name": "Spanish Agency of Medicines and Medical Devices (AEMPS)",
+      "regulator_url": "https://www.aemps.gob.es/",
+      "source_tier": "official"
     },
     {
       "id": "IT",
@@ -1760,9 +1760,9 @@
       "latitude": 42,
       "longitude": 12,
       "name": "Italy",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/it",
-      "source_tier": "synthetic"
+      "regulator_name": "Italian Medicines Agency (AIFA)",
+      "regulator_url": "https://www.aifa.gov.it/en/",
+      "source_tier": "official"
     },
     {
       "id": "NL",
@@ -1770,9 +1770,9 @@
       "latitude": 52,
       "longitude": 5,
       "name": "Netherlands",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/nl",
-      "source_tier": "synthetic"
+      "regulator_name": "Medicines Evaluation Board (CBG-MEB)",
+      "regulator_url": "https://english.cbg-meb.nl/",
+      "source_tier": "official"
     },
     {
       "id": "BE",
@@ -1780,9 +1780,9 @@
       "latitude": 50,
       "longitude": 4,
       "name": "Belgium",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/be",
-      "source_tier": "synthetic"
+      "regulator_name": "Federal Agency for Medicines and Health Products (FAMHP)",
+      "regulator_url": "https://www.famhp.be/en",
+      "source_tier": "official"
     },
     {
       "id": "AT",
@@ -1790,9 +1790,9 @@
       "latitude": 47,
       "longitude": 14,
       "name": "Austria",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/at",
-      "source_tier": "synthetic"
+      "regulator_name": "Federal Office for Safety in Health Care (BASG)",
+      "regulator_url": "https://www.basg.gv.at/en/",
+      "source_tier": "official"
     },
     {
       "id": "CH",
@@ -1800,9 +1800,9 @@
       "latitude": 47,
       "longitude": 8,
       "name": "Switzerland",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/ch",
-      "source_tier": "synthetic"
+      "regulator_name": "Swissmedic",
+      "regulator_url": "https://www.swissmedic.ch/swissmedic/en/home.html",
+      "source_tier": "official"
     },
     {
       "id": "DK",
@@ -1810,9 +1810,9 @@
       "latitude": 56,
       "longitude": 10,
       "name": "Denmark",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/dk",
-      "source_tier": "synthetic"
+      "regulator_name": "Danish Medicines Agency",
+      "regulator_url": "https://laegemiddelstyrelsen.dk/en/",
+      "source_tier": "official"
     },
     {
       "id": "FI",
@@ -1820,9 +1820,9 @@
       "latitude": 64,
       "longitude": 26,
       "name": "Finland",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/fi",
-      "source_tier": "synthetic"
+      "regulator_name": "Finnish Medicines Agency (Fimea)",
+      "regulator_url": "https://fimea.fi/en/frontpage",
+      "source_tier": "official"
     },
     {
       "id": "IE",
@@ -1830,9 +1830,9 @@
       "latitude": 53,
       "longitude": -8,
       "name": "Ireland",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/ie",
-      "source_tier": "synthetic"
+      "regulator_name": "Health Products Regulatory Authority (HPRA)",
+      "regulator_url": "https://www.hpra.ie/",
+      "source_tier": "official"
     },
     {
       "id": "NZ",
@@ -1840,9 +1840,9 @@
       "latitude": -41,
       "longitude": 174,
       "name": "New Zealand",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/nz",
-      "source_tier": "synthetic"
+      "regulator_name": "Medsafe",
+      "regulator_url": "https://www.medsafe.govt.nz/",
+      "source_tier": "official"
     },
     {
       "id": "SG",
@@ -1850,9 +1850,9 @@
       "latitude": 1,
       "longitude": 104,
       "name": "Singapore",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/sg",
-      "source_tier": "synthetic"
+      "regulator_name": "Health Sciences Authority (HSA)",
+      "regulator_url": "https://www.hsa.gov.sg/",
+      "source_tier": "official"
     },
     {
       "id": "KR",
@@ -1860,9 +1860,9 @@
       "latitude": 36,
       "longitude": 128,
       "name": "South Korea",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/kr",
-      "source_tier": "synthetic"
+      "regulator_name": "Ministry of Food and Drug Safety (MFDS)",
+      "regulator_url": "https://www.mfds.go.kr/eng/",
+      "source_tier": "official"
     },
     {
       "id": "BR",
@@ -1870,9 +1870,9 @@
       "latitude": -14,
       "longitude": -52,
       "name": "Brazil",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/br",
-      "source_tier": "synthetic"
+      "regulator_name": "Brazilian Health Regulatory Agency (ANVISA)",
+      "regulator_url": "https://www.gov.br/anvisa/pt-br",
+      "source_tier": "official"
     },
     {
       "id": "MX",
@@ -1880,9 +1880,9 @@
       "latitude": 23,
       "longitude": -102,
       "name": "Mexico",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/mx",
-      "source_tier": "synthetic"
+      "regulator_name": "Federal Commission for Protection against Health Risks (COFEPRIS)",
+      "regulator_url": "https://www.gob.mx/cofepris",
+      "source_tier": "official"
     },
     {
       "id": "AR",
@@ -1890,9 +1890,9 @@
       "latitude": -34,
       "longitude": -64,
       "name": "Argentina",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/ar",
-      "source_tier": "synthetic"
+      "regulator_name": "National Administration of Drugs, Foods and Medical Devices (ANMAT)",
+      "regulator_url": "https://www.argentina.gob.ar/anmat",
+      "source_tier": "official"
     },
     {
       "id": "IN",
@@ -1900,9 +1900,9 @@
       "latitude": 21,
       "longitude": 79,
       "name": "India",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/in",
-      "source_tier": "synthetic"
+      "regulator_name": "Central Drugs Standard Control Organisation (CDSCO)",
+      "regulator_url": "https://cdsco.gov.in/",
+      "source_tier": "official"
     },
     {
       "id": "CN",
@@ -1910,9 +1910,9 @@
       "latitude": 35,
       "longitude": 104,
       "name": "China",
-      "regulator_name": "Simulated research authority",
-      "regulator_url": "https://example.org/cleared-synthetic/demo/cn",
-      "source_tier": "synthetic"
+      "regulator_name": "National Medical Products Administration (NMPA)",
+      "regulator_url": "https://english.nmpa.gov.cn/",
+      "source_tier": "official"
     }
   ],
   "routes": [
