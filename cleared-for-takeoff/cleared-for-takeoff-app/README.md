@@ -3,10 +3,15 @@
 Plain HTML/CSS and ES modules. No build step and no dependencies. All data is **sample/mock** data.
 
 ## Run
-ES modules and `fetch()` of the mock JSON don't work from `file://`, so serve the folder locally (works offline):
+For live route analysis, run the included Node backend (Node 18+):
 ```bash
-cd app && python3 -m http.server 8000   # open http://localhost:8000
+cd cleared-for-takeoff/cleared-for-takeoff-app
+cp .env.example .env.local
+# Put the rotated key in .env.local, then run:
+npm start
+# open http://localhost:8000
 ```
+The key is read only by the backend from `.env.local` or its environment; it is never sent to the browser. `.env.local` is git-ignored. Enable Google Routes API and restrict the key in Google Cloud. `GDACS_EVENTS_URL`, `DISASTER_MAX_AGE_DAYS`, and `PORT` can also be set as environment variables. The default GDACS source is its recent-events GeoJSON endpoint. The older static preview can still be served with `python3 -m http.server 8000`, but route analysis requires the Node server.
 Debug flags: `?fail=1` makes every API call fail (error states), and `?empty=1` makes every list come back empty (empty states).
 
 ## Routes (hash router in `src/main.js`)
@@ -53,6 +58,19 @@ app/
 | `sendChatMessage(chatId, text)` | `POST /api/photon/chats/:id/messages` body `{"text": "..."}` | the created `Message` |
 
 A non-2xx response throws, and the view shows its error state with a Retry button.
+
+## Disaster route monitor
+Open **Analyze route hazards** in the shipment section (or navigate to `#/monitor`). The frontend posts the shipment origin, destination, and selected corridor radius to `POST /api/route-analysis`. The backend gets route geometry from Google Routes API, loads and caches recent GDACS GeoJSON events for ten minutes, and returns only events within the selected corridor. It includes GDACS alert level (red/orange/green), event type, location, timestamp, affected area, and details when present. Events older than `DISASTER_MAX_AGE_DAYS` (30 by default) are excluded. The API response includes route distance, duration, route point count, number of events checked, matched events, and analysis timestamp.
+
+The backend validates request fields and returns JSON errors with appropriate HTTP status codes. It does not return the full global GDACS feed to the client. The Google API key stays server side. Route computation uses Google Routes API's `DRIVE` mode, so origin/destination pairs without a drivable route (for example, across oceans) will return an error; air and sea routing need a transport-specific routing provider.
+
+Example request:
+```http
+POST /api/route-analysis
+Content-Type: application/json
+
+{"origin":"Boston","destination":"New York","proximityKm":50}
+```
 
 ## Data schemas
 Enums: `status` (shipments/inventory) = `on_track | at_risk | blocked | no_shipment`; warning `severity` = `critical | high | medium | low`; warning `status` = `open | in_review | resolved`; inventory `runs[]` = `on_time | late | missed`.

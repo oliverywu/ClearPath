@@ -2,6 +2,7 @@ import { $, initCursor, burst } from './ui.js';
 import { initLanding } from './views/landing.js';
 import { renderWarnings } from './views/warnings.js';
 import { renderChats } from './views/chats.js';
+import { renderMonitor } from './views/monitor.js';
 const ptr = initCursor();
 initLanding(ptr);
 let last = '';
@@ -10,10 +11,11 @@ function route() {
   const [, view = '', id] = (location.hash || '#/').split('/');
   const name = view || 'landing';
   document.body.dataset.view = name;
-  $('#v-warnings').hidden = name !== 'warnings'; $('#v-chats').hidden = name !== 'chats';
+  $('#v-warnings').hidden = name !== 'warnings'; $('#v-chats').hidden = name !== 'chats'; $('#v-monitor').hidden = name !== 'monitor';
   if (name !== last && last && name !== 'landing' && last !== 'landing') burst();
   if (name === 'warnings') renderWarnings($('#v-warnings'), id);
   if (name === 'chats') renderChats($('#v-chats'), id);
+  if (name === 'monitor') renderMonitor($('#v-monitor'));
   last = name;
 }
 addEventListener('hashchange', route); route();

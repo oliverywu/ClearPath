@@ -11,7 +11,7 @@ async function mock(file) {
 }
 async function http(path, opts = {}) {
   const r = await fetch(API_BASE + path, { headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, ...opts });
-  if (!r.ok) throw new Error(`${opts.method || 'GET'} ${path} → ${r.status}`);
+  if (!r.ok) { let detail = ''; try { detail = (await r.json()).error || ''; } catch {} throw new Error(detail || `${opts.method || 'GET'} ${path} → ${r.status}`); }
   return r.status === 204 ? null : r.json();
 }
 /** GET /api/warnings  → Warning[] (newest first) */
@@ -26,6 +26,10 @@ export async function getWarning(id) {
 }
 /** GET /api/shipments → Shipment[] */
 export async function getShipments() { return USE_MOCK ? mock('shipments') : http('/shipments'); }
+/** POST /api/route-analysis → route summary plus GDACS events near that route */
+export async function analyzeShipmentRoute({ origin, destination, proximityKm }) {
+  return http('/route-analysis', { method: 'POST', body: JSON.stringify({ origin, destination, proximityKm }) });
+}
 /** GET /api/inventory → InventoryItem[] (recurring shipments) */
 export async function getInventory() { return USE_MOCK ? mock('inventory') : http('/inventory'); }
 /** GET /api/photon/chats → Chat[] */
