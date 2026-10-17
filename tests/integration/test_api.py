@@ -344,6 +344,30 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(current_jp['adapter'],'egov')
         self.assertFalse(self.service.migrate_legacy_official_sources(), 'Migration should be idempotent')
 
+    def test_startup_migration_supersedes_stale_registry_when_dataset_is_already_updated(self):
+        # This is the partial-migration state found in a user's persisted database:
+        # rule citations and replacement sources are current, but the old registry
+        # rows remain enabled and visible with fetch errors.
+        legacy_urls = [
+            'https://www.canada.ca/en/health-canada/services/drugs-health-products/compliance-enforcement/good-clinical-practices/guidance-documents/guidance-drugs-clinical-trials-human-subjects-gui-0100/labelling-records.html',
+            'https://www.mhlw.go.jp/file/04-Houdouhappyou-11123000-Iyakushokuhinkyoku-Shinsakanrika/0000190647.pdf',
+            'https://www.mhlw.go.jp/web/t_doc?dataId=81997396&dataType=0&pageNo=1',
+        ]
+        for index, url in enumerate(legacy_urls):
+            self.service.repo.save_source({
+                'id':f'legacy-stale-{index}', 'title':f'Legacy source {index}',
+                'url':url, 'enabled':True, 'last_check_error':'stale failure'
+            })
+
+        self.assertTrue(self.service.migrate_legacy_official_sources())
+        sources = {source['id']:source for source in self.service.repo.sources()}
+        for index in range(len(legacy_urls)):
+            source = sources[f'legacy-stale-{index}']
+            self.assertFalse(source['enabled'])
+            self.assertTrue(source['superseded_by_source_id'])
+            self.assertIsNone(source.get('last_check_error'))
+        self.assertFalse(self.service.migrate_legacy_official_sources(), 'Registry-only migration should be idempotent')
+
     def test_recalculate_freshness_check_detects_changes_and_skips_synthetic_sources(self):
         source = self.post('/api/sources',{'title':'Official change test','url':'https://official.example/change','adapter':'generic'})
         self.post('/api/sources/snapshot',{'source_id':source['id'],'content':'Old official text'})

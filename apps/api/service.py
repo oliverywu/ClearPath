@@ -128,20 +128,32 @@ class Service:
                 else:
                     record['notes'] = str(record.get('notes','')).strip()
             changed.append(record.get('id'))
-        if not changed:
+        legacy_sources = []
+        for source in self.repo.sources():
+            old_url = source.get('url')
+            old_url_key = old_url.split('#',1)[0] if old_url else None
+            if old_url_key in (LEGACY_MHLW_ENGLISH_PDF, LEGACY_MHLW_GCP_URL, LEGACY_CANADA_GUI_URL):
+                legacy_sources.append((source, old_url_key))
+        active_legacy_sources = [
+            (source, old_url_key) for source, old_url_key in legacy_sources
+            if source.get('enabled', True) or not source.get('superseded_by_source_id')
+        ]
+        if not changed and not active_legacy_sources:
             return False
-        self.validate(dataset)
+        if changed:
+            self.validate(dataset)
         with self.repo.transaction():
-            dataset_id = self.repo.save_dataset(dataset)
+            dataset_id = self.repo.save_dataset(dataset) if changed else self.repo.setting('dataset_id')
             self.sync_sources(dataset)
             replacement_ids = {s.get('url'):s.get('id') for s in self.repo.sources() if s.get('url') in (CURRENT_MHLW_GCP_TEXT,CURRENT_CANADA_LABEL_RULE)}
-            for source in self.repo.sources():
-                old_url = source.get('url')
-                old_url_key = old_url.split('#',1)[0] if old_url else None
-                if old_url_key not in (LEGACY_MHLW_ENGLISH_PDF, LEGACY_MHLW_GCP_URL, LEGACY_CANADA_GUI_URL):
-                    continue
+            for source, old_url_key in legacy_sources:
                 replacement_url = CURRENT_CANADA_LABEL_RULE if old_url_key == LEGACY_CANADA_GUI_URL else CURRENT_MHLW_GCP_TEXT
-                source.update({'enabled':False,'superseded_by_source_id':replacement_ids.get(replacement_url)})
+                replacement_id = replacement_ids.get(replacement_url)
+                if replacement_id:
+                    source.update({
+                        'enabled':False,'superseded_by_source_id':replacement_id,
+                        'last_check_error':None,'last_check_changed':False
+                    })
                 self.repo.save_source(source)
             self.repo.audit('source.url_migrated',dataset_id,payload={
                 'replacements':{
@@ -149,7 +161,9 @@ class Service:
                     LEGACY_MHLW_GCP_URL:CURRENT_MHLW_GCP_TEXT,
                     LEGACY_CANADA_GUI_URL:CURRENT_CANADA_LABEL_RULE
                 },
-                'affected_record_ids':changed,'reason':'Replace dead or unreliable guidance links with fetchable current official primary legal texts.'
+                'affected_record_ids':changed,
+                'registry_rows_superseded':len(active_legacy_sources),
+                'reason':'Replace dead or unreliable guidance links with fetchable current official primary legal texts.'
             })
         return True
 
