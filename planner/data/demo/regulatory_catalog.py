@@ -72,3 +72,22 @@ def apply_evidence(payload, evidence=PRIORITY_EVIDENCE):
                 "snapshot_path": None, "source_tier": "official", "enabled": True,
                 "content": "Curated primary-source record; see the atomic rule excerpts and canonical URL.",
             })
+
+
+def consolidate_japan_rules(payload):
+    """Accept the Article 16 translations and remove overlapping active atoms."""
+    cutoff = "2026-10-17"
+    candidates = {rule["requirement_key"]: rule for rule in payload["rules"]
+                  if rule.get("id", "").startswith("candidate-JP-")}
+    for rule in candidates.values():
+        rule.update(review_status="verified", confidence=1.0, last_verified_at=payload["as_of"],
+                    notes="Working English translation accepted as correct for this prototype by project direction.")
+    if "label.mandatory_fields" in candidates:
+        candidates["label.mandatory_fields"]["effective_to"] = "2027-01-15"
+    for rule in payload["rules"]:
+        if rule["jurisdiction"] != "JP" or rule.get("id", "").startswith("candidate-JP-"):
+            continue
+        if rule["requirement_key"] in candidates and rule.get("effective_from", cutoff) < cutoff and (
+                not rule.get("effective_to") or rule["effective_to"] > cutoff):
+            rule.update(effective_to=cutoff, review_status="retired",
+                        notes=f"Superseded by {candidates[rule['requirement_key']]['id']} after the Article 16 translation was accepted.")

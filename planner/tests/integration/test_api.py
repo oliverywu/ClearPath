@@ -126,15 +126,15 @@ class ServiceTests(unittest.TestCase):
         baseline = self.service.requirements(event['jurisdiction'],self.base['as_of'],self.base['id'])['requirements']
         self.assertFalse(any(r.get('scenario_assumption') for r in baseline))
 
-    def test_japan_article_16_candidates_are_linked_and_review_gated(self):
+    def test_japan_article_16_translations_are_linked_verified_and_active(self):
         requirements = self.service.requirements('JP', self.base['as_of'])['requirements']
         candidates = [r for r in requirements if r['id'].startswith('candidate-JP-')]
         self.assertEqual(6, len(candidates))
         self.assertTrue(all(r['source_tier'] == 'official' for r in candidates))
-        self.assertTrue(all(r['review_status'] == 'needs_review' for r in candidates))
+        self.assertTrue(all(r['review_status'] == 'verified' for r in candidates))
         self.assertTrue(all(r['source_url'].startswith('https://laws.e-gov.go.jp/law/409M50000100028') for r in candidates))
         self.assertTrue(all(r['source_excerpt'] for r in candidates))
-        self.assertTrue(all(not r['active'] for r in candidates))
+        self.assertTrue(all(r['active'] for r in candidates))
         keys = {r['requirement_key'] for r in candidates}
         self.assertEqual({
             'label.mandatory_fields', 'label.prohibited_fields', 'label.sponsor_constraint',

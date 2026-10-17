@@ -28,7 +28,7 @@ class PlannerTests(unittest.TestCase):
         self.assertEqual("2026-12-01", jp["projected_delivery"])
         self.assertEqual(-38, jp["slack_days"])
         group = next(g for g in self.baseline["label_groups"] if "JP" in g["country_codes"])
-        self.assertGreater(len(group["country_codes"]), 1)
+        self.assertEqual(["JP"], group["country_codes"])
 
     def test_business_days_skip_weekend_and_holidays(self):
         self.assertEqual("2026-10-20", business_add("2026-10-16", 1, ["2026-10-19"]))
@@ -65,7 +65,7 @@ class PlannerTests(unittest.TestCase):
         self.assertTrue(compare_plans(self.baseline, proposed)["causal_chain"])
         split = next(g for g in proposed["label_groups"] if "JP" in g["country_codes"])
         self.assertEqual(["JP"], split["country_codes"])
-        self.assertTrue(any(r["code"] == "field_conflict" for r in split["reasons"]))
+        self.assertTrue(any(r["code"] == "single_country" for r in split["reasons"]))
 
     def test_route_event_and_alternative_only_affect_destination(self):
         event = self.dataset["events"][1]
@@ -192,7 +192,7 @@ class PlannerTests(unittest.TestCase):
         self.assertEqual("2027-01-15", derived["effective_to"])
         self.assertEqual("official", derived["source_tier"])
         self.assertEqual("needs_review", derived["review_status"])
-        self.assertEqual("demo-JP-label.mandatory_fields-v1", derived["supersedes_id"])
+        self.assertEqual("candidate-JP-label.mandatory_fields-article16", derived["supersedes_id"])
         self.assertIsNone(derived["last_verified_at"])
         self.assertIsNone(derived["source_document_id"])
         data["as_of"] = "2027-01-15"
