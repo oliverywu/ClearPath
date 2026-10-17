@@ -2,6 +2,7 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createScheduleItem, listCalendarEvents, listScheduleDay, removeScheduleItem, updateScheduleItem } from './src/schedule-db.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 // Load developer-local secrets without a runtime dependency. The file is ignored by git.
@@ -54,7 +55,7 @@ function normalizeEvent(feature) {
     type,
     title: String(first(p.name, p.title, p.description, `${type} event`)),
     country: String(first(p.country, p.countryname, p.countryName, 'Area not specified')),
-    affectedArea: String(first(p.affectedarea, p.affectedArea, p.countryname, p.countryName, '')),
+    affectedArea: String(first(p.affectedarea, p.affectedArea, p.countryname, p.countryName) || ''),
     severity, lat, lng, radiusKm: Math.max(0, safeNumber(first(p.radius, p.radiusKm, p.severity?.radius)) || 0),
     timestamp, details: String(first(p.description, p.htmldescription, ''))
   };
@@ -104,8 +105,14 @@ function distanceFromRouteKm(event, points) {
   return nearest;
 }
 async function analyzeRoute(body) {
-  const origin = typeof body.origin === 'string' ? body.origin.trim() : '';
-  const destination = typeof body.destination === 'string' ? body.destination.trim() : '';
+  let example = null;
+  if (typeof body.scenarioId === 'string') {
+    const examples = JSON.parse(await readFile(path.join(ROOT, 'src/mock/historical-route-examples.json'), 'utf8'));
+    example = examples.find(item => item.id === body.scenarioId);
+    if (!example) throw Object.assign(new Error('Unknown historical route example.'), { status: 400 });
+  }
+  const origin = example?.origin || (typeof body.origin === 'string' ? body.origin.trim() : '');
+  const destination = example?.destination || (typeof body.destination === 'string' ? body.destination.trim() : '');
   const proximityKm = safeNumber(body.proximityKm);
   if (!origin || !destination || origin.length > 300 || destination.length > 300) throw Object.assign(new Error('Origin and destination are required (maximum 300 characters each).'), { status: 400 });
   if (proximityKm === null || proximityKm < 1 || proximityKm > 500) throw Object.assign(new Error('proximityKm must be between 1 and 500.'), { status: 400 });
@@ -123,7 +130,9 @@ async function analyzeRoute(body) {
   const route = routeData.routes?.[0];
   if (!route?.polyline?.encodedPolyline) throw Object.assign(new Error('Google Routes API returned no route geometry.'), { status: 502 });
   const points = decodePolyline(route.polyline.encodedPolyline);
-  const events = await getEvents();
+  // Historical case studies use sourced GDACS records bundled with the app;
+  // live shipment analyses continue to use the recent-events feed.
+  const events = example ? [example.event] : await getEvents();
   const severityOrder = { red: 0, orange: 1, green: 2 };
   const nearbyEvents = events.map(event => ({ ...event, distanceKm: Number(distanceFromRouteKm(event, points).toFixed(1)) }))
     .filter(event => event.distanceKm <= proximityKm + event.radiusKm)
@@ -131,6 +140,7 @@ async function analyzeRoute(body) {
   return {
     origin, destination, distanceMeters: route.distanceMeters || null, duration: route.duration || null,
     routePointCount: points.length, proximityKm, eventsChecked: events.length, events: nearbyEvents,
+    sourceMode: example ? 'historical-example' : 'live', scenarioLabel: example?.label || null,
     analyzedAt: new Date().toISOString()
   };
 }
@@ -149,6 +159,25 @@ async function serveStatic(req, res, pathname) {
 }
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  if (url.pathname === '/api/calendar') {
+    if (req.method !== 'GET') return send(res, 405, { error: 'Method not allowed.' }, { Allow: 'GET' });
+    try { return send(res, 200, { month: url.searchParams.get('month'), events: listCalendarEvents(url.searchParams.get('month')) }); }
+    catch (error) { return send(res, error.status || 500, { error: error.message || 'Calendar lookup failed.' }); }
+  }
+  const schedulePath = url.pathname.match(/^\/api\/schedule(?:\/([^/]+))?$/);
+  if (schedulePath) {
+    let key;
+    try { key = schedulePath[1] ? decodeURIComponent(schedulePath[1]) : null; }
+    catch { return send(res, 400, { error: 'Schedule ID is not valid URL encoding.' }); }
+    try {
+      if (req.method === 'GET' && key) return send(res, 200, listScheduleDay(key));
+      if (req.method === 'POST' && !key) return send(res, 201, createScheduleItem(await readJson(req)));
+      if (req.method === 'PATCH' && key) return send(res, 200, updateScheduleItem(key, await readJson(req)));
+      if (req.method === 'DELETE' && key) { removeScheduleItem(key); return send(res, 200, { deleted: true, id: key }); }
+      const allow = key ? 'GET, PATCH, DELETE' : 'POST';
+      return send(res, 405, { error: 'Method not allowed.' }, { Allow: allow });
+    } catch (error) { return send(res, error.status || 500, { error: error.message || 'Schedule request failed.' }); }
+  }
   if (url.pathname === '/api/route-analysis') {
     if (req.method !== 'POST') return send(res, 405, { error: 'Method not allowed.' }, { Allow: 'POST' });
     try { return send(res, 200, await analyzeRoute(await readJson(req))); }

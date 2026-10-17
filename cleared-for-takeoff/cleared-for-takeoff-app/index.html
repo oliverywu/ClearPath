@@ -1,8 +1,8 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="icon" href="data:,"><title>Cleared for Takeoff</title><link rel="stylesheet" href="styles.css"></head>
+<link rel="icon" href="data:,"><title>Clear Path</title><link rel="stylesheet" href="styles.css"></head>
 <body data-view="landing">
 <div id="bg"></div><div class="grain"></div>
-<a class="brand" href="#/" style="color:inherit;text-decoration:none">Cleared for Takeoff <b>●</b></a>
+<a class="brand" href="#/" style="color:inherit;text-decoration:none">Clear Path <b>●</b></a>
 <div class="art">
  <div class="img" id="img"><img src="hand-empty.png" alt="Gloved hand holding a blood sample vial"><img class="vdock" id="vdock" src="vial.png" alt=""></div>
  <img class="vfly" id="vfly" src="vial.png" alt="" aria-hidden="true">
@@ -16,7 +16,7 @@
   <aside class="cal" id="cal" aria-label="Shipment calendar"><div class="calh"><div class="shd">Shipment calendar<span id="calm"></span></div><div class="caln"><button id="calp" aria-label="Previous month">‹</button><button id="caln" aria-label="Next month">›</button></div></div><div class="calg" id="calg"></div><div class="calk"><span><i class="maj"></i>Major</span><span><i></i>Minor</span></div></aside>
  </section>
  <section id="shipments"><div class="sticky"><div class="copy">
-  <div class="k">Shipment readiness</div><h2>Routes draw<br>as kits <em>move.</em></h2><p class="l">Origin → destination · days of slack against the target delivery.</p><p class="live" id="live" hidden><span></span>Live tracking · updated <b id="liveu">—</b></p><a class="btn monitor-link" href="#/monitor">Analyze route hazards →</a></div>
+  <div class="k">Shipment tracking</div><h2>Track your recent<br><em>shipments.</em></h2><p class="l">Origins, destinations, delivery estimates, and schedule slack for shipments in progress.</p><p class="live" id="live" hidden><span></span>Live tracking · updated <b id="liveu">—</b></p><a class="btn monitor-link" href="#/monitor">Check route hazards →</a></div>
   <div class="routes" id="routes"></div>
   <div class="gmap" id="gmap" hidden><div class="map" id="map" aria-label="Map of tracked shipments"></div><div class="tlist" id="tlist" role="list"></div></div></div></section>
  <section id="inventory"><div class="copy rv">
@@ -31,7 +31,7 @@
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" hidden aria-label="Day schedule"><button class="dx" id="drawer-x" aria-label="Close">×</button><div id="dbody"></div></aside>
 
-<a class="photon" id="photon" href="#/max" aria-label="Open Max"><span class="po"></span><span class="pb" id="pbadge"></span>Max</a>
+<a class="photon" id="photon" href="#/max" aria-label="Open Max"><span class="po"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M5.2 31.1 10.4 13a2.6 2.6 0 0 1 2.5-1.9h3.8a2.6 2.6 0 0 1 2.5 3.3L14 32.5a2.6 2.6 0 0 1-2.5 1.9H7.7a2.6 2.6 0 0 1-2.5-3.3Zm14.2-10 4-15.2A2.6 2.6 0 0 1 26 4h3.7a2.6 2.6 0 0 1 2.5 3.3L28.1 22.5a2.6 2.6 0 0 1-2.5 1.9h-3.7a2.6 2.6 0 0 1-2.5-3.3Zm7.1 15 4.9-17.3a2.6 2.6 0 0 1 2.5-1.9h3.8a2.6 2.6 0 0 1 2.5 3.3l-4.9 17.3a2.6 2.6 0 0 1-2.5 1.9h-3.8a2.6 2.6 0 0 1-2.5-3.3Z"/></svg></span><span class="pb" id="pbadge"></span>Max</a>
 <div class="wipe" id="wipe"></div>
 <div class="cur" id="cur"><span>OPEN</span></div>
 <script type="module" src="src/main.js"></script>

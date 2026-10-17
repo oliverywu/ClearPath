@@ -62,13 +62,23 @@ function scriptedReply(chatId, text) {
 }
 /** GET /api/calendar?month=YYYY-MM → { month, events: CalendarEvent[] } */
 export async function getCalendar(month) {
-  if (!USE_MOCK) return http(`/calendar?month=${encodeURIComponent(month)}`);
-  const all = await mock('calendar'); return all.find(m => m.month === month) || { month, events: [] };
+  return http(`/calendar?month=${encodeURIComponent(month)}`);
 }
 /** GET /api/schedule/:date → DaySchedule { date, items: TimelineItem[] } */
 export async function getDaySchedule(date) {
-  if (!USE_MOCK) return http(`/schedule/${encodeURIComponent(date)}`);
-  const all = await mock('day-schedules'); return { date, items: all[date]?.items || [] };
+  return http(`/schedule/${encodeURIComponent(date)}`);
+}
+/** POST /api/schedule → persisted TimelineItem */
+export async function createScheduleItem(item) {
+  return http('/schedule', { method: 'POST', body: JSON.stringify(item) });
+}
+/** PATCH /api/schedule/:id → updated TimelineItem */
+export async function updateScheduleItem(id, changes) {
+  return http(`/schedule/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(changes) });
+}
+/** DELETE /api/schedule/:id */
+export async function deleteScheduleItem(id) {
+  return http(`/schedule/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 /** GET /api/chalk/insights?date=YYYY-MM-DD → ChalkInsight { date, risk, summary, recommendations[] }
  *  Chalk AI integration point: the backend calls Chalk AI and returns this shape. */
@@ -95,4 +105,12 @@ export const sendMaxMessage = sendChatMessage;
 
 export async function analyzeShipmentRoute({ origin, destination, proximityKm }) {
   return http('/route-analysis', { method: 'POST', body: JSON.stringify({ origin, destination, proximityKm }) });
+}
+export async function analyzeHistoricalRoute({ scenarioId, proximityKm }) {
+  return http('/route-analysis', { method: 'POST', body: JSON.stringify({ scenarioId, proximityKm }) });
+}
+export async function getHistoricalRouteExamples() {
+  const response = await fetch(new URL('./mock/historical-route-examples.json', import.meta.url));
+  if (!response.ok) throw new Error(`Historical route examples ${response.status}`);
+  return response.json();
 }

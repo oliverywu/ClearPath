@@ -1,9 +1,9 @@
 # Cleared for Takeoff — frontend (v5)
 
-Plain HTML/CSS and ES modules. No build step and no dependencies. All data is **sample/mock** data.
+Plain HTML/CSS and ES modules. No build step or npm dependencies. Most app content is sample data; the shipment calendar and day schedules now persist in local SQLite.
 
 ## Run
-For live route analysis, run the included Node backend (Node 18+):
+For live route analysis and the persistent schedule calendar, run the included Node backend (Node 22.13+):
 ```bash
 cd cleared-for-takeoff/cleared-for-takeoff-app
 cp .env.example .env.local
@@ -60,7 +60,9 @@ app/
 A non-2xx response throws, and the view shows its error state with a Retry button.
 
 ## Disaster route monitor
-Open **Analyze route hazards** in the shipment section (or navigate to `#/monitor`). The frontend posts the shipment origin, destination, and selected corridor radius to `POST /api/route-analysis`. The backend gets route geometry from Google Routes API, loads and caches recent GDACS GeoJSON events for ten minutes, and returns only events within the selected corridor. It includes GDACS alert level (red/orange/green), event type, location, timestamp, affected area, and details when present. Events older than `DISASTER_MAX_AGE_DAYS` (30 by default) are excluded. The API response includes route distance, duration, route point count, number of events checked, matched events, and analysis timestamp.
+Open **Analyze route hazards** in the shipment section (or navigate to `#/monitor`). Choose a current shipment to check recent GDACS events, or choose one of the sourced historical case studies to see a known past disaster along a Google Maps route. Historical examples are clearly labeled and are not presented as current alerts. The frontend posts the shipment endpoints or historical scenario ID and selected corridor radius to `POST /api/route-analysis`. The backend gets route geometry from Google Routes API, loads and caches recent GDACS GeoJSON events for ten minutes for live shipments, and returns only events within the selected corridor. It includes GDACS alert level (red/orange/green), event type, location, timestamp, affected area, and details when present. Live events older than `DISASTER_MAX_AGE_DAYS` (30 by default) are excluded. Historical examples include a direct GDACS source link. The API response includes route distance, duration, route point count, number of events checked, matched events, analysis mode, and analysis timestamp.
+
+Available historical route examples are the 2023 Türkiye–Syria M7.8 earthquake, the 2021 western Germany floods, and Cyclone Idai's 2019 landfall near Beira, Mozambique. Their event records are in `src/mock/historical-route-examples.json`. The flood map point is an approximate point in the documented affected district, rather than an official event centroid.
 
 The backend validates request fields and returns JSON errors with appropriate HTTP status codes. It does not return the full global GDACS feed to the client. The Google API key stays server side. Route computation uses Google Routes API's `DRIVE` mode, so origin/destination pairs without a drivable route (for example, across oceans) will return an error; air and sea routing need a transport-specific routing provider.
 
@@ -71,6 +73,36 @@ Content-Type: application/json
 
 {"origin":"Boston","destination":"New York","proximityKm":50}
 ```
+
+## Persistent shipment schedule
+
+The calendar and day drawer now read schedule milestones from a local SQLite database at `.data/schedule.sqlite`. On first start, the backend copies the existing sample milestones from `src/mock/day-schedules.json` into the database. New schedule records persist across restarts. The hidden database folder is git-ignored and blocked from static file access; back it up before deleting or replacing it. Node's built-in SQLite support is used, so there is no separate database service or npm dependency to install.
+
+The backend exposes:
+
+- `GET /api/calendar?month=YYYY-MM` — calendar markers for that month
+- `GET /api/schedule/YYYY-MM-DD` — ordered milestones for that day
+- `POST /api/schedule` — create a milestone
+- `PATCH /api/schedule/:id` — update a milestone, including its date/time
+- `DELETE /api/schedule/:id` — remove a milestone
+
+Create request example:
+```json
+{
+  "date": "2026-11-12",
+  "time": "09:30",
+  "type": "customs",
+  "title": "Customs documents due",
+  "shipmentId": "shp-002",
+  "party": "Amara K. · customs broker",
+  "dependencies": [],
+  "status": "scheduled"
+}
+```
+
+Use `dependencies` for prerequisite schedule item IDs. The backend rejects missing prerequisites and circular dependencies.
+
+Send your actual milestones as a CSV or JSON file when ready. Useful columns are shipment ID, milestone title/type, date, time, owner, and status; I can map your existing format into this schema. For now the API is intended for the local prototype and has no user authentication or change history, so it should not be exposed publicly until those are added.
 
 ## Data schemas
 Enums: `status` (shipments/inventory) = `on_track | at_risk | blocked | no_shipment`; warning `severity` = `critical | high | medium | low`; warning `status` = `open | in_review | resolved`; inventory `runs[]` = `on_time | late | missed`.

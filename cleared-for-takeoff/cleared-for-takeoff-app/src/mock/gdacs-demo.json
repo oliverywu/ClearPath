@@ -1,0 +1,23 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "demo-eq-frankfurt-001",
+      "properties": {
+        "eventid": "demo-eq-frankfurt-001",
+        "eventtype": "EQ",
+        "alertlevel": "Red",
+        "name": "DEMO ALERT — earthquake near Frankfurt",
+        "country": "Germany",
+        "from": "2026-10-17T12:00:00Z",
+        "radiusKm": 0,
+        "description": "Synthetic route-monitor test event. This is not a real disaster alert."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8.6821, 50.1109]
+      }
+    }
+  ]
+}
