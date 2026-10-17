@@ -69,7 +69,7 @@ The **Source registry** records official HTTPS pages and supports generic-page, 
 
 ## Optional OpenAI planner assistant
 
-The planner assistant works offline by default. Its deterministic answers cite the selected immutable scenario and source records. To enable a model-written answer, copy `.env.example` to `.env` and set:
+The planner assistant works offline by default. Its deterministic answers cite the selected immutable scenario and source records. Ask with a full country name (`Why is Argentina at risk?`) or an uppercase two-letter code (`Why is DE at risk?`). Full names take priority, so ordinary words such as “at” are never interpreted as country codes. Answers lead with the direct cause, dates, slack, and scenario impact; repeated causal text is removed. To enable a model-written answer, copy `.env.example` to `.env` and set:
 
 ```dotenv
 ASSISTANT_PROVIDER=openai

@@ -142,6 +142,18 @@ class ServiceTests(unittest.TestCase):
         self.assertIn('cannot approve',result['answer'])
         self.assertEqual(self.service.repo.plan(self.base['id'])['content_hash'],self.base['content_hash'])
 
+    def test_assistant_country_name_does_not_match_common_word_as_code(self):
+        proposal = self.analyze()
+        result = self.post('/api/assistant/query',{'question':'Why is Argentina at risk?','scenario_id':proposal['id']})
+        self.assertIn('Argentina is',result['answer'])
+        self.assertNotIn('Austria is',result['answer'])
+        self.assertNotIn('1 business days',result['answer'])
+        self.assertEqual(result['answer'].count('Current scenario impact:'),1)
+
+    def test_assistant_accepts_explicit_uppercase_country_code(self):
+        result = self.post('/api/assistant/query',{'question':'Why is DE at risk?','scenario_id':self.base['id']})
+        self.assertIn('Germany is',result['answer'])
+
     def test_invalid_import_and_verified_synthetic_rejected(self):
         row = copy.deepcopy(self.service.repo.dataset()['rules'][0])
         row['id'] = 'bad-rule'

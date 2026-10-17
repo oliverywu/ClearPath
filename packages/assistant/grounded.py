@@ -2,12 +2,33 @@
 import re
 
 
+def _select_shipments(question, shipments):
+    """Prefer country names; accept codes only when clearly expressed as codes."""
+    low = question.lower()
+    named = [s for s in shipments if re.search(r'(?<!\w)' + re.escape(s['country_name'].lower()) + r'(?!\w)', low)]
+    if named:
+        return named
+    explicit_codes = set(re.findall(r'\b[A-Z]{2}\b', question))
+    explicit_codes.update(code.upper() for code in re.findall(r'\bcountry\s*:\s*([a-z]{2})\b', low))
+    return [s for s in shipments if s['country_code'].upper() in explicit_codes]
+
+
+def _days(value):
+    return f"{value} business {'day' if value == 1 else 'days'}"
+
+
+def _reason_text(reasons):
+    values = [str(r.get('explanation',r.get('message',''))) if isinstance(r,dict) else str(r) for r in reasons]
+    cleaned = [re.sub(r'\b1 business days\b','1 business day',value.strip().rstrip('.')) for value in values if value.strip()]
+    return '; '.join(dict.fromkeys(cleaned))
+
+
 def answer_question(question, scenario, dataset, comparison=None):
     question = str(question).strip()[:4000]
     low = question.lower()
     if re.search(r'\b(approve|reject|delete|commit|send|modify|overwrite)\b', low):
         return {'answer':'I can explain stored requirements, features, and comparisons. I cannot approve, reject, or modify plans. Use the scenario review controls for a human decision.','citations':[],'suggested_questions':['Why are shipments at risk?','What repair options are available?']}
-    selected = [s for s in scenario['shipments'] if s['country_name'].lower() in low or re.search(r'\b' + re.escape(s['country_code'].lower()) + r'\b', low)]
+    selected = _select_shipments(question,scenario['shipments'])
     if not selected:
         selected = sorted(scenario['shipments'],key=lambda s:(-s.get('risk_score',0),s['country_code']))[:5]
     codes = {s['country_code'] for s in selected}
@@ -15,21 +36,29 @@ def answer_question(question, scenario, dataset, comparison=None):
     rules = [r for r in scenario.get('rules',dataset.get('rules',[])) if r['jurisdiction'] in codes and (not active_ids or r.get('id') in active_ids)]
     citations = [{'title':r.get('source_title',r['requirement_key']),'url':r['source_url'],'excerpt':r['source_excerpt'],'status':r['review_status'],'requirement_key':r['requirement_key'],'effective_from':r['effective_from']} for r in rules if r.get('source_url') and r.get('source_excerpt')]
     unique = {(r['url'],r['excerpt']):r for r in citations}
-    lines = [f"Stored scenario {scenario['name']} ({scenario.get('status','proposed')}), calculated as of {scenario['as_of']}."]
+    lines = []
     for shipment in selected:
-        reasons = shipment.get('reasons',[])
-        reasons_text = '; '.join(str(r.get('explanation',r.get('message',r))) if isinstance(r,dict) else str(r) for r in reasons)
-        lines.append(f"{shipment['country_name']}: {shipment['risk_band'].replace('_',' ')}, {shipment['slack_days']} business days of slack; projected delivery {shipment['projected_delivery']} against target {shipment['target_delivery']}. Route: {shipment.get('route_name','unassigned')}. {reasons_text}")
+        risk = shipment['risk_band'].replace('_',' ')
+        slack = _days(shipment['slack_days'])
+        reason = _reason_text(shipment.get('reasons',[]))
+        lead = f"{shipment['country_name']} is {risk} because it has {slack} of delivery slack."
+        schedule = f"Projected delivery is {shipment['projected_delivery']}, against a target of {shipment['target_delivery']}, via {shipment.get('route_name','an unassigned route')}."
+        cause = f"Current scenario impact: {reason}." if reason else ''
+        lines.append(' '.join(part for part in (lead,schedule,cause) if part))
+    lines.append(f"Scenario: {scenario['name']} ({scenario.get('status','proposed')}), calculated as of {scenario['as_of']}.")
     if any(word in low for word in ('split','repair','what if','alternative','expedite')):
         options = scenario.get('repair_options',[])
         lines.extend(f"Proposed option: {o['title']}. {o.get('description','')} Trade-off: {o.get('tradeoffs','Review the scenario comparison.')}" for o in options)
         if not options:
             lines.append('No event repair is stored for this scenario. Analyze an event to calculate a separate proposal before assessing a split or route change.')
-    if comparison and ('change' in low or 'why' in low):
-        lines.append('Stored causal chain: ' + '; '.join(' → '.join(v.get('steps',[])) if isinstance(v,dict) else str(v) for v in comparison.get('causal_chain',[]) if not isinstance(v,dict) or v.get('country_code') in codes))
+    if comparison and 'change' in low:
+        chains = [' → '.join(v.get('steps',[])) if isinstance(v,dict) else str(v) for v in comparison.get('causal_chain',[]) if not isinstance(v,dict) or v.get('country_code') in codes]
+        chains = list(dict.fromkeys(chain for chain in chains if chain))
+        if chains:
+            lines.append('Change path: ' + '; '.join(chains))
     if not citations:
         lines.append('No cited rule supports a legal conclusion for this selection. Import and review source evidence before relying on a requirement.')
     elif any(r.get('review_status') != 'verified' for r in rules):
-        lines.append('Some or all selected requirements are synthetic or awaiting review. These are planning assumptions, not verified legal requirements.')
-    lines.append('Decision support only; this answer does not approve changes or provide regulatory or legal advice.')
+        lines.append('Evidence note: this explanation includes synthetic or unreviewed planning assumptions.')
+    lines.append('Decision support only; no plan changes are approved by this answer.')
     return {'answer':'\n\n'.join(lines),'citations':list(unique.values())[:20],'suggested_questions':['Why are shipments at risk?','What repair options are available?','Which evidence supports these requirements?'],'scenario_id':scenario['id'],'calculation_version':scenario['calculation_version'],'tools_used':['read_scenario','read_shipment_features','read_source_evidence']}
