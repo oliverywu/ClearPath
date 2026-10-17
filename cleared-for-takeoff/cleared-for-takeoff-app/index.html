@@ -1,0 +1,31 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,"><title>Cleared for Takeoff</title><link rel="stylesheet" href="styles.css"></head>
+<body data-view="landing">
+<div id="bg"></div><div class="grain"></div>
+<a class="brand" href="#/" style="color:inherit;text-decoration:none">Cleared for Takeoff <b>●</b></a>
+<div class="art">
+ <div class="img" id="img"><img src="pills.png" alt=""></div>
+ <button class="notif" id="notif" aria-label="Open recent warnings"><div class="pill" id="pill"><div class="orb">!</div><div style="text-align:left"><small id="nsm">Japan · alert 1 of 4</small><b>Drug <i>late</i></b></div></div></button>
+</div>
+<div class="scrollhint">Click the alert · or scroll</div>
+<div class="prog"><i></i></div>
+
+<main>
+ <section id="landing"></section>
+ <section id="shipments"><div class="sticky"><div class="copy">
+  <div class="k">Shipment readiness</div><h2>Routes draw<br>as kits <em>move.</em></h2><p class="l">Origin → destination · days of slack against the target delivery.</p></div>
+  <div class="routes" id="routes"></div></div></section>
+ <section id="inventory"><div class="copy rv">
+  <div class="k">Inventory · recurring shipments</div><h2>Every route, <em>every cycle.</em></h2><p class="l">All recurring shipments across studies and countries. Click a tile for its run history.</p></div>
+  <div class="invbar rv" id="invbar"></div><div class="grid" id="grid"></div></section>
+ <section class="foot"><span>Sample data · prototype frontend</span></section>
+</main>
+
+<div class="view" id="v-warnings" hidden></div>
+<div class="view" id="v-chats" hidden></div>
+
+<a class="photon" id="photon" href="#/chats"><span class="po"></span><span class="pb" id="pbadge">6</span>Photon chats</a>
+<div class="wipe" id="wipe"></div>
+<div class="cur" id="cur"><span>OPEN</span></div>
+<script type="module" src="src/main.js"></script>
+</body></html>

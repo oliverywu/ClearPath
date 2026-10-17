@@ -1,0 +1,90 @@
+{
+ "cht-001": [
+  {
+   "id": "cht-001-m1",
+   "from": "them",
+   "text": "Heads up: the new label field applies to all 23 NOVA-24 kits.",
+   "sentAt": "08:02"
+  },
+  {
+   "id": "cht-001-m2",
+   "from": "me",
+   "text": "Can you relabel in Tokyo?",
+   "sentAt": "08:15"
+  },
+  {
+   "id": "cht-001-m3",
+   "from": "them",
+   "text": "We can relabel locally but it adds 9 days.",
+   "sentAt": "08:31"
+  }
+ ],
+ "cht-002": [
+  {
+   "id": "cht-002-m1",
+   "from": "them",
+   "text": "Permit expires on the 23rd.",
+   "sentAt": "07:30"
+  },
+  {
+   "id": "cht-002-m2",
+   "from": "me",
+   "text": "Please pre-file today.",
+   "sentAt": "07:41"
+  },
+  {
+   "id": "cht-002-m3",
+   "from": "them",
+   "text": "Permit draft ready, needs your signature.",
+   "sentAt": "07:58"
+  }
+ ],
+ "cht-003": [
+  {
+   "id": "cht-003-m1",
+   "from": "them",
+   "text": "Shanghai depot licence suspended this morning.",
+   "sentAt": "Oct 16"
+  },
+  {
+   "id": "cht-003-m2",
+   "from": "me",
+   "text": "Options?",
+   "sentAt": "Oct 16"
+  },
+  {
+   "id": "cht-003-m3",
+   "from": "them",
+   "text": "China depot re-inspection booked for Nov 3.",
+   "sentAt": "Oct 16"
+  }
+ ],
+ "cht-004": [
+  {
+   "id": "cht-004-m1",
+   "from": "them",
+   "text": "Logger shows 9.1\u00b0C for 42 minutes.",
+   "sentAt": "09:40"
+  },
+  {
+   "id": "cht-004-m2",
+   "from": "them",
+   "text": "Excursion data uploaded. Reviewing now.",
+   "sentAt": "10:02"
+  }
+ ],
+ "cht-005": [
+  {
+   "id": "cht-005-m1",
+   "from": "me",
+   "text": "Any issues at Frankfurt?",
+   "sentAt": "Oct 14"
+  },
+  {
+   "id": "cht-005-m2",
+   "from": "them",
+   "text": "Frankfurt cleared, thanks!",
+   "sentAt": "Oct 14"
+  }
+ ]
+}

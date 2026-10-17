@@ -1,0 +1,65 @@
+[
+ {
+  "id": "cht-001",
+  "name": "Yuki T.",
+  "role": "Tokyo depot",
+  "channel": "whatsapp",
+  "lastMessage": "We can relabel locally but it adds 9 days.",
+  "updatedAt": "2026-10-17T08:31:00-04:00",
+  "unread": 2,
+  "links": [
+   "wrn-001",
+   "shp-001"
+  ]
+ },
+ {
+  "id": "cht-002",
+  "name": "Amara K.",
+  "role": "Customs broker \u00b7 AR",
+  "channel": "slack",
+  "lastMessage": "Permit draft ready, needs your signature.",
+  "updatedAt": "2026-10-17T07:58:00-04:00",
+  "unread": 1,
+  "links": [
+   "wrn-002",
+   "shp-002"
+  ]
+ },
+ {
+  "id": "cht-003",
+  "name": "Lars M.",
+  "role": "ORION-7 logistics",
+  "channel": "email",
+  "lastMessage": "China depot re-inspection booked for Nov 3.",
+  "updatedAt": "2026-10-16T18:12:00-04:00",
+  "unread": 0,
+  "links": [
+   "wrn-003",
+   "shp-003"
+  ]
+ },
+ {
+  "id": "cht-004",
+  "name": "QA desk",
+  "role": "Brazil hub",
+  "channel": "teams",
+  "lastMessage": "Excursion data uploaded. Reviewing now.",
+  "updatedAt": "2026-10-16T10:02:00-04:00",
+  "unread": 3,
+  "links": [
+   "wrn-004"
+  ]
+ },
+ {
+  "id": "cht-005",
+  "name": "Sofia R.",
+  "role": "HALO-3 supply",
+  "channel": "sms",
+  "lastMessage": "Frankfurt cleared, thanks!",
+  "updatedAt": "2026-10-14T12:40:00-04:00",
+  "unread": 0,
+  "links": [
+   "shp-004"
+  ]
+ }
+]

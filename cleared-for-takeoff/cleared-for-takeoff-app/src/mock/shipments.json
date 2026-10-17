@@ -1,0 +1,72 @@
+[
+ {
+  "id": "shp-001",
+  "country": "JP",
+  "countryName": "Japan",
+  "study": "NOVA-24",
+  "kit": "NV-118 / placebo kit",
+  "origin": "Boston",
+  "destination": "Tokyo",
+  "status": "at_risk",
+  "slackDays": -9,
+  "targetDelivery": "2026-11-28",
+  "projectedDelivery": "2026-12-07",
+  "labelGroup": "label-JP-v1"
+ },
+ {
+  "id": "shp-002",
+  "country": "AR",
+  "countryName": "Argentina",
+  "study": "NOVA-24",
+  "kit": "NV-118 / placebo kit",
+  "origin": "Boston",
+  "destination": "Buenos Aires",
+  "status": "at_risk",
+  "slackDays": 6,
+  "targetDelivery": "2026-12-09",
+  "projectedDelivery": "2026-12-01",
+  "labelGroup": "label-284383c6a31b"
+ },
+ {
+  "id": "shp-003",
+  "country": "CN",
+  "countryName": "China",
+  "study": "ORION-7",
+  "kit": "ORX-2 IV vials",
+  "origin": "Basel",
+  "destination": "Shanghai",
+  "status": "blocked",
+  "slackDays": 0,
+  "targetDelivery": "2026-12-02",
+  "projectedDelivery": null,
+  "labelGroup": "label-CN-orx"
+ },
+ {
+  "id": "shp-004",
+  "country": "DE",
+  "countryName": "Germany",
+  "study": "HALO-3",
+  "kit": "HL-40 inhaler",
+  "origin": "Dublin",
+  "destination": "Frankfurt",
+  "status": "on_track",
+  "slackDays": 7,
+  "targetDelivery": "2026-12-01",
+  "projectedDelivery": "2026-11-24",
+  "labelGroup": "label-EU-halo"
+ },
+ {
+  "id": "shp-005",
+  "country": "KR",
+  "countryName": "South Korea",
+  "study": "NOVA-24",
+  "kit": "Insulin glargine (comparator)",
+  "origin": "Copenhagen",
+  "destination": "Incheon",
+  "status": "on_track",
+  "slackDays": 5,
+  "targetDelivery": "2026-12-11",
+  "projectedDelivery": "2026-12-06",
+  "labelGroup": "label-KR-cmp"
+ }
+]
