@@ -39,6 +39,10 @@ Both services bind to loopback. Keep the terminal running; Ctrl+C stops both. No
 6. In **Planner assistant**, select the proposal and ask why the destination is at risk. Answers use stored calculations and evidence.
 7. View **Audit history**, then download **Approved calendar (.ics)** in Scenarios.
 
+The **Control tower** includes a monthly supply calendar populated from the selected scenario's projected milestones. Select the latest event proposal to see its changed dates before approval. Select any calendar item to add that milestone directly to Google Calendar or Outlook. The full `.ics` export contains every milestone and is available for approved scenarios, so it can be imported into either calendar service.
+
+Selecting a country opens its requirements and delivery progress. The progress tracker shows the current planned stage, business-day duration for every step, projected dates, and remaining shipment slack. Orange delay-exposure labels identify milestones affected by the selected event or a shipment with low slack. These labels explain stored scenario risk; they are not probabilistic forecasts.
+
 The backup event increases Canada's permit lead time. All event names, affected jurisdictions, delays and repairs come from data records.
 
 Reset with the Control tower button, or stop the app and run `.\start.ps1 -Reset`. Reset activates a fresh synthetic baseline while retaining historical scenario/audit snapshots. For the alternative fixture: `python start.py --db .local/replacement.sqlite3 --fixture data/demo/replacement.json`. Add `--reset` to explicitly replace an existing demo database.
@@ -86,6 +90,24 @@ The application is complete and testable without external credentials. Teammates
 - confirmed Photon credentials/contract only if external notifications become a requirement.
 
 Every imported rule should begin as `needs_review`. A qualified reviewer must inspect evidence in the UI. Dataset and rule commits generate proposals; a separate named plan approval is still required.
+
+### What to do next
+
+- [ ] Each country researcher downloads the CSV template from **Data & research**, adds exact official-source excerpts and effective dates, and submits one or more files.
+- [ ] A qualified reviewer imports those files, resolves any duplicate conflicts, and records **Verify**, **Keep in review**, or **Retire** for each rule.
+- [ ] The supply-planning teammate replaces demo demand, route, depot, target-date, and product fields in a complete dataset JSON.
+- [ ] The team reviews every generated proposal in **Scenarios** and records a named approval or rejection with a decision note.
+- [ ] If model-written assistant responses are desired, one teammate creates a local `.env` with the OpenAI settings below. Do not share or commit that file.
+- [ ] If remote Chalk calculations are desired, deploy the matching resolvers first, then add Chalk credentials locally.
+- [ ] Before a demo or handoff, run `python -m unittest discover -v`; optionally run `npm install`, `npx playwright install chromium`, and `npm run test:browser` for the browser suite.
+
+### Daily teammate workflow
+
+1. Pull the branch: `git pull origin cleared-for-takeoff`.
+2. Start the app with `./start.ps1` in PowerShell or `python start.py` on macOS/Linux.
+3. Open `http://localhost:3000`. Keep the terminal open while using the app.
+4. Import research in **Data & research**, review evidence in **Requirements**, and assess resulting dates in **Scenarios** and the Control tower calendar.
+5. Stop the app with Ctrl+C. Local work is stored in `.local/cleared.sqlite3`; do not commit that database.
 
 ## Chalk
 

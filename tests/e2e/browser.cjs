@@ -48,12 +48,16 @@ async function main() {
     await page.goto(base);
     await page.locator('.country-tile').first().waitFor();
     assert.equal(await page.locator('.country-tile').count(), boot.jurisdictions.length);
+    await page.locator('.calendar-card').waitFor();
+    assert.ok(await page.locator('.calendar-event').count() > 0, 'Dashboard calendar should contain scenario milestones');
     fs.mkdirSync(path.join(root, 'test-results'), {recursive:true});
     await page.screenshot({path:path.join(root,'test-results/control-tower.png'),fullPage:true});
     await page.locator('[data-country="DE"]').click();
     await page.locator('.rule-select').first().waitFor();
     await page.locator('.rule-select').first().click();
     assert.match(await page.locator('#evidence-content').innerText(), /Synthetic/i);
+    await page.locator('.delivery-progress').waitFor();
+    assert.match(await page.locator('#timeline-panel').innerText(), /Delay exposure|business days slack/i);
     await page.locator('[data-view="scenarios"]').click();
     const jp = boot.events.find(e => e.jurisdiction === 'JP');
     await page.locator(`[data-analyze="${jp.id}"]`).click();
