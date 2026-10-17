@@ -32,6 +32,8 @@ from typing import Literal, Optional
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
+import audit_log
+import decision_agent
 import impact_analyzer
 import label_grouping
 import notification_manager
@@ -123,12 +125,35 @@ def _baseline_rows(shipments: list) -> list:
                 "delay_type": "none",
                 "delay_days": 0,
                 "event_or_change": None,
+                "approved_decision": None,
             }
         )
     return rows
 
 
+def _approved_decision_view(decision: dict) -> dict:
+    option = decision["selected_option"]
+    return {
+        "option_id": option["option_id"],
+        "label": option["label"],
+        "approved_by": decision.get("approved_by"),
+        "approved_at": decision.get("approved_at"),
+        "channel": "iMessage",
+    }
+
+
 def _customs_hold_rows(shipments: list, disruption_results: list) -> list:
+    """Each row reflects the CURRENT plan: the raw, unmitigated disruption
+    projection by default, overridden by an approved decision_agent
+    decision when one exists for that shipment+event (requirement: an
+    approved APPROVE must be visible here, not just in the audit log).
+    `delay_type`/`event_or_change` still describe the triggering event
+    itself (what happened) regardless of approval status -- only the
+    revised_* "current plan" fields and the new `approved_decision` field
+    change. This overlay is read-only and never touches shipments.json or
+    any simulated baseline data; approved-plan state lives only in
+    decision_agent's conversation store.
+    """
     event = impact_analyzer.SIMULATED_DISRUPTION_EVENT
     by_id = {s.get("shipment_id"): s for s in shipments}
 
@@ -136,6 +161,20 @@ def _customs_hold_rows(shipments: list, disruption_results: list) -> list:
     for result in disruption_results:
         shipment = by_id.get(result["shipment_id"], {})
         jurisdiction, in_scope = _jurisdiction_info(shipment.get("destination"))
+
+        revised_arrival_date = result["updated_arrival_date"].isoformat()
+        revised_buffer_days = result["new_buffer_days"]
+        revised_at_risk = result["new_at_risk"]
+        approved_decision = None
+
+        decision = decision_agent.find_approved_decision(result["shipment_id"], event["event_id"])
+        if decision is not None:
+            plan = decision["approved_plan"]
+            revised_arrival_date = plan["estimated_arrival_date"]
+            revised_buffer_days = plan["buffer_days"]
+            revised_at_risk = plan["at_risk"]
+            approved_decision = _approved_decision_view(decision)
+
         rows.append(
             {
                 "shipment_id": result["shipment_id"],
@@ -145,12 +184,12 @@ def _customs_hold_rows(shipments: list, disruption_results: list) -> list:
                 "jurisdiction": jurisdiction,
                 "in_scope": in_scope,
                 "original_arrival_date": result["original_arrival_date"].isoformat(),
-                "revised_arrival_date": result["updated_arrival_date"].isoformat(),
+                "revised_arrival_date": revised_arrival_date,
                 "required_delivery_date": result["required_delivery_date"].isoformat(),
                 "original_buffer_days": result["original_buffer_days"],
-                "revised_buffer_days": result["new_buffer_days"],
+                "revised_buffer_days": revised_buffer_days,
                 "original_at_risk": result["original_at_risk"],
-                "revised_at_risk": result["new_at_risk"],
+                "revised_at_risk": revised_at_risk,
                 "affected": result["affected"],
                 "delay_type": "in_transit_customs_hold" if result["affected"] else "none",
                 "delay_days": event["additional_delay_days"] if result["affected"] else 0,
@@ -163,6 +202,7 @@ def _customs_hold_rows(shipments: list, disruption_results: list) -> list:
                     if result["affected"]
                     else None
                 ),
+                "approved_decision": approved_decision,
             }
         )
     return rows
@@ -218,14 +258,18 @@ def _labeling_change_rows(shipments: list, regulatory_report: dict) -> list:
                 "delay_type": delay_type,
                 "delay_days": delay_days,
                 "event_or_change": event_or_change,
+                "approved_decision": None,  # decision-agent approvals are wired for customs_hold only so far
             }
         )
     return rows
 
 
-def _newly_at_risk_count(scenario: str, disruption_results: list, regulatory_report: dict) -> int:
+def _newly_at_risk_count(scenario: str, rows: list, regulatory_report: dict) -> int:
     if scenario == "customs_hold":
-        return len(notification_manager.find_newly_at_risk(disruption_results))
+        # Computed from the (possibly approval-overridden) rows, not the raw
+        # disruption results, so a resolved shipment stops counting as
+        # newly-at-risk once its approved decision brings it back on track.
+        return sum(1 for row in rows if row["affected"] and not row["original_at_risk"] and row["revised_at_risk"])
     if scenario == "labeling_change":
         return sum(
             1
@@ -247,6 +291,7 @@ def _combined_alerts(disruption_results: list, regulatory_report: dict) -> list:
     alerts = []
     for result in notification_manager.find_newly_at_risk(disruption_results):
         key = f"{result['event_id']}:{result['shipment_id']}"
+        decision = decision_agent.find_approved_decision(result["shipment_id"], result["event_id"])
         alerts.append(
             {
                 "alert_id": key,
@@ -256,6 +301,7 @@ def _combined_alerts(disruption_results: list, regulatory_report: dict) -> list:
                 "drug_name": result["drug_name"],
                 "message": notification_manager.build_alert_message(result),
                 "sent": key in sent_keys,
+                "approved_decision": _approved_decision_view(decision) if decision else None,
             }
         )
 
@@ -269,6 +315,7 @@ def _combined_alerts(disruption_results: list, regulatory_report: dict) -> list:
                 "drug_name": alert["drug_name"],
                 "message": alert["reason_summary"],
                 "sent": alert["sent"],
+                "approved_decision": None,  # decision-agent approvals are wired for customs_hold only so far
             }
         )
     return alerts
@@ -277,6 +324,35 @@ def _combined_alerts(disruption_results: list, regulatory_report: dict) -> list:
 @app.get("/api/health")
 def health() -> dict:
     return {"status": "ok"}
+
+
+# --- decision agent: read-only conversation / pending-decision / audit views --
+#
+# No mutation endpoint is exposed here. Decisions are only ever advanced by
+# an inbound Photon/iMessage reply through decision_agent.handle_reply
+# (photon_bridge.poll_once), which already enforces the same approval and
+# authorization safeguards these read views report on.
+
+
+@app.get("/api/conversations")
+def conversations() -> list:
+    convos = decision_agent.load_conversations()
+    return [decision_agent.conversation_view(c) for c in convos.values()]
+
+
+@app.get("/api/pending-decisions")
+def pending_decisions() -> list:
+    convos = decision_agent.load_conversations()
+    return [
+        decision_agent.conversation_view(c)
+        for c in convos.values()
+        if c.get("status") in decision_agent.PENDING_STATUSES
+    ]
+
+
+@app.get("/api/audit-log")
+def audit_log_entries() -> list:
+    return audit_log.load_entries()
 
 
 @app.get("/api/scenarios")
@@ -312,7 +388,7 @@ def dashboard(scenario: ScenarioId = Query("baseline")) -> dict:
     overview = {
         "shipment_count": len(shipments),
         "baseline_at_risk_count": baseline_at_risk_count,
-        "newly_at_risk_count": _newly_at_risk_count(scenario, disruption_results, regulatory_report),
+        "newly_at_risk_count": _newly_at_risk_count(scenario, rows, regulatory_report),
         "regulatory_alerts_count": len(regulatory_report["alerts"]),
     }
 

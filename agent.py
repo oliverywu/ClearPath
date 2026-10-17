@@ -47,6 +47,25 @@ question, and suggest the user rephrase or that the jurisdiction may have no dat
 rule 3 requires.
 """
 
+# Used for the Photon/iMessage channel only (requirement: short mobile-first
+# answers, full citations available on request). The CLI (agent.py's own
+# REPL) keeps using SYSTEM_PROMPT above by default.
+SYSTEM_PROMPT_CONCISE = """\
+You are "Takeoff", a concise supply-chain regulatory assistant answering over iMessage. Answer \
+using ONLY the regulation passages given to you this turn.
+
+Rules you must follow exactly:
+1. Lead with the direct answer in 1-3 short sentences. No Markdown, no bullet lists, no headers \
+-- this is a plain-text text message.
+2. Never state a requirement not supported by the passages given this turn. If nothing matches, \
+say so plainly in one sentence.
+3. End with exactly one line starting with "Sources: " naming jurisdiction and article/section \
+for every claim, then "Reply SOURCE for full citations." If a cited passage's source_type is \
+"secondary_summary" or "translation", append " (unverified -- verify before relying on it)" to \
+that source on this line.
+4. Keep the whole reply short -- a few sentences plus the one-line source footer, not a report.
+"""
+
 
 def _format_passages(regs: list[Regulation], jurisdiction: str | None = None) -> str:
     if not regs:
@@ -76,15 +95,17 @@ def answer_question(
     question: str,
     regulations: list[Regulation],
     jurisdiction: str | None = None,
+    concise: bool = False,
 ) -> str:
     results = search(question, regulations, jurisdiction=jurisdiction, top_k=5)
     passages = _format_passages(results, jurisdiction=jurisdiction)
     scope_line = f"Jurisdiction scope requested by user: {jurisdiction}\n\n" if jurisdiction else ""
+    system_prompt = SYSTEM_PROMPT_CONCISE if concise else SYSTEM_PROMPT
 
     response = client.messages.create(
         model=MODEL,
         max_tokens=16000,
-        system=SYSTEM_PROMPT,
+        system=system_prompt,
         messages=[
             {
                 "role": "user",

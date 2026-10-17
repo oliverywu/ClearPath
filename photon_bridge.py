@@ -22,6 +22,7 @@ ANTHROPIC_API_KEY.
 
 from __future__ import annotations
 
+import fcntl
 import json
 import os
 import signal
@@ -38,10 +39,13 @@ import anthropic
 from photon_api import Photon
 from photon_api.rpc_generated import ListMessagesInput, MarkMessageReadInput, SendMessageInput
 
+import decision_agent
 from agent import answer_question
 from retrieval import load_regulations
 
 STATE_PATH = Path(__file__).parent / ".photon_bridge_state.json"
+QA_STATE_PATH = Path(__file__).parent / ".qa_context_state.json"
+LOCK_PATH = Path(__file__).parent / ".photon_bridge.lock"
 POLL_INTERVAL_SECONDS = 3
 # Bounds how many processed message ids are retained, so the dedupe set
 # does not grow without limit over a long-running process.
@@ -111,6 +115,30 @@ def extract_text(message: Any) -> Optional[str]:
     return text.strip() if text else None
 
 
+def _actor_id(message: Any) -> Optional[str]:
+    """The Photon user id of the human who SENT this inbound message --
+    used only for decision-approval authorization (decision_agent). This is
+    distinct from `_reply_identity`, which is the identity our *own* reply
+    should be sent as.
+    """
+    sent_by = _unwrap(getattr(message, "sentBy", None))
+    return getattr(sent_by, "id", None) if sent_by is not None else None
+
+
+def _load_qa_context(path: Path = QA_STATE_PATH) -> dict:
+    """Per-space cache of the last free-text regulatory question asked, so a
+    later DETAILS/SOURCE reply can return the fuller cited answer without
+    the user having to repeat their question.
+    """
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return {}
+
+
+def _save_qa_context(context: dict, path: Path = QA_STATE_PATH) -> None:
+    path.write_text(json.dumps(context), encoding="utf-8")
+
+
 def _reply_identity(message: Any) -> Optional[str]:
     """The user id the reply should be sent *as* -- the project's own
     identity in this conversation. `receivedBy` is the documented field for
@@ -163,12 +191,83 @@ def poll_once(
     regulations: list,
     anthropic_client: anthropic.Anthropic,
     state: dict,
+    *,
+    conversation_state_path: Path = decision_agent.CONVERSATION_STATE_PATH,
+    audit_log_path: Path = decision_agent.AUDIT_LOG_PATH,
+    qa_state_path: Path = QA_STATE_PATH,
+    roles: Optional[dict] = None,
+    lock_path: Path = LOCK_PATH,
+) -> dict:
+    """Acquire an exclusive, non-blocking lock around one poll cycle.
+
+    Two overlapping poll_once calls (e.g. the standalone bridge process and
+    a second one started by mistake, both against the same Photon project)
+    would otherwise each load the same on-disk `processed_ids` before
+    either had replied, and both answer the same inbound message -- this
+    previously produced duplicate outbound replies to a single text
+    (observed live: one inbound message answered 4 times within ~1.2s,
+    far faster than POLL_INTERVAL_SECONDS allows from a single process).
+    If the lock is already held, this poll is skipped entirely and `state`
+    is returned unchanged -- safe, since the message is simply retried by
+    whichever instance currently holds the lock.
+    """
+    lock_file = open(lock_path, "a+")
+    try:
+        fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        print(
+            "[photon_bridge] poll skipped: another poll_once is already in "
+            "progress (lock held) -- avoids double-answering the same inbound message.",
+            file=sys.stderr,
+        )
+        lock_file.close()
+        return state
+    try:
+        return _poll_once_locked(
+            client,
+            project_id,
+            regulations,
+            anthropic_client,
+            state,
+            conversation_state_path=conversation_state_path,
+            audit_log_path=audit_log_path,
+            qa_state_path=qa_state_path,
+            roles=roles,
+        )
+    finally:
+        fcntl.flock(lock_file, fcntl.LOCK_UN)
+        lock_file.close()
+
+
+def _poll_once_locked(
+    client: Photon,
+    project_id: str,
+    regulations: list,
+    anthropic_client: anthropic.Anthropic,
+    state: dict,
+    *,
+    conversation_state_path: Path = decision_agent.CONVERSATION_STATE_PATH,
+    audit_log_path: Path = decision_agent.AUDIT_LOG_PATH,
+    qa_state_path: Path = QA_STATE_PATH,
+    roles: Optional[dict] = None,
 ) -> dict:
     """Fetch new inbound messages, answer each, reply, and return updated state.
+
+    Each human text message is routed one of two ways:
+      - If its space has an active (pending) decision conversation, the
+        reply is handled by decision_agent.handle_reply -- 1/2/3, DETAILS,
+        SOURCE, CANCEL, APPROVE.
+      - Otherwise it's treated as a free-text regulatory question and
+        answered concisely via agent.answer_question(concise=True), with
+        DETAILS/SOURCE replaying the fuller cited answer for the last
+        question asked in that space.
 
     A failure handling any single message (API error, missing fields, a
     failed Claude call) is logged and that message is simply left out of
     `processed_ids` -- it is retried on the next call rather than lost.
+
+    Called only from poll_once, which holds the cross-process lock for the
+    duration of this call.
     """
     query: dict[str, Any] = {"direction": "received", "platform": "imessage"}
     if state.get("cursor"):
@@ -183,15 +282,18 @@ def poll_once(
         return state
 
     messages = sorted((_unwrap(m) for m in page.items), key=lambda m: m.createdAt)
+    print(f"[photon_bridge] list_messages returned {len(messages)} message(s)", file=sys.stderr)
 
     processed_ids = set(state.get("processed_ids", []))
     latest_created_at = state.get("cursor")
 
     for message in messages:
         if message.id in processed_ids:
+            print(f"[photon_bridge] {message.id}: skip (already processed)", file=sys.stderr)
             continue  # already answered -- guards overlapping poll windows
 
         if is_from_agent(message):
+            print(f"[photon_bridge] {message.id}: skip (sent by agent)", file=sys.stderr)
             processed_ids.add(message.id)
             continue
 
@@ -199,6 +301,7 @@ def poll_once(
         if text is None:
             # Not a text question (attachment/reaction/etc.) -- nothing to
             # answer, but mark seen so we don't keep re-evaluating it.
+            print(f"[photon_bridge] {message.id}: skip (no answerable text content)", file=sys.stderr)
             processed_ids.add(message.id)
             continue
 
@@ -211,10 +314,49 @@ def poll_once(
             )
             continue
 
+        space_id = _unwrap(message.space).id
+        actor_id = _actor_id(message)
+
         try:
-            answer = answer_question(anthropic_client, text, regulations)
+            # Route to decision_agent only when BOTH a conversation exists
+            # for this space (any status -- including already resolved, so
+            # a duplicate APPROVE or a DETAILS follow-up still reaches
+            # handle_reply's idempotent handling instead of silently
+            # falling through to Q&A) AND the reply text actually looks
+            # like decision-flow grammar, so an ordinary regulatory
+            # question asked later in the same space still falls through.
+            active = decision_agent.find_conversation_for_space(space_id, state_path=conversation_state_path)
+            if active is not None and decision_agent.is_decision_reply(text):
+                active_event_id, _convo = active
+                print(f"[photon_bridge] {message.id}: routed to decision_agent (event={active_event_id})", file=sys.stderr)
+                answer = decision_agent.handle_reply(
+                    space_id,
+                    active_event_id,
+                    actor_id,
+                    text,
+                    state_path=conversation_state_path,
+                    audit_path=audit_log_path,
+                    roles=roles,
+                )
+            else:
+                print(f"[photon_bridge] {message.id}: routed to Q&A", file=sys.stderr)
+                normalized = text.strip().upper()
+                qa_context = _load_qa_context(qa_state_path)
+                prior = qa_context.get(space_id)
+                if normalized in ("DETAILS", "SOURCE") and prior:
+                    answer = answer_question(
+                        anthropic_client,
+                        prior["question"],
+                        regulations,
+                        jurisdiction=prior.get("jurisdiction"),
+                        concise=False,
+                    )
+                else:
+                    answer = answer_question(anthropic_client, text, regulations, concise=True)
+                    qa_context[space_id] = {"question": text, "jurisdiction": None}
+                    _save_qa_context(qa_context, qa_state_path)
         except Exception as exc:
-            print(f"[photon_bridge] answer_question failed for {message.id}: {exc}", file=sys.stderr)
+            print(f"[photon_bridge] reply handling failed for {message.id}: {exc}", file=sys.stderr)
             continue  # leave unprocessed -- retried on next poll
 
         try:
@@ -225,11 +367,12 @@ def poll_once(
             send_text_message(
                 client,
                 project_id,
-                space_id=_unwrap(message.space).id,
+                space_id=space_id,
                 sender_id=sender_id,
                 text=answer,
                 idempotency_key=f"reply:{message.id}",
             )
+            print(f"[photon_bridge] {message.id}: reply sent", file=sys.stderr)
         except Exception as exc:
             print(f"[photon_bridge] send_message failed for {message.id}: {exc}", file=sys.stderr)
             # Deliberately NOT marked processed. The idempotency key above
@@ -238,11 +381,19 @@ def poll_once(
             continue
 
         try:
+            # headers.idempotency-key is required by the installed SDK
+            # (MarkMessageReadHeader), same as SendMessageHeader above --
+            # derived from the message id so a retried mark-read for the
+            # same message is always safe to repeat.
             client.projects.mark_message_read(
                 MarkMessageReadInput.model_validate(
-                    {"path": {"id": project_id, "messageId": message.id}, "headers": {}}
+                    {
+                        "path": {"id": project_id, "messageId": message.id},
+                        "headers": {"idempotency-key": f"mark-read:{message.id}"},
+                    }
                 )
             )
+            print(f"[photon_bridge] {message.id}: marked read", file=sys.stderr)
         except Exception as exc:
             # Non-critical -- the reply already went out successfully.
             print(f"[photon_bridge] mark_message_read failed for {message.id}: {exc}", file=sys.stderr)
@@ -254,6 +405,11 @@ def poll_once(
     state["processed_ids"] = list(processed_ids)
     if latest_created_at:
         state["cursor"] = latest_created_at
+    print(
+        f"[photon_bridge] poll complete: cursor={state.get('cursor')!r} "
+        f"tracked_ids={len(state['processed_ids'])}",
+        file=sys.stderr,
+    )
     return state
 
 

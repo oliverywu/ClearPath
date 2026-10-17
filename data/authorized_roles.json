@@ -1,0 +1,14 @@
+{
+  "pho_usr_maya": {
+    "name": "Maya",
+    "role": "supply_lead",
+    "can_approve": true,
+    "note": "SIMULATED demo identity -- supply lead, authorized to approve plan changes."
+  },
+  "pho_usr_kenji": {
+    "name": "Kenji",
+    "role": "affiliate",
+    "can_approve": false,
+    "note": "SIMULATED demo identity -- Japan affiliate, can ask questions but cannot approve plan changes."
+  }
+}

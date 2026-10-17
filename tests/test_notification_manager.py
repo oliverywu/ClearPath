@@ -1,6 +1,7 @@
 import json
 from unittest.mock import MagicMock
 
+import decision_agent
 import notification_manager
 from impact_analyzer import SIMULATED_DISRUPTION_EVENT, analyze_disruption_impact
 
@@ -145,3 +146,68 @@ def test_run_missing_destination_env_falls_back_to_dry_run_without_sending(monke
     alerts = notification_manager.run(dry_run=False, state_path=tmp_path / "state.json", project_id="proj1")
 
     assert len(alerts) == 1  # alert still generated/printed, just not sent
+
+
+# --- start_customs_hold_conversation(): SHIP-001 decision-conversation kickoff --
+
+
+def test_start_customs_hold_conversation_dry_run_never_touches_photon(tmp_path, monkeypatch):
+    monkeypatch.delenv("PHOTON_ALERT_SPACE_ID", raising=False)
+    monkeypatch.setattr(
+        notification_manager, "build_photon_client",
+        lambda: (_ for _ in ()).throw(AssertionError("must not build a real client in dry run")),
+    )
+    state_path = tmp_path / "conversations.json"
+
+    message = notification_manager.start_customs_hold_conversation(
+        dry_run=True, conversation_state_path=state_path,
+    )
+
+    assert "SHIP-001" in message
+    assert "Pick a fix" in message
+    convos = decision_agent.load_conversations(state_path)
+    key = decision_agent.conversation_key("SIMULATED-SPACE", SIMULATED_DISRUPTION_EVENT["event_id"])
+    assert convos[key]["status"] == decision_agent.STATUS_AWAITING_OPTION
+
+
+def test_start_customs_hold_conversation_send_mode_uses_mocked_client_and_matching_space(tmp_path):
+    mock_client = MagicMock()
+    state_path = tmp_path / "conversations.json"
+
+    notification_manager.start_customs_hold_conversation(
+        dry_run=False,
+        conversation_state_path=state_path,
+        photon_client=mock_client,
+        project_id="proj1",
+        space_id="pho_spc_maya",
+        sender_id="pho_usr_agent",
+    )
+
+    mock_client.projects.send_message.assert_called_once()
+    sent_input = mock_client.projects.send_message.call_args.args[0]
+    dumped = sent_input.model_dump(by_alias=True, exclude_unset=True)
+    assert dumped["body"]["spaceId"] == "pho_spc_maya"
+
+    # The conversation is keyed by the SAME space it was actually sent to,
+    # so a reply arriving in that real space will find this pending decision.
+    convo = decision_agent.get_conversation(
+        "pho_spc_maya", SIMULATED_DISRUPTION_EVENT["event_id"], state_path=state_path,
+    )
+    assert convo is not None
+    assert convo["status"] == decision_agent.STATUS_AWAITING_OPTION
+
+
+def test_start_customs_hold_conversation_missing_destination_env_falls_back_to_dry_run(tmp_path, monkeypatch):
+    monkeypatch.delenv("PHOTON_ALERT_SPACE_ID", raising=False)
+    monkeypatch.delenv("PHOTON_ALERT_SENDER_ID", raising=False)
+    monkeypatch.setattr(
+        notification_manager, "build_photon_client",
+        lambda: (_ for _ in ()).throw(AssertionError("must not build a real client")),
+    )
+    state_path = tmp_path / "conversations.json"
+
+    message = notification_manager.start_customs_hold_conversation(
+        dry_run=False, conversation_state_path=state_path, project_id="proj1",
+    )
+
+    assert "SHIP-001" in message  # conversation still opened, just not sent

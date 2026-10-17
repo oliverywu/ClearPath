@@ -28,6 +28,7 @@ import sys
 from pathlib import Path
 from typing import Any, Optional
 
+import decision_agent
 from impact_analyzer import SIMULATED_DISRUPTION_EVENT, analyze_disruption_impact
 from photon_bridge import build_photon_client, send_text_message
 from shipment_planner import ShipmentDataError, load_shipments
@@ -167,6 +168,76 @@ def run(
     return alerts
 
 
+def start_customs_hold_conversation(
+    shipment_id: str = "SHIP-001",
+    *,
+    dry_run: bool = True,
+    photon_client: Any = None,
+    project_id: Optional[str] = None,
+    space_id: Optional[str] = None,
+    sender_id: Optional[str] = None,
+    conversation_state_path: Path = decision_agent.CONVERSATION_STATE_PATH,
+) -> str:
+    """Open the SIM-DISRUPTION-001 (customs hold) decision conversation for
+    one shipment: builds the initial numbered-option alert via
+    decision_agent.start_conversation() (which also seeds conversation
+    state as AWAITING_OPTION) and, only when dry_run=False and Photon
+    destination env vars are available, sends it via the existing
+    photon_bridge.send_text_message(). Same dry-run-by-default safety as
+    run() above -- never sends during automated tests unless a mock
+    `photon_client` is explicitly passed with dry_run=False.
+    """
+    event = SIMULATED_DISRUPTION_EVENT
+    project_id = project_id or os.environ.get("PHOTON_PROJECT_ID")
+    space_id = space_id or os.environ.get("PHOTON_ALERT_SPACE_ID")
+    sender_id = sender_id or os.environ.get("PHOTON_ALERT_SENDER_ID")
+
+    # The conversation is keyed by the space it will actually be sent to --
+    # resolved *before* start_conversation() so a later reply in that same
+    # real space finds this same pending decision.
+    conversation_space_id = space_id or "SIMULATED-SPACE"
+    message = decision_agent.start_conversation(
+        conversation_space_id,
+        event["event_id"],
+        shipment_id,
+        state_path=conversation_state_path,
+    )
+
+    print(message)
+    print()
+
+    if dry_run:
+        print("[DRY RUN] Decision conversation opened; Photon send skipped. Pass --send to dispatch.")
+        return message
+
+    missing = [
+        name
+        for name, value in [
+            ("PHOTON_PROJECT_ID", project_id),
+            ("PHOTON_ALERT_SPACE_ID", space_id),
+            ("PHOTON_ALERT_SENDER_ID", sender_id),
+        ]
+        if not value
+    ]
+    if missing:
+        print(f"Cannot send: missing {', '.join(missing)}. Falling back to dry run -- no message sent.")
+        return message
+
+    client = photon_client or build_photon_client()
+    try:
+        send_text_message(
+            client,
+            project_id,
+            space_id=space_id,
+            sender_id=sender_id,
+            text=message,
+            idempotency_key=f"decision-start:{event['event_id']}:{shipment_id}",
+        )
+    except Exception as exc:  # network/API failure -- conversation state is already saved, safe to retry
+        print(f"[notification_manager] decision alert send failed: {exc}", file=sys.stderr)
+    return message
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate (and optionally send) disruption risk alerts.")
     parser.add_argument(
@@ -174,7 +245,16 @@ def main() -> None:
         action="store_true",
         help="Actually dispatch via Photon. Default is dry-run: alerts are printed only.",
     )
+    parser.add_argument(
+        "--start-decision",
+        action="store_true",
+        help="Open the SHIP-001 simulated customs-hold decision conversation instead of the broad alert sweep.",
+    )
     args = parser.parse_args()
+
+    if args.start_decision:
+        start_customs_hold_conversation(dry_run=not args.send)
+        return
 
     try:
         run(dry_run=not args.send)

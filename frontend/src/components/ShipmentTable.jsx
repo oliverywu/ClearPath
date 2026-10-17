@@ -89,6 +89,16 @@ export default function ShipmentTable({ rows, scenarioId, loading }) {
                       ) : (
                         <span className="delay-chip delay-chip-none">{DELAY_LABELS.none}</span>
                       )}
+                      {row.approved_decision && (
+                        <span
+                          className="approved-chip"
+                          title={`Approved by ${row.approved_decision.approved_by?.name ?? "unknown"} (${
+                            row.approved_decision.approved_by?.role ?? "unknown role"
+                          }) via ${row.approved_decision.channel} at ${row.approved_decision.approved_at}`}
+                        >
+                          Approved: {row.approved_decision.label}
+                        </span>
+                      )}
                     </td>
                   )}
                 </tr>

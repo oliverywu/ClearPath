@@ -28,11 +28,18 @@ export default function AlertsPanel({ alerts }) {
                 <span className={`sent-badge ${alert.sent ? "sent" : "not-sent"}`}>
                   {alert.sent ? "Sent" : "Not sent"}
                 </span>
+                {alert.approved_decision && <span className="sent-badge sent">Resolved</span>}
               </div>
               <p className="alert-shipment">
                 {alert.shipment_id} — {alert.drug_name}
               </p>
               <p className="alert-message">{alert.message}</p>
+              {alert.approved_decision && (
+                <p className="alert-message">
+                  Approved: {alert.approved_decision.label} by {alert.approved_decision.approved_by?.name}{" "}
+                  ({alert.approved_decision.approved_by?.role}) via {alert.approved_decision.channel}
+                </p>
+              )}
             </li>
           ))}
         </ul>

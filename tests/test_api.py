@@ -1,6 +1,8 @@
 from fastapi.testclient import TestClient
 
 import api
+import audit_log
+import decision_agent
 from notification_manager import load_alert_state
 from shipment_planner import load_shipments
 
@@ -146,3 +148,190 @@ def test_dashboard_requests_never_mutate_shipment_data_file():
     client.get("/api/dashboard", params={"scenario": "labeling_change"})
     after = load_shipments()
     assert before == after
+
+
+# --- decision agent read-only endpoints (requirement 7) --------------------
+
+
+def test_conversations_endpoint_lists_every_conversation(monkeypatch):
+    fake = {
+        "a": {"space_id": "s1", "event_id": "e1", "status": "AWAITING_OPTION"},
+        "b": {"space_id": "s2", "event_id": "e1", "status": "APPROVED"},
+    }
+    monkeypatch.setattr(decision_agent, "load_conversations", lambda: fake)
+
+    resp = client.get("/api/conversations")
+    assert resp.status_code == 200
+    statuses = {c["status"] for c in resp.json()}
+    assert statuses == {"AWAITING_OPTION", "APPROVED"}
+
+
+def test_pending_decisions_endpoint_excludes_approved_and_cancelled(monkeypatch):
+    fake = {
+        "a": {"space_id": "s1", "event_id": "e1", "status": "AWAITING_OPTION"},
+        "b": {"space_id": "s2", "event_id": "e1", "status": "AWAITING_APPROVAL"},
+        "c": {"space_id": "s3", "event_id": "e1", "status": "APPROVED"},
+        "d": {"space_id": "s4", "event_id": "e1", "status": "CANCELLED"},
+    }
+    monkeypatch.setattr(decision_agent, "load_conversations", lambda: fake)
+
+    resp = client.get("/api/pending-decisions")
+    assert resp.status_code == 200
+    statuses = {c["status"] for c in resp.json()}
+    assert statuses == {"AWAITING_OPTION", "AWAITING_APPROVAL"}
+
+
+def test_audit_log_endpoint_returns_persisted_entries(monkeypatch):
+    fake_entries = [
+        {
+            "event_id": "SIM-DISRUPTION-001",
+            "shipment_id": "SHIP-001",
+            "selected_option": {"option_id": 1, "label": "Reroute via Rotterdam (alternate port)"},
+            "authorized_actor": {"id": "pho_usr_maya", "name": "Maya", "role": "supply_lead"},
+            "timestamp": "2026-10-05T09:06:00+00:00",
+            "before_plan": {"estimated_arrival_date": "2026-10-12"},
+            "after_plan": {"estimated_arrival_date": "2026-10-08"},
+            "channel": "iMessage",
+        }
+    ]
+    monkeypatch.setattr(audit_log, "load_entries", lambda: fake_entries)
+
+    resp = client.get("/api/audit-log")
+    assert resp.status_code == 200
+    assert resp.json() == fake_entries
+
+
+def test_audit_log_endpoint_empty_when_no_approvals_yet(monkeypatch):
+    monkeypatch.setattr(audit_log, "load_entries", lambda: [])
+    resp = client.get("/api/audit-log")
+    assert resp.json() == []
+
+
+# --- full pipeline integration: alert -> option -> preview -> approval ------
+# -> persistent plan -> dashboard API. Drives the real decision_agent state
+# machine against tmp_path files, then points the live endpoints at that
+# persisted state the same way a restarted process would re-read it from
+# disk -- never a live Photon send (no photon_client involved at all here).
+
+
+def _approve_ship_001_customs_hold(tmp_path, *, actor_id="pho_usr_maya", roles=None, option="1"):
+    from impact_analyzer import SIMULATED_DISRUPTION_EVENT
+
+    state_path = tmp_path / "conversations.json"
+    audit_path = tmp_path / "audit.jsonl"
+    roles = roles if roles is not None else {"pho_usr_maya": {"name": "Maya", "role": "supply_lead", "can_approve": True}}
+
+    alert = decision_agent.start_conversation(
+        "pho_spc_maya", SIMULATED_DISRUPTION_EVENT["event_id"], "SHIP-001", state_path=state_path,
+    )
+    preview = decision_agent.handle_reply(
+        "pho_spc_maya", SIMULATED_DISRUPTION_EVENT["event_id"], actor_id, option,
+        state_path=state_path, audit_path=audit_path,
+    )
+    confirmation = decision_agent.handle_reply(
+        "pho_spc_maya", SIMULATED_DISRUPTION_EVENT["event_id"], actor_id, "APPROVE",
+        state_path=state_path, audit_path=audit_path, roles=roles,
+    )
+    return alert, preview, confirmation, state_path, audit_path
+
+
+def test_full_pipeline_approved_decision_is_persistent_and_reflected_on_dashboard(monkeypatch, tmp_path):
+    alert, preview, confirmation, state_path, audit_path = _approve_ship_001_customs_hold(tmp_path)
+
+    assert "Pick a fix" in alert
+    assert "Preview" in preview and "Reply APPROVE" in preview
+    assert "Recorded" in confirmation and "Maya" in confirmation
+    assert len(audit_log.load_entries(audit_path)) == 1
+
+    # Simulate the dashboard reading persisted state after a process restart:
+    # a totally fresh load from disk, no object shared with the steps above.
+    persisted = decision_agent.load_conversations(state_path)
+    monkeypatch.setattr(decision_agent, "load_conversations", lambda *a, **k: persisted)
+
+    resp = client.get("/api/dashboard", params={"scenario": "customs_hold"})
+    assert resp.status_code == 200
+    data = resp.json()
+    row = next(r for r in data["shipments"] if r["shipment_id"] == "SHIP-001")
+
+    assert row["approved_decision"] is not None
+    assert row["approved_decision"]["label"] == "Reroute via Rotterdam (alternate port)"
+    assert row["approved_decision"]["approved_by"]["name"] == "Maya"
+    assert row["approved_decision"]["channel"] == "iMessage"
+    assert row["revised_arrival_date"] == "2026-10-08"
+    assert row["revised_at_risk"] is False  # the approved plan, not the raw unmitigated disruption
+
+    # the overview tile no longer counts this shipment as newly-at-risk
+    assert data["overview"]["newly_at_risk_count"] == 0
+
+    # the underlying simulated baseline fixture is untouched by any of this
+    from shipment_planner import load_shipments
+    ship_001_raw = next(s for s in load_shipments() if s["shipment_id"] == "SHIP-001")
+    assert ship_001_raw["required_delivery_date"] == "2026-10-10"
+    assert "approved_decision" not in ship_001_raw
+    assert "estimated_arrival_date" not in ship_001_raw
+
+
+def test_dashboard_never_reflects_an_unauthorized_approval_attempt(monkeypatch, tmp_path):
+    from impact_analyzer import SIMULATED_DISRUPTION_EVENT
+
+    state_path = tmp_path / "conversations.json"
+    audit_path = tmp_path / "audit.jsonl"
+    decision_agent.start_conversation(
+        "pho_spc_maya", SIMULATED_DISRUPTION_EVENT["event_id"], "SHIP-001", state_path=state_path,
+    )
+    decision_agent.handle_reply(
+        "pho_spc_maya", SIMULATED_DISRUPTION_EVENT["event_id"], "pho_usr_intruder", "1",
+        state_path=state_path, audit_path=audit_path,
+    )
+    decision_agent.handle_reply(
+        "pho_spc_maya", SIMULATED_DISRUPTION_EVENT["event_id"], "pho_usr_intruder", "APPROVE",
+        state_path=state_path, audit_path=audit_path, roles={},  # no one authorized
+    )
+
+    persisted = decision_agent.load_conversations(state_path)
+    monkeypatch.setattr(decision_agent, "load_conversations", lambda *a, **k: persisted)
+
+    resp = client.get("/api/dashboard", params={"scenario": "customs_hold"})
+    row = next(r for r in resp.json()["shipments"] if r["shipment_id"] == "SHIP-001")
+
+    assert row["approved_decision"] is None
+    assert row["revised_at_risk"] is True  # still the raw, unmitigated disruption
+    assert audit_log.load_entries(audit_path) == []
+
+
+def test_dashboard_reflects_duplicate_approve_once_not_as_conflicting_updates(monkeypatch, tmp_path):
+    from impact_analyzer import SIMULATED_DISRUPTION_EVENT
+
+    state_path = tmp_path / "conversations.json"
+    audit_path = tmp_path / "audit.jsonl"
+    roles = {"pho_usr_maya": {"name": "Maya", "role": "supply_lead", "can_approve": True}}
+
+    decision_agent.start_conversation(
+        "pho_spc_maya", SIMULATED_DISRUPTION_EVENT["event_id"], "SHIP-001", state_path=state_path,
+    )
+    decision_agent.handle_reply(
+        "pho_spc_maya", SIMULATED_DISRUPTION_EVENT["event_id"], "pho_usr_maya", "1",
+        state_path=state_path, audit_path=audit_path,
+    )
+    decision_agent.handle_reply(
+        "pho_spc_maya", SIMULATED_DISRUPTION_EVENT["event_id"], "pho_usr_maya", "APPROVE",
+        state_path=state_path, audit_path=audit_path, roles=roles,
+    )
+    # duplicate APPROVE, and a conflicting attempt to switch options afterward
+    decision_agent.handle_reply(
+        "pho_spc_maya", SIMULATED_DISRUPTION_EVENT["event_id"], "pho_usr_maya", "APPROVE",
+        state_path=state_path, audit_path=audit_path, roles=roles,
+    )
+    decision_agent.handle_reply(
+        "pho_spc_maya", SIMULATED_DISRUPTION_EVENT["event_id"], "pho_usr_maya", "3",
+        state_path=state_path, audit_path=audit_path, roles=roles,
+    )
+
+    persisted = decision_agent.load_conversations(state_path)
+    monkeypatch.setattr(decision_agent, "load_conversations", lambda *a, **k: persisted)
+
+    resp = client.get("/api/dashboard", params={"scenario": "customs_hold"})
+    row = next(r for r in resp.json()["shipments"] if r["shipment_id"] == "SHIP-001")
+
+    assert row["approved_decision"]["option_id"] == 1  # the "3" attempt never took effect
+    assert len(audit_log.load_entries(audit_path)) == 1

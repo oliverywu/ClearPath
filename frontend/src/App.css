@@ -316,6 +316,19 @@ tbody tr.row-affected {
   cursor: default;
 }
 
+.approved-chip {
+  display: block;
+  margin-top: 4px;
+  padding: 3px 9px;
+  border-radius: 8px;
+  background: var(--risk-good-bg);
+  color: var(--risk-good);
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: help;
+  white-space: normal;
+}
+
 /* --- regulatory panel ---------------------------------------------------- */
 
 .scope-line {
