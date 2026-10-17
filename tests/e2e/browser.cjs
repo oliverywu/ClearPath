@@ -91,6 +91,10 @@ async function main() {
     const de = boot.events.find(e => e.jurisdiction === 'DE');
     await page.locator(`[data-analyze="${de.id}"]`).click();
     await page.locator('[data-repair]').first().waitFor();
+    await page.locator('#toggle-full-plan').waitFor();
+    assert.ok(await page.locator('#scenario-shipments tbody tr').count() < boot.jurisdictions.length, 'Comparison should default to changed shipments');
+    await page.locator('#toggle-full-plan').click();
+    assert.equal(await page.locator('#scenario-shipments tbody tr').count(), boot.jurisdictions.length, 'Full plan should remain available');
     await page.screenshot({path:path.join(root,'test-results/german-disruption.png'),fullPage:true});
     await page.locator('[data-view="assistant"]').click();
     await page.locator('#chat-question').fill('Why is Germany at risk?');

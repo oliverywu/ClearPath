@@ -33,6 +33,7 @@ All errors `{error: string, details?: any}`. JSON bodies. All non-API static fil
 - POST /api/change-events/{id}/analyze body {repair?: option-id, parent_scenario_id?: id} => full proposed plan (contains parent_scenario_id)
 - POST /api/scenarios/{id}/approve or /reject body {approver,note} => full plan with status
 - GET /api/scenarios/{id}/calendar.ics => only approved scenario, valid ICS
+- POST /api/scenarios/{id}/calendar-sync body {provider: google|outlook} => audited direct synchronization result; provider failure never changes scenario state
 - GET /api/audit => {events:[...]}
 - GET /api/alerts => {alerts:[...]}; POST /api/alerts/{id}/acknowledge
 - POST /api/assistant/query body {question,scenario_id,trial_id} => grounded answer, or for an allowlisted “what if” question an ephemeral deterministic {temporary_scenario,comparison}; temporary results are never persisted or approved.

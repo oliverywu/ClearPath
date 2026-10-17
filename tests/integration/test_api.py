@@ -15,6 +15,7 @@ from packages.feature_provider.providers import LocalFeatureProvider, ChalkFeatu
 from packages.feature_provider.formulas import effective_transit, projected_delivery, delivery_slack, risk_score, risk_band
 from packages.ingestion.adapters import GenericPageAdapter, parse_records
 from packages.notifications.providers import PhotonNotificationProvider
+from packages.calendar.providers import GoogleCalendarProvider, OutlookCalendarProvider
 from packages.assistant.providers import OpenAIAssistantProvider
 from packages.research.providers import OpenAIResearchProvider
 
@@ -394,6 +395,25 @@ class ProviderTests(unittest.TestCase):
         result = self.service.handle('POST','/api/photon/follow-up',body={'space_id':'space','question':'Why is Germany at risk?','scenario_id':base['id']})
         self.assertIn('Germany is',result['answer']['answer'])
         self.assertTrue(result['delivery']['accepted'])
+
+    def test_google_calendar_sync_uses_all_day_events_and_stable_ids(self):
+        provider = GoogleCalendarProvider(token='token')
+        plan = self.service.bootstrap()['approved_scenario']
+        with patch.object(provider,'_post',return_value=(200,{'id':'event','htmlLink':'https://calendar.google.com/event'})) as post:
+            result = provider.sync(plan)
+        self.assertEqual(result['created'],sum(len(s['milestones']) for s in plan['shipments']))
+        body = post.call_args_list[0].args[1]
+        self.assertEqual(len(body['id']),32)
+        self.assertIn('date',body['start'])
+
+    def test_outlook_calendar_sync_uses_graph_contract(self):
+        provider = OutlookCalendarProvider(token='token')
+        plan = self.service.bootstrap()['approved_scenario']
+        with patch.object(provider,'_post',return_value=(201,{'id':'event','webLink':'https://outlook.office.com/event'})) as post:
+            result = provider.sync(plan)
+        self.assertEqual(result['provider'],'outlook')
+        self.assertEqual(post.call_args_list[0].args[0],'https://graph.microsoft.com/v1.0/me/calendar/events')
+        self.assertTrue(post.call_args_list[0].args[1]['isAllDay'])
 
     def test_openai_assistant_uses_read_only_context_tool(self):
         provider = OpenAIAssistantProvider(api_key='test',model='test-model')

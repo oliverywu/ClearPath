@@ -32,25 +32,14 @@ IMPLEMENTED FOUNDATION
 - Allowlisted conversational what-if simulations calculated by the deterministic planner without persistence or approval.
 - Focused official evidence records for the United States, EU/Germany, Canada, and Japan, alongside the clearly synthetic wider footprint.
 - Photon 2.0 User, Space, and Message integration for scenario alerts and grounded follow-up replies, with audited failure handling.
+- Checked-in agent gold set with deterministic scoring, abstention cases, citation checks, and Chalk Agent Evals handoff.
+- Changed-only scenario review by default, with the complete plan available through an explicit control.
+- Credential-ready Google Calendar and Microsoft Graph milestone synchronization for approved scenarios.
 - Dashboard alerts, country progress, calendar display, and approved ICS export.
 - One-command local startup, API/integration/unit tests, and browser acceptance coverage.
 
 
 REMAINING PRIORITIZED HACKATHON WORK
-
-P1  AI Evaluation Set
-
-Create a small gold dataset covering regulatory extraction, source-change interpretation, translation ambiguity, and planner questions. Record expected requirement keys, effective dates, quotations, materiality labels, and abstentions. Evaluate exact quotation/citation accuracy, typed-value accuracy, material-change classification, grounded-answer quality, and refusal when evidence is insufficient.
-
-Definition of done: the team can show concrete evaluation results and at least one example where validation or human review catches an AI mistake.
-
-
-P1  Changed-only Scenario Experience
-
-The comparison view should initially show only affected countries, milestones, label groups, routes, and repairs. Unchanged shipments should remain available behind a “Show full plan” control. Keep the causal chain short and place the best repair choices near the changed result.
-
-Definition of done: a judge can understand the trigger, impact, alternatives, and required approval in under three minutes without scrolling through every unaffected shipment.
-
 
 P1  Live Provider Smoke Tests
 
@@ -74,7 +63,6 @@ DEFER UNTIL THE CORE DEMO IS COMPLETE
 
 - PostgreSQL migration and multi-user hosting.
 - Production authentication and role-based authorization.
-- Automatic Google Calendar or Outlook account synchronization; ICS export is sufficient.
 - Broad live monitoring of every country regulator.
 - A predictive risk model without historical shipment outcomes and calibration data.
 - Replacing deterministic planning calculations with an LLM.
@@ -91,3 +79,15 @@ DEMO NARRATIVE
 7. Record a named human approval, inspect the audit event, and export the approved calendar.
 
 This sequence demonstrates useful AI judgment while keeping regulated decisions, calculations, and approvals controlled and auditable.
+
+
+VERIFIED OFFICIAL EVIDENCE SLICE
+
+This mapping was discovered and source-checked during implementation; it was not supplied as a completed mapping in the original brief:
+
+- United States — FDA, 21 CFR 312.6 investigational-drug labeling: https://www.fda.gov/science-research/clinical-trials-and-human-subject-protection/new-drug-antibiotic-and-biologic-drug-product-regulations-part-3
+- EU/Germany — Regulation (EU) No 536/2014, Annex VI: https://eur-lex.europa.eu/legal-content/EN-DE/TXT/?uri=CELEX%3A32014R0536
+- Canada — Health Canada GUI-0100, Labelling and records: https://www.canada.ca/en/health-canada/services/drugs-health-products/compliance-enforcement/good-clinical-practices/guidance-documents/guidance-drugs-clinical-trials-human-subjects-gui-0100/labelling-records.html
+- Japan — MHLW English translation of the Ministerial Ordinance on GCP for Drugs: https://www.mhlw.go.jp/file/04-Houdouhappyou-11123000-Iyakushokuhinkyoku-Shinsakanrika/0000190647.pdf
+
+The source excerpt and normalized requirement are stored in data/demo/trial.json. This is a focused demonstration slice, not a substitute for qualified regulatory review.

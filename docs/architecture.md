@@ -16,7 +16,9 @@ Semantic change analysis compares the newest two immutable snapshots for one jur
 
 The assistant reads scenario objects and their source references. It explains stored values and refuses legal conclusions and plan-changing actions. Its allowlisted what-if path translates supported questions into temporary scenario inputs, calls the deterministic planner, and returns a comparison without saving or approving the result. Answers are usable without any model credentials.
 
-Calendar export is an explicit action available for approved scenarios. Stable milestone UIDs make repeated export predictable. The `CalendarProvider` protocol defines future synchronization. Calendar and notification failures do not affect a decision or stored plan. Photon 2.0 is an optional coordination adapter: it creates or resolves a recipient, opens a messaging space, submits an alert, and can post a grounded follow-up reply. HTTP 202 is recorded as accepted rather than delivered, every result is audited, and dashboard state remains authoritative when Photon is unavailable.
+Calendar export and direct Google Calendar or Microsoft Graph synchronization are explicit actions available only for approved scenarios. Stable ICS milestone UIDs and deterministic Google event IDs make repeated export predictable. Tokens remain server-side; sync results are audited. Calendar and notification failures do not affect a decision or stored plan. Photon 2.0 is an optional coordination adapter: it creates or resolves a recipient, opens a messaging space, submits an alert, and can post a grounded follow-up reply. HTTP 202 is recorded as accepted rather than delivered, every result is audited, and dashboard state remains authoritative when Photon is unavailable.
+
+Scenario comparison returns changed countries and milestones. The browser uses that set to show affected shipments and intersecting label groups first, while an explicit “Show full plan” control preserves complete audit access. `evals/gold.json` is the versioned evaluation source for local regression and Chalk Agent Evals.
 
 ## Time and reproducibility
 

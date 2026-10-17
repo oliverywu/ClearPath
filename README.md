@@ -143,8 +143,6 @@ Every imported rule should begin as `needs_review`. A qualified reviewer must in
 
 ### Required hackathon completion work
 
-- [ ] **AI evaluation set:** create a small gold dataset of regulatory passages, source changes, and planner questions. Measure requirement-key extraction, effective-date accuracy, quotation/citation accuracy, material-change classification, grounded-answer quality, and correct abstention. Include adversarial examples where the model should say that evidence is insufficient.
-- [ ] **Changed-only scenario view:** make the comparison screen default to affected countries, milestones, label groups, and routes, with unchanged shipments collapsed behind an explicit control. Keep the full plan available for audit, while ensuring the main disruption story can be understood in under three minutes.
 - [ ] **Live provider smoke tests:** run one real OpenAI research/assistant flow and one real Photon notification before the demo. If the project is submitted for a Chalk category, also deploy the resolvers and verify one live query against the local parity result. Keep secrets out of Git and preserve local fallbacks.
 
 ### Required before using real trial data
@@ -158,8 +156,8 @@ Every imported rule should begin as `needs_review`. A qualified reviewer must in
 
 ### Optional infrastructure after the hackathon workflow is complete
 
-- [ ] **Chalk:** deploy the matching feature resolvers, confirm remote/local parity, then add Chalk credentials if hosted feature computation is wanted. Local calculations already work.
-- [ ] **Google Calendar / Outlook:** the app already opens individual milestones in either service and exports the complete approved timeline as `.ics`. Implement OAuth account synchronization only if automatic background updates to a shared calendar are required.
+- [ ] **Chalk live activation:** create the hackathon project, run `chalk apply` in `chalk/`, and paste the issued client credentials and query server into `.env`. The feature contract, resolvers, parity checks, fallbacks, and Agent Evals dataset are ready.
+- [ ] **Calendar account authorization:** issue delegated Google Calendar or Microsoft Graph access tokens and paste them into `.env`. Direct approved-milestone synchronization is implemented; `.ics` and one-click event links remain available without credentials.
 - [ ] **Hosting:** choose a deployment host and production data/security approach only if teammates need the app while the host laptop is off. The current app intentionally runs on one laptop with SQLite and local reviewer attribution.
 
 Never share or commit `.env`, API keys, client secrets, or the local `.local/cleared.sqlite3` database.
@@ -187,9 +185,17 @@ Deploy `chalk/features.py`, `chalk/resolvers.py`, and shared `packages/feature_p
 
 Credentials automatically select `ChalkFeatureProvider`. Remote/local parity is checked; authentication, connectivity, deployment or parity failures explicitly report a local fallback. `FEATURE_PROVIDER=local` forces offline mode. Historical scenario snapshots retain point-in-time feature values. **Live Chalk requires your account and deployed matching resolvers; tests verify mocked contract/formula parity, not a live account.**
 
+The checked-in [agent evaluation set](evals/README.md) covers grounded answers, citations, refusal, temporary what-if behavior, requirement extraction, semantic change classification, and insufficient-evidence abstention. `python evals/run.py` produces a pass/fail report without credentials; the same `evals/gold.json` is ready to upload to Chalk Agent Evals for hosted runs and per-kind slices.
+
 ## Calendar and Photon
 
-Approved-only RFC 5545 ICS export includes permit filing/approval, label review, artwork freeze, packaging start/completion, dispatch, customs arrival/release, depot arrival and site delivery. Import it into Google Calendar, Outlook or another calendar. `CalendarProvider` defines future direct account synchronization. Provider failures cannot modify approval or plan data.
+Approved-only RFC 5545 ICS export includes permit filing/approval, label review, artwork freeze, packaging start/completion, dispatch, customs arrival/release, depot arrival and site delivery. Google Calendar and Outlook buttons can directly synchronize the complete approved milestone set when their server-side delegated access token is configured. Provider results are audited, and failures cannot modify approval or plan data.
+
+```dotenv
+GOOGLE_CALENDAR_ACCESS_TOKEN=delegated-token-with-calendar-events-write
+GOOGLE_CALENDAR_ID=primary
+MICROSOFT_GRAPH_ACCESS_TOKEN=delegated-token-with-Calendars.ReadWrite
+```
 
 Photon is isolated behind `NotificationProvider` and disabled by default. The implementation follows Photon 2.0's User → Space → Message model and supports iMessage, SMS, RCS, WhatsApp, Telegram, or email according to the channel configured in the Photon dashboard. Scenario analysis sends the trigger, projected consequence, review status, and deep link; `POST /api/photon/follow-up` lets an inbound-message bridge return a grounded answer in the same space. Every send/reply result is audited, HTTP 202 is reported honestly as accepted rather than delivered, and failures never modify a plan or approval.
 
@@ -232,4 +238,4 @@ The standard-library API, SQLite and buildless browser app keep offline startup 
 
 This is a single-user local tool. Reviewer names are attribution, not production authentication. Holiday calendars, route estimates and evidence quality depend on imported records. The assistant remains usable without a model-service dependency. Source checks are user-triggered and only run while the application and laptop are on.
 
-Conversational what-if analysis, the focused official evidence slice, and Photon 2.0 messaging are implemented. Live provider smoke tests, the AI evaluation set, and the changed-only comparison experience remain. Live Chalk and direct calendar-account synchronization need external setup. See [planning notes](PLANNING_NOTES.txt), [architecture](docs/architecture.md), [provenance](docs/data_provenance.md), [demo script](docs/demo_script.md), and the original [challenge brief](CHALLENGE_BRIEF.txt).
+Conversational what-if analysis, the focused official evidence slice, Photon 2.0 messaging, the agent evaluation set, changed-only review, Chalk deployment contract, and direct calendar providers are implemented. Only credentialed live activation and smoke tests remain. See [planning notes](PLANNING_NOTES.txt), [architecture](docs/architecture.md), [provenance](docs/data_provenance.md), [demo script](docs/demo_script.md), and the original [challenge brief](CHALLENGE_BRIEF.txt).

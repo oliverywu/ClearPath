@@ -1,1 +1,1 @@
-from .providers import ICSCalendarProvider
+from .providers import ICSCalendarProvider, GoogleCalendarProvider, OutlookCalendarProvider, configured_calendar

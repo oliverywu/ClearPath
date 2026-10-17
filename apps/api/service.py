@@ -13,7 +13,7 @@ from packages.feature_provider.providers import LocalFeatureProvider
 from packages.ingestion.adapters import GenericPageAdapter, ECFRAdapter, EURLexAdapter, parse_records, field_diff, CachedGeographyProvider
 from packages.assistant import configured_assistant
 from packages.research import configured_research, ResearchUnavailable
-from packages.calendar import ICSCalendarProvider
+from packages.calendar import ICSCalendarProvider, configured_calendar
 from packages.notifications import configured_notifications
 from .repository import Repository, identifier, encode, now
 
@@ -657,7 +657,15 @@ class Service:
             if len(parts)==4 and parts[1]=='scenarios' and parts[3]=='calendar-sync':
                 plan = self.repo.plan(parts[2])
                 ICSCalendarProvider().export(plan)
-                return ICSCalendarProvider().sync(plan)
+                provider = str(body.get('provider','')).lower()
+                if provider not in ('google','outlook'):
+                    raise APIError('Calendar provider must be google or outlook')
+                try:
+                    result = configured_calendar(provider).sync(plan)
+                except Exception as exc:
+                    result = {'provider':provider,'created':0,'error':type(exc).__name__,'message':str(exc)}
+                self.repo.audit('calendar.sync',plan['id'],payload=result)
+                return result
         raise APIError('Endpoint not found',404)
 
     def handle(self, method, path, query=None, body=None):
