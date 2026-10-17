@@ -9,6 +9,7 @@ from pathlib import Path
 from packages.domain.validation import validate_dataset, validate_rule
 from packages.planner.engine import generate_plan, compare_plans, select_rules, CALCULATION_VERSION
 from packages.feature_provider import configured_provider
+from packages.feature_provider.providers import LocalFeatureProvider
 from packages.ingestion.adapters import GenericPageAdapter, ECFRAdapter, EURLexAdapter, parse_records, field_diff, CachedGeographyProvider
 from packages.assistant import configured_assistant
 from packages.research import configured_research, ResearchUnavailable
@@ -103,11 +104,70 @@ class Service:
                 alerts.append({'id':key,'title':'Scenario awaiting human review','severity':'at_risk','cause':scenario['name'],'affected_shipment_count':len(scenario.get('impacts',[])),'recommended_action':'Compare and approve or reject','scenario_id':scenario['id'],'acknowledged':key in acknowledged,'deep_link':'/#scenarios'})
         return alerts
 
+    def what_if(self, body):
+        question = str(body.get('question','')).strip()[:4000]
+        if not question:
+            raise APIError('Question is required')
+        scenario_id = body.get('scenario_id') or self.repo.setting('approved_scenario_id')
+        parent = self.repo.plan(scenario_id)
+        dataset = self.repo.plan_dataset(scenario_id)
+        low = question.lower()
+        jurisdictions = {j['iso_code']:j['name'] for j in dataset['jurisdictions']}
+        codes = [code for code,name in jurisdictions.items() if name.lower() in low or code.lower() in low.split()]
+        actions = []
+        if any(term in low for term in ('separate label','split label','separate-label')): actions.append('split_label')
+        if any(term in low for term in ('alternative route','reroute','amsterdam')): actions.append('alternative_route')
+        if 'expedite' in low and any(term in low for term in ('label','review')): actions.append('expedite_review')
+        if 'expedite' in low and 'permit' in low: actions.append('expedite_permit')
+        if len(codes)!=1 or len(set(actions))!=1:
+            raise APIError('Supported what-if questions must name one country and one action: separate label, alternative route, expedite label review, or expedite permit.',422)
+        action = actions[0]
+        matches = []
+        for event in self.repo.events():
+            if event.get('jurisdiction') != codes[0]:
+                continue
+            for option in event.get('repair_options',[]):
+                if option.get('action') == action:
+                    matches.append((event,option))
+        if len(matches)!=1:
+            raise APIError(f'No allowlisted {action.replace("_"," ")} simulation is configured for {jurisdictions[codes[0]]}.',422)
+        event,option = matches[0]
+        temporary = generate_plan(dataset,parent=parent,event=event,repair=option['id'])
+        temporary['id'] = 'temporary_' + temporary['id'].split('_',1)[-1]
+        temporary['scenario_id'] = temporary['id']
+        temporary['status'] = 'temporary'
+        temporary['ephemeral'] = True
+        temporary['persisted'] = False
+        temporary['generated_at'] = now()
+        temporary['parent_scenario_id'] = parent['id']
+        temporary['input_dataset_id'] = parent.get('input_dataset_id')
+        LocalFeatureProvider().enrich(temporary)
+        comparison = compare_plans(parent,temporary)
+        affected = comparison.get('changes',[])
+        before_cost = parent.get('metrics',{}).get('cost_proxy',0)
+        after_cost = temporary.get('metrics',{}).get('cost_proxy',0)
+        lines = [f"Temporary simulation: {option['title']}. {option.get('description','')}"]
+        if affected:
+            for change in affected:
+                before,after = change['before'],change['after']
+                lines.append(f"{change['country_name']}: delivery {before.get('projected_delivery')} → {after.get('projected_delivery')}; slack {before.get('slack_days')} → {after.get('slack_days')} business days; risk {before.get('risk_band')} → {after.get('risk_band')}.")
+        else:
+            lines.append('The deterministic planner found no material schedule or route change from this option.')
+        lines.append(f"Cost proxy: {before_cost} → {after_cost}. Trade-off: {option.get('tradeoffs','Review the comparison.')}")
+        lines.append('This result is temporary: it was not saved, approved, or applied.')
+        rules = [r for r in temporary.get('rules',[]) if r.get('jurisdiction')==codes[0]]
+        citations = [{'title':r.get('source_title',r['requirement_key']),'url':r.get('source_url'),
+                      'excerpt':r.get('source_excerpt'),'status':r.get('review_status')} for r in rules if r.get('source_url')]
+        self.repo.audit('assistant.what_if.simulated',parent['id'],payload={'question':question,'event_id':event['id'],'repair':option['id'],'persisted':False})
+        return {'answer':'\n\n'.join(lines),'provider':'deterministic','temporary_scenario':temporary,
+                'comparison':comparison,'citations':citations[:20],
+                'suggested_questions':['Why is this shipment at risk?','What evidence supports this requirement?']}
+
     def bootstrap(self):
         dataset = self.repo.dataset()
         approved = self.repo.setting('approved_scenario_id')
         plan = self.repo.plan(approved) if approved else None
-        return {'trial':dataset['trial'],'dataset_summary':{'id':dataset['id'],'as_of':dataset['as_of'],'countries':len(dataset['jurisdictions']),'rules':len(dataset['rules']),'routes':len(dataset['routes']),'synthetic_rules':sum(r['review_status']=='synthetic' for r in dataset['rules'])},'approved_scenario':plan,'scenarios':self.summaries(),'events':self.repo.events(),'alerts':self.alerts(),'provider':plan.get('provider') if plan else {'active':self.provider.name},'assistant_provider':self.assistant.name,'research_provider':self.research.name,'jurisdictions':dataset['jurisdictions']}
+        return {'trial':dataset['trial'],'dataset_summary':{'id':dataset['id'],'as_of':dataset['as_of'],'countries':len(dataset['jurisdictions']),'rules':len(dataset['rules']),'routes':len(dataset['routes']),'synthetic_rules':sum(r['review_status']=='synthetic' for r in dataset['rules'])},'approved_scenario':plan,'scenarios':self.summaries(),'events':self.repo.events(),'alerts':self.alerts(),'provider':plan.get('provider') if plan else {'active':self.provider.name},'assistant_provider':self.assistant.name,'research_provider':self.research.name,'notification_provider':self.notifications.name,'jurisdictions':dataset['jurisdictions']}
 
     def preview(self, body, kind):
         dataset = self.repo.dataset()
@@ -545,7 +605,11 @@ class Service:
                     raise APIError('Unknown repair option')
                 plan = self.generate(dataset,parent=parent,event=event,repair=repair)
                 self.repo.audit('change_event.analyzed',event['id'],payload={'scenario_id':plan['id'],'parent_scenario_id':parent_id,'repair':repair})
-                notification = self.notifications.send({'id':'review:'+plan['id'],'title':plan['name'],'scenario_id':plan['id'],'deep_link':'/#scenarios'})
+                changed = [s for s in plan.get('shipments',[]) if s.get('country_code')==event.get('jurisdiction')]
+                consequence = '; '.join(f"{s['country_name']} delivery {s['projected_delivery']} ({s['slack_days']} business days slack)" for s in changed) or 'Review the deterministic scenario comparison.'
+                notification = self.notifications.send({'id':'review:'+plan['id'],'title':plan['name'],'scenario_id':plan['id'],
+                    'cause':event.get('description','Planning change detected'),'consequence':consequence,
+                    'review_status':'proposed','deep_link':'/#scenarios?scenario='+plan['id']})
                 self.repo.audit('notification.result',plan['id'],payload=notification)
                 return plan
             if len(parts)==4 and parts[1]=='scenarios' and parts[3] in ('approve','reject'):
@@ -569,12 +633,27 @@ class Service:
             if path == '/api/assistant/query':
                 if not body.get('question'):
                     raise APIError('Question is required')
+                if 'what if' in str(body.get('question','')).lower():
+                    return self.what_if(body)
                 key = body.get('scenario_id') or self.repo.setting('approved_scenario_id')
                 plan = self.repo.plan(key)
                 if body.get('trial_id') and body['trial_id'] != plan['trial_id']:
                     raise APIError('Trial and scenario do not match')
                 comparison = compare_plans(self.repo.plan(plan['parent_scenario_id']),plan) if plan.get('parent_scenario_id') else None
                 return self.assistant.answer(body['question'],plan,self.repo.plan_dataset(key),comparison)
+            if path == '/api/photon/follow-up':
+                question = str(body.get('question','')).strip()
+                space_id = str(body.get('space_id','')).strip()
+                if not question or not space_id:
+                    raise APIError('Photon space_id and question are required')
+                key = body.get('scenario_id') or self.repo.setting('approved_scenario_id')
+                plan = self.repo.plan(key)
+                dataset = self.repo.plan_dataset(key)
+                comparison = compare_plans(self.repo.plan(plan['parent_scenario_id']),plan) if plan.get('parent_scenario_id') else None
+                answer = self.what_if({'question':question,'scenario_id':key}) if 'what if' in question.lower() else self.assistant.answer(question,plan,dataset,comparison)
+                delivery = self.notifications.reply(space_id=space_id,text=answer['answer'],reply_id=identifier('photon_reply')) if hasattr(self.notifications,'reply') else {'delivered':False,'reason':'Photon provider is not active'}
+                self.repo.audit('photon.follow_up',key,payload={'space_id':space_id,'delivery':delivery,'question_length':len(question)})
+                return {'answer':answer,'delivery':delivery}
             if len(parts)==4 and parts[1]=='scenarios' and parts[3]=='calendar-sync':
                 plan = self.repo.plan(parts[2])
                 ICSCalendarProvider().export(plan)

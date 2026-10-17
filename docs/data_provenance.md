@@ -1,8 +1,10 @@
 # Evidence and synthetic data
 
-The packaged trial, product, enrollment, routes, lead times, regulatory requirements and planted events are deterministic synthetic demonstration records. They are not verified legal research. Synthetic citation URLs identify fixture provenance and are not evidence that an authority published the simulated requirement.
+The packaged trial, product, enrollment, routes, lead times, most regulatory requirements and planted events are deterministic synthetic demonstration records. They are not verified legal research. Synthetic citation URLs identify fixture provenance and are not evidence that an authority published the simulated requirement.
 
-The source documents supplied with the repository inspired the workflow. They contain research leads, including a translated Japanese ordinance, but their legal interpretations have not been adopted as verified rules. In particular, future-effective versions are selected only when the dataset's planning date falls within their interval.
+A deliberately narrow evidence slice replaces one rule for each of the United States, EU/Germany, Canada and Japan with a cited official record. Those records preserve a short exact excerpt, retrieval and verification timestamps, effective interval, confidence and normalization notes. The Japan record uses the ministry's English translation and explicitly requires confirmation against the Japanese text before real-trial use. This focused slice demonstrates the evidence model; it does not convert the wider 24-country fixture into validated regulatory guidance.
+
+Other source documents supplied with the repository inspired the workflow but remain research leads whose legal interpretations have not been adopted as verified rules. Future-effective versions are selected only when the dataset's planning date falls within their interval.
 
 Four visible evidence distinctions are preserved:
 

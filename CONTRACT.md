@@ -23,7 +23,7 @@ comparison: changes (country_code, country_name, before, after, changed_mileston
 
 ## HTTP contract
 All errors `{error: string, details?: any}`. JSON bodies. All non-API static files served on web :3000. API :8000 (web requests relative `/api`, static server proxies to API).
-- GET /api/bootstrap => {trial, dataset_summary, approved_scenario, scenarios, events, alerts, provider, jurisdictions}. approved_scenario includes plan fields plus status/approval metadata. jurisdictions list id/iso_code/name.
+- GET /api/bootstrap => {trial, dataset_summary, approved_scenario, scenarios, events, alerts, provider, assistant_provider, research_provider, notification_provider, jurisdictions}. approved_scenario includes plan fields plus status/approval metadata. jurisdictions list id/iso_code/name.
 - GET /api/scenarios => {scenarios:[summary]}
 - GET /api/scenarios/{id} => full plan with status
 - POST /api/trials/{id}/scenarios/generate => full baseline plan; first baseline approved with explicit seed audit.
@@ -35,7 +35,8 @@ All errors `{error: string, details?: any}`. JSON bodies. All non-API static fil
 - GET /api/scenarios/{id}/calendar.ics => only approved scenario, valid ICS
 - GET /api/audit => {events:[...]}
 - GET /api/alerts => {alerts:[...]}; POST /api/alerts/{id}/acknowledge
-- POST /api/assistant/query body {question,scenario_id,trial_id} => {answer,citations:[{title,url,excerpt,status}],suggested_questions:[]}
+- POST /api/assistant/query body {question,scenario_id,trial_id} => grounded answer, or for an allowlisted “what if” question an ephemeral deterministic {temporary_scenario,comparison}; temporary results are never persisted or approved.
+- POST /api/photon/follow-up body {space_id,question,scenario_id?} => {answer,delivery}; intended for a Photon inbound-message bridge and never mutates scenario state.
 - POST /api/rules/import/preview body {records:[atomic rules]} => {preview_id,valid,errors,diff,records}
 - POST /api/rules/import/commit body {preview_id,reviewer} => {imported,scenario_id?}
 - POST /api/datasets/import/preview body {dataset} and /commit body {preview_id,reviewer}

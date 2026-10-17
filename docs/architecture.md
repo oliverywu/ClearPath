@@ -14,9 +14,9 @@ Semantic change analysis compares the newest two immutable snapshots for one jur
 
 `packages/feature_provider` provides a common application contract for deterministic local and Chalk features. Provider failures retain local results and disclose the fallback. Rules, dates, group membership and approval decisions remain deterministic even when a remote provider is configured. `chalk/` defines the deployment-side feature namespace contract.
 
-The assistant reads scenario objects and their source references. It explains stored values and refuses legal conclusions and plan-changing actions. A planned allowlisted what-if tool may translate supported questions into temporary scenario inputs, but the deterministic planner will still calculate the result and the assistant will remain unable to persist or approve it. Answers are usable without any model credentials.
+The assistant reads scenario objects and their source references. It explains stored values and refuses legal conclusions and plan-changing actions. Its allowlisted what-if path translates supported questions into temporary scenario inputs, calls the deterministic planner, and returns a comparison without saving or approving the result. Answers are usable without any model credentials.
 
-Calendar export is an explicit action available for approved scenarios. Stable milestone UIDs make repeated export predictable. The `CalendarProvider` protocol defines future synchronization. Calendar and notification failures do not affect a decision or stored plan. Photon remains a disabled notification boundary until its service contract is available.
+Calendar export is an explicit action available for approved scenarios. Stable milestone UIDs make repeated export predictable. The `CalendarProvider` protocol defines future synchronization. Calendar and notification failures do not affect a decision or stored plan. Photon 2.0 is an optional coordination adapter: it creates or resolves a recipient, opens a messaging space, submits an alert, and can post a grounded follow-up reply. HTTP 202 is recorded as accepted rather than delivered, every result is audited, and dashboard state remains authoritative when Photon is unavailable.
 
 ## Time and reproducibility
 

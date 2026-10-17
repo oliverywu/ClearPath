@@ -162,6 +162,23 @@ class ServiceTests(unittest.TestCase):
         self.assertNotIn('-2 business days',result['answer'])
         self.assertEqual(result['answer'].lower().count('misses target'),0)
 
+    def test_conversational_what_if_is_calculated_and_never_persisted(self):
+        before = len(self.service.repo.plans(self.base['trial_id']))
+        result = self.post('/api/assistant/query',{'question':'What if Japan receives a separate label?','scenario_id':self.base['id']})
+        self.assertTrue(result['temporary_scenario']['ephemeral'])
+        self.assertFalse(result['temporary_scenario']['persisted'])
+        self.assertEqual(result['temporary_scenario']['status'],'temporary')
+        self.assertTrue(result['comparison']['changes'])
+        self.assertIn('Cost proxy:',result['answer'])
+        self.assertEqual(len(self.service.repo.plans(self.base['trial_id'])),before)
+        with self.assertRaises(KeyError):
+            self.service.repo.plan(result['temporary_scenario']['id'])
+
+    def test_conversational_what_if_rejects_unsupported_action(self):
+        with self.assertRaises(APIError) as raised:
+            self.post('/api/assistant/query',{'question':'What if Germany uses a helicopter?','scenario_id':self.base['id']})
+        self.assertEqual(raised.exception.status,422)
+
     def test_invalid_import_and_verified_synthetic_rejected(self):
         row = copy.deepcopy(self.service.repo.dataset()['rules'][0])
         row['id'] = 'bad-rule'
@@ -221,6 +238,16 @@ class ServiceTests(unittest.TestCase):
         future = next(r for r in rules if r['effective_from']>self.base['as_of'])
         result = self.service.requirements(future['jurisdiction'],self.base['as_of'])
         self.assertTrue(next(r for r in result['requirements'] if r['id']==future['id'])['future_effective'])
+
+    def test_focused_official_evidence_slice_is_cited_and_verified(self):
+        rules = self.service.repo.dataset()['rules']
+        expected_hosts = {'US':'fda.gov','DE':'eur-lex.europa.eu','CA':'canada.ca','JP':'mhlw.go.jp'}
+        for country,host in expected_hosts.items():
+            verified = [r for r in rules if r['jurisdiction']==country and r['review_status']=='verified']
+            self.assertTrue(verified,country)
+            self.assertTrue(all(r['source_tier']=='official' for r in verified))
+            self.assertTrue(all(host in r['source_url'] for r in verified))
+            self.assertTrue(all(r['source_excerpt'] and r['last_verified_at'] for r in verified))
 
     def test_review_synthetic_evidence_cannot_be_verified(self):
         rule = next(r for r in self.service.repo.dataset()['rules'] if r['source_tier']=='synthetic')
@@ -346,6 +373,27 @@ class ProviderTests(unittest.TestCase):
     def test_photon_stub_is_honest(self):
         result = PhotonNotificationProvider().send({'id':'test'})
         self.assertFalse(result['delivered'])
+
+    def test_photon_sends_user_space_and_message_with_idempotency(self):
+        provider = PhotonNotificationProvider(api_key='secret',project_id='project',agent_user_id='agent',recipient='+14155550123')
+        responses = [(201,{'id':'user'}),(201,{'id':'space'}),(202,{'id':'message'})]
+        with patch.object(provider,'_post',side_effect=responses) as post:
+            result = provider.send({'id':'review:scenario','title':'Review change','cause':'Weather delay','consequence':'Germany is late','review_status':'proposed','deep_link':'https://app.example/#scenarios'})
+        self.assertTrue(result['accepted'])
+        self.assertFalse(result['delivered'])
+        self.assertEqual(result['delivery_status'],'accepted')
+        self.assertEqual([call.args[0] for call in post.call_args_list],['/users','/spaces','/messages'])
+        self.assertIn('Projected consequence: Germany is late',post.call_args_list[2].args[1]['content']['text'])
+
+    def test_photon_follow_up_returns_grounded_answer_and_delivery_result(self):
+        class FakePhoton:
+            name = 'photon'
+            def reply(self,**kwargs): return {'accepted':True,'delivered':False,'space_id':kwargs['space_id']}
+        self.service.notifications = FakePhoton()
+        base = self.service.bootstrap()['approved_scenario']
+        result = self.service.handle('POST','/api/photon/follow-up',body={'space_id':'space','question':'Why is Germany at risk?','scenario_id':base['id']})
+        self.assertIn('Germany is',result['answer']['answer'])
+        self.assertTrue(result['delivery']['accepted'])
 
     def test_openai_assistant_uses_read_only_context_tool(self):
         provider = OpenAIAssistantProvider(api_key='test',model='test-model')

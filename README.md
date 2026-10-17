@@ -1,6 +1,6 @@
 # Cleared for Takeoff
 
-Local clinical-supply decision support: dated regulatory evidence, compatible label groups, dependency schedules, change scenarios, human approval and audit history. The packaged trial and requirements are **synthetic demonstrations**, not verified regulations or legal advice.
+Local clinical-supply decision support: dated regulatory evidence, compatible label groups, dependency schedules, change scenarios, human approval and audit history. The packaged trial is a **synthetic demonstration** with a four-jurisdiction official evidence slice; it is not legal advice or ready for operational use.
 
 The product deliberately combines two kinds of intelligence. Deterministic code owns calculations that must be reproducible. AI is reserved for uncertain, language-heavy work such as interpreting source documents, identifying meaningful changes, and explaining scenarios. A human remains responsible for evidence verification and plan approval.
 
@@ -9,10 +9,10 @@ The product deliberately combines two kinds of intelligence. Deterministic code 
 ```mermaid
 flowchart TB
     L1["Level 1: Evidence and inputs<br/>Regulations, routes, product data, disruptions"]
-    L2["Level 2: AI research and analysis<br/>Extract, compare, classify, explain<br/>Implemented with optional OpenAI provider"]
+    L2["Level 2: AI research and analysis<br/>Extract, compare, classify, explain, simulate<br/>Implemented with optional OpenAI provider"]
     L3["Level 3: Deterministic planning<br/>Rule selection, label grouping, dates, slack, risk, repairs<br/>Implemented"]
     L4["Level 4: Human governance<br/>Verify evidence, review trade-offs, approve or reject<br/>Implemented"]
-    L5["Level 5: Coordination<br/>Dashboard, calendar, Photon alerts and follow-up<br/>Photon remaining"]
+    L5["Level 5: Coordination<br/>Dashboard, calendar, Photon alerts and follow-up<br/>Implemented; live credentials optional"]
 
     L1 --> L2 --> L3 --> L4 --> L5
 ```
@@ -37,13 +37,14 @@ flowchart LR
     P --> F["Local or Chalk feature provider"]
     F --> Q["Immutable proposed scenario"]
     Q --> D["Dashboard comparison"]
-    Q --> X["Grounded planner assistant"]
+    Q --> X["Grounded planner assistant<br/>ephemeral what-if simulations"]
     D --> G["Human approval or rejection"]
     G --> K["Approved calendar and audit history"]
-    Q --> N["Photon notification and follow-up<br/>planned"]
+    Q --> N["Photon 2.0 notification and follow-up"]
+    N --> X
 ```
 
-The current implementation is complete from AI-assisted candidate extraction and semantic source-change analysis through validated structured inputs, planning, comparison, approval, audit, and calendar export. AI research is optional and fails closed when it is not configured; live Photon delivery and conversational what-if tools remain. Detailed product decisions and the prioritized work list are in [`PLANNING_NOTES.txt`](PLANNING_NOTES.txt).
+The implementation covers AI-assisted candidate extraction and semantic source-change analysis, validated structured inputs, deterministic what-if simulation, planning, comparison, approval, audit, calendar export, and Photon 2.0 alerts/follow-up. AI and Photon are optional and fail safely when they are not configured. A credentialed live-provider smoke test remains before the demo. Detailed product decisions and the prioritized work list are in [`PLANNING_NOTES.txt`](PLANNING_NOTES.txt).
 
 ## Start
 
@@ -132,21 +133,16 @@ AI_RESEARCH_PROVIDER=openai
 
 In **Data & research**, register a source with its jurisdiction, collect or paste a snapshot, and choose **Extract candidate requirements**. Candidates then pass through the existing validation/import preview and separate evidence-review workflow. After two changed snapshots exist, choose **Analyze latest change**, inspect the semantic summary, quotations, raw diff and proposed event, then record a named confirmation. OpenAI requests use the Responses API with strict JSON Schema output and storage disabled. Provider failures do not create rules or events.
 
-The next AI work is the constrained conversational what-if tool. It must produce temporary simulations only; deterministic code and human approval remain authoritative.
+Questions beginning with “What if” use an allowlisted simulation path for separate labels, alternative routes, expedited label review, and expedited permits. The selected scenario is copied in memory, the deterministic planner calculates the comparison, and the result is returned as `temporary` without creating, approving, or applying a scenario. Unsupported countries or actions produce an explicit limitation.
 
 ## Teammate handoff checklist
 
-**The current deterministic demo runs without ChatGPT, OpenAI, Chalk, Photon, Google, or Microsoft credentials.** Planning, risk calculation, scenarios, approvals, audit history, the dashboard calendar, `.ics` export, and the offline planner assistant remain available locally. OpenAI research analysis and Photon are required for the intended final hackathon story but may fail safely without disabling the planning workflow.
+**The current deterministic demo runs without ChatGPT, OpenAI, Chalk, Photon, Google, or Microsoft credentials.** Planning, risk calculation, temporary what-if scenarios, approvals, audit history, the dashboard calendar, `.ics` export, and the offline planner assistant remain available locally. Configured OpenAI and Photon providers add the intended live hackathon experience but may fail safely without disabling the planning workflow.
 
 Every imported rule should begin as `needs_review`. A qualified reviewer must inspect evidence in the UI. Dataset and rule commits generate proposals; a separate named plan approval is still required.
 
 ### Required hackathon completion work
 
-- [x] **AI Research Copilot:** accepts a registered regulator snapshot or pasted source text and extracts candidate atomic requirements into the existing schema. Each candidate includes an exact supporting quotation, jurisdiction, effective interval, requirement key, value, confidence, and ambiguity note. AI output remains `needs_review`; verbatim citation checking, schema validation, import preview, and a named human evidence review precede planning use.
-- [x] **AI Change Analyst:** compares the newest source snapshot with its predecessor, summarizes the meaningful semantic change, identifies likely requirement keys and affected jurisdictions, and prepares a proposed change event. The stored analysis preserves the raw diff and before/after citations. Materiality remains an AI proposal, and a named reviewer must confirm the normalized event before deterministic impact calculation is available.
-- [ ] **Conversational what-if tool:** allow questions such as “What if Japan receives a separate label?” or “What if Germany uses the Amsterdam route?” The assistant should translate the request into an allowlisted temporary scenario input, call the deterministic planner, and explain the returned comparison. It must never approve, persist, or silently apply the result.
-- [ ] **Verified evidence slice:** replace a focused subset of synthetic rules with official or authoritative records for at least the United States, EU/Germany, Canada, and Japan. Prefer a small number of deeply sourced, human-reviewed requirements over superficial coverage. Retain synthetic records for the wider 24-country demonstration and label them clearly.
-- [ ] **Live Photon integration:** implement authenticated `NotificationProvider.send`, deliver a scenario alert with its cause and deep link, and support the intended Photon follow-up interaction. A failed delivery must remain visible in diagnostics and must never affect scenario state. Photon is part of the primary hackathon story, not an optional production enhancement.
 - [ ] **AI evaluation set:** create a small gold dataset of regulatory passages, source changes, and planner questions. Measure requirement-key extraction, effective-date accuracy, quotation/citation accuracy, material-change classification, grounded-answer quality, and correct abstention. Include adversarial examples where the model should say that evidence is insufficient.
 - [ ] **Changed-only scenario view:** make the comparison screen default to affected countries, milestones, label groups, and routes, with unchanged shipments collapsed behind an explicit control. Keep the full plan available for audit, while ensuring the main disruption story can be understood in under three minutes.
 - [ ] **Live provider smoke tests:** run one real OpenAI research/assistant flow and one real Photon notification before the demo. If the project is submitted for a Chalk category, also deploy the resolvers and verify one live query against the local parity result. Keep secrets out of Git and preserve local fallbacks.
@@ -195,7 +191,20 @@ Credentials automatically select `ChalkFeatureProvider`. Remote/local parity is 
 
 Approved-only RFC 5545 ICS export includes permit filing/approval, label review, artwork freeze, packaging start/completion, dispatch, customs arrival/release, depot arrival and site delivery. Import it into Google Calendar, Outlook or another calendar. `CalendarProvider` defines future direct account synchronization. Provider failures cannot modify approval or plan data.
 
-Photon is isolated behind `NotificationProvider`, disabled by default. `PHOTON_ENABLED=true` selects the tested unconfigured adapter; dashboard alerts remain available and no message delivery is claimed. Actual delivery requires implementing `send(alert)` against the confirmed Photon contract and credentials. Payloads include scenario links.
+Photon is isolated behind `NotificationProvider` and disabled by default. The implementation follows Photon 2.0's User → Space → Message model and supports iMessage, SMS, RCS, WhatsApp, Telegram, or email according to the channel configured in the Photon dashboard. Scenario analysis sends the trigger, projected consequence, review status, and deep link; `POST /api/photon/follow-up` lets an inbound-message bridge return a grounded answer in the same space. Every send/reply result is audited, HTTP 202 is reported honestly as accepted rather than delivered, and failures never modify a plan or approval.
+
+Create a Photon 2.0 beta project and channel, then configure:
+
+```dotenv
+PHOTON_ENABLED=true
+PHOTON_API_KEY=your-api-key
+PHOTON_PROJECT_ID=your-project-id
+PHOTON_AGENT_USER_ID=your-agent-user-id
+PHOTON_RECIPIENT=+14155550123
+PHOTON_PLATFORM=imessage
+```
+
+The [Photon hackathon guide](https://somethingreat.notion.site/Hackathon-Guidelines-for-Photon-2-0-3f8e443f36bb81f9893fed0d08a4c01d) requires a project to be live on at least one Photon channel; iMessage is the flagship text path, while voice must use an SMS number. Credentials and a real channel are intentionally not committed, so the live smoke test remains a pre-demo checklist item.
 
 ## Tests
 
@@ -223,4 +232,4 @@ The standard-library API, SQLite and buildless browser app keep offline startup 
 
 This is a single-user local tool. Reviewer names are attribution, not production authentication. Holiday calendars, route estimates and evidence quality depend on imported records. The assistant remains usable without a model-service dependency. Source checks are user-triggered and only run while the application and laptop are on.
 
-Conversational what-if analysis and Photon are the main unfinished hackathon features. Live Chalk and direct calendar-account synchronization need external setup; local AI research candidates, semantic change analysis, planning, governance, and ICS export are implemented now. See [planning notes](PLANNING_NOTES.txt), [architecture](docs/architecture.md), [provenance](docs/data_provenance.md), [demo script](docs/demo_script.md), and the original [challenge brief](CHALLENGE_BRIEF.txt).
+Conversational what-if analysis, the focused official evidence slice, and Photon 2.0 messaging are implemented. Live provider smoke tests, the AI evaluation set, and the changed-only comparison experience remain. Live Chalk and direct calendar-account synchronization need external setup. See [planning notes](PLANNING_NOTES.txt), [architecture](docs/architecture.md), [provenance](docs/data_provenance.md), [demo script](docs/demo_script.md), and the original [challenge brief](CHALLENGE_BRIEF.txt).
