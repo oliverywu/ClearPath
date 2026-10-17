@@ -1,0 +1,15 @@
+# Research and dataset contracts
+
+`research-rule.schema.json` describes one atomic research record. JSON imports use `{ "records": [ ... ] }`; CSV uses the columns in `research-template.csv`, with JSON encoded in the `value` cell. Always preserve the exact citation and excerpt. Imported extracted evidence starts as `needs_review`; only a human can approve it. Synthetic sources cannot become verified records.
+
+`dataset.schema.json` describes a complete portable dataset. `data/demo/trial.json` is a 24-country fictional trial; `data/demo/replacement.json` is a disjoint six-country trial with different product, origin, dates, languages, routes and events. The same engine handles both. Run `python data/demo/build_fixtures.py` to reproduce these seed files.
+
+All rule intervals are `[effective_from, effective_to)`. Null `effective_to` means no end. Accepted versions of the same country and requirement may not overlap. Planning chooses currently effective verified records first; explicitly synthetic records may support a simulated plan but always remain labeled synthetic. `needs_review` and `retired` records do not supply missing planning requirements.
+
+Supported planning keys are `label.languages`, `label.mandatory_fields`, `label.prohibited_fields`, `label.expiry_format`, optional `label.exclusive_template`, `label.sponsor_constraint`, `label.blinding_constraint`, `label.review_days`, `permit.lead_time_business_days`, and `packaging.duration_days`. Required documents and storage assertions remain available as evidence. Product and route temperature bands drive the storage compatibility gate. A route's entire qualified temperature band must fit within the product's allowed range.
+
+Every scheduling duration is a nonnegative integer in business days. Each country plan may supply ISO-date holidays; otherwise only weekends are excluded. `ready_date` is the earliest feasible start. The planner computes required deadlines backward from target delivery and feasible completions forward from the later of `ready_date` or dataset `as_of`. Missing accepted requirements, incompatible labels, missing routes, temperature mismatch and negative delivery slack block a shipment. `low_slack_days` and all risk/readiness weights are explicit configuration. Cost is a synthetic comparison proxy, not a price quote.
+
+Events and repair choices belong in the dataset. `changes` supports atomic values, `rework_days` affects original shared artwork members, `permit_delay_days` affects permit review, and `transit_delay_days` affects the chosen lane. `split_label`, `expedite_review`, `alternative_route`, and `expedite_permit` repair actions are generic. Scenario generation carries parent events and selected repairs forward without mutating the parent. Unaffected label groups retain membership.
+
+The standard-library Python validator adds checks JSON Schema cannot express conveniently: references, unique IDs, invalid intervals, overlapping accepted rules, type-specific requirement values, and repair-route ownership. The API runs validation before dataset commit. No engine or frontend change is needed when countries or products change.

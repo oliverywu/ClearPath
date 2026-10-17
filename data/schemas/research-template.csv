@@ -1,0 +1,2 @@
+jurisdiction,rule_type,requirement_key,operator,value,effective_from,effective_to,source_url,source_title,source_excerpt,retrieved_at,source_tier,confidence,review_status,notes
+XX,label,label.languages,contains_all,"[""en""]",2026-01-01,,https://example.org/replace-with-exact-source,Replace with official document title,Replace with exact cited excerpt,2026-10-19T00:00:00Z,synthetic,0.5,synthetic,Template only; replace jurisdiction and evidence before import

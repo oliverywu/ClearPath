@@ -1,0 +1,18 @@
+# Evidence and synthetic data
+
+The packaged trial, product, enrollment, routes, lead times, regulatory requirements and planted events are deterministic synthetic demonstration records. They are not verified legal research. Synthetic citation URLs identify fixture provenance and are not evidence that an authority published the simulated requirement.
+
+The source documents supplied with the repository inspired the workflow. They contain research leads, including a translated Japanese ordinance, but their legal interpretations have not been adopted as verified rules. In particular, future-effective versions are selected only when the dataset's planning date falls within their interval.
+
+Four visible evidence distinctions are preserved:
+
+- **Verified:** a human-reviewed rule backed by a non-synthetic source.
+- **Needs review:** a collected or imported candidate that is not used as an approved regulatory fact.
+- **Authoritative secondary:** source provenance indicating a secondary interpretation; independent from the rule's review state.
+- **Synthetic:** a deliberate simulated input used for the demo.
+
+Every atomic rule retains its jurisdiction, rule type, requirement key, operator, value, effective interval, source URL, title, exact excerpt, retrieval timestamp, confidence, source tier and review status. An import cannot label a synthetic source as verified. Current and future versions are retained rather than overwriting historical scenario inputs.
+
+Teammates should provide exact source excerpts and complete citations, default new research to `needs_review`, and have a qualified reviewer validate translations and interpretation before marking a record `verified`. Source snapshots retain a content hash and change diff; a text change alone does not establish an effective regulatory change.
+
+No application output is regulatory or legal advice. The local app supports review and planning decisions by qualified users.

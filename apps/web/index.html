@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f4ef">
+  <title>Cleared for Takeoff · Clinical Supply Control Tower</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="brand" href="#overview" aria-label="Cleared for Takeoff home"><span class="brand-mark">✳</span><span>cleared for<br><b>takeoff</b></span></a>
+      <div class="workspace-label">SUPPLY OPERATIONS</div>
+      <nav class="nav-list">
+        <button class="nav-item active" data-view="overview"><span class="nav-icon">◫</span>Control tower</button>
+        <button class="nav-item" data-view="requirements"><span class="nav-icon">▤</span>Requirements</button>
+        <button class="nav-item" data-view="scenarios"><span class="nav-icon">⤨</span>Scenarios <span class="nav-count" id="scenario-count">0</span></button>
+        <button class="nav-item" data-view="assistant"><span class="nav-icon">✧</span>Planner assistant</button>
+        <button class="nav-item" data-view="imports"><span class="nav-icon">⇧</span>Data & research</button>
+        <button class="nav-item" data-view="audit"><span class="nav-icon">◷</span>Audit history</button>
+      </nav>
+      <div class="sidebar-bottom"><div class="status-dot"></div><div><b>Local workspace</b><small id="provider-label">Checking data provider…</small></div></div>
+      <div class="sidebar-disclaimer">Decision support only.<br>Not regulatory or legal advice.</div>
+    </aside>
+    <main class="main-area">
+      <header class="topbar"><div class="crumbs"><span>Supply operations</span><i>/</i><b id="top-context">Control tower</b></div><div class="top-actions"><span class="live-pill"><span></span>LOCAL DEMO</span><button class="icon-button" id="refresh-btn" title="Refresh data" aria-label="Refresh data">↻</button><div class="avatar">OP</div></div></header>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <section id="app-content" aria-live="polite"><div class="loading"><span class="spinner"></span>Loading supply picture…</div></section>
+    </main>
+  </div>
+  <div id="dialog-root"></div>
+</body>
+</html>

@@ -1,0 +1,285 @@
+import copy
+import json
+import sqlite3
+import tempfile
+import threading
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
+
+from apps.api.service import Service, APIError, ROOT
+from apps.api.server import make_server
+from packages.feature_provider.providers import LocalFeatureProvider, ChalkFeatureProvider
+from packages.feature_provider.formulas import effective_transit, projected_delivery, delivery_slack, risk_score, risk_band
+from packages.ingestion.adapters import GenericPageAdapter, parse_records
+from packages.notifications.providers import PhotonNotificationProvider
+
+
+class ServiceTests(unittest.TestCase):
+    def setUp(self):
+        self.service = Service(':memory:')
+        self.base = self.service.bootstrap()['approved_scenario']
+
+    def tearDown(self):
+        self.service.repo.close()
+
+    def post(self,path,body=None):
+        return self.service.handle('POST',path,body=body or {})
+
+    def analyze(self,index=0,parent=None,repair=None):
+        event = self.service.repo.events()[index]
+        return self.post('/api/change-events/'+event['id']+'/analyze',{'parent_scenario_id':parent or self.base['id'],'repair':repair})
+
+    def test_seed_country_coverage_and_approval(self):
+        self.assertGreaterEqual(len(self.base['shipments']),20)
+        self.assertEqual(self.base['status'],'approved')
+        audit = self.service.handle('GET','/api/audit')['events']
+        self.assertTrue(any(e['action']=='scenario.approved' and e['actor']=='demo seed' for e in audit))
+
+    def test_event_compare_human_approve_immutable_payload(self):
+        proposal = self.analyze()
+        self.assertEqual(proposal['status'],'proposed')
+        self.assertEqual(self.service.bootstrap()['approved_scenario']['id'],self.base['id'])
+        comparison = self.service.handle('GET',f"/api/scenarios/{self.base['id']}/compare/{proposal['id']}")
+        self.assertGreater(comparison['summary']['changed_countries'],0)
+        approved = self.post('/api/scenarios/'+proposal['id']+'/approve',{'approver':'Reviewer','note':'Reviewed synthetic scenario and evidence'})
+        self.assertEqual(approved['status'],'approved')
+        self.assertEqual(approved['content_hash'],proposal['content_hash'])
+        self.assertEqual(self.service.repo.plan(self.base['id'])['content_hash'],self.base['content_hash'])
+        self.assertEqual(self.service.bootstrap()['approved_scenario']['id'],proposal['id'])
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.service.repo.db.execute('UPDATE scenarios SET payload=? WHERE id=?',('{}',self.base['id']))
+
+    def test_approval_requires_identity_and_note(self):
+        proposal = self.analyze()
+        with self.assertRaises(APIError):
+            self.post('/api/scenarios/'+proposal['id']+'/approve',{'approver':'Reviewer'})
+        self.assertEqual(self.service.repo.plan(proposal['id'])['status'],'proposed')
+
+    def test_rejection_does_not_replace_baseline(self):
+        proposal = self.analyze()
+        rejected = self.post('/api/scenarios/'+proposal['id']+'/reject',{'approver':'Reviewer','note':'Try alternate route'})
+        self.assertEqual(rejected['status'],'rejected')
+        self.assertEqual(self.service.bootstrap()['approved_scenario']['id'],self.base['id'])
+        with self.assertRaises(APIError):
+            self.post('/api/scenarios/'+proposal['id']+'/approve',{'approver':'Reviewer','note':'Second decision'})
+
+    def test_cumulative_events_and_repairs(self):
+        one = self.analyze()
+        two = self.analyze(1,parent=one['id'])
+        self.assertEqual(len(two['applied_event_ids']),2)
+        events = self.service.repo.events()
+        repair = events[0]['repair_options'][0]['id']
+        repaired = self.analyze(parent=two['id'],repair=repair)
+        self.assertEqual(len(repaired['applied_event_ids']),2)
+        self.assertEqual(repaired['selected_repairs'][events[0]['id']],repair)
+
+    def test_custom_event_cumulative(self):
+        seed = self.service.repo.events()[0]
+        event = self.post('/api/change-events',{'title':'Custom delay','event_type':'logistics','jurisdiction':seed['jurisdiction'],'transit_delay_days':2})
+        one = self.post('/api/change-events/'+event['id']+'/analyze')
+        two = self.analyze(1,parent=one['id'])
+        self.assertIn(event['id'],two['applied_event_ids'])
+
+    def test_invalid_event_values_and_repairs_are_not_persisted(self):
+        events = self.service.repo.events()
+        base = {'title':'Invalid event','event_type':'regulatory','jurisdiction':events[0]['jurisdiction']}
+        invalid_cases = [
+            {'changes':[{'requirement_key':'label.languages','operator':'contains_all','value':17}]},
+            {'changes':[{'requirement_key':'permit.lead_time_business_days','operator':'equals','value':-3}]},
+            {'repair_options':[{'id':'bad-route','title':'Bad route','description':'Invalid route','tradeoffs':'None','action':'alternative_route','route_id':'nonexistent'}]},
+            {'transit_delay_days':1.5},
+            {'effective_from':'not-a-date'},
+            {'synthetic':False},
+        ]
+        for invalid in invalid_cases:
+            with self.subTest(invalid=invalid), self.assertRaises(APIError) as raised:
+                self.post('/api/change-events',{**base,**invalid})
+            self.assertEqual(raised.exception.status,422)
+            self.assertEqual(len(self.service.repo.events()),len(events))
+
+    def test_review_regenerates_proposal_and_preserves_approved_baseline(self):
+        rule = self.service.repo.dataset()['rules'][0]
+        reviewed = self.post('/api/rules/'+rule['id']+'/review',{'reviewer':'Human reviewer','note':'Evidence requires further review','status':'needs_review'})
+        self.assertNotEqual(reviewed['id'],rule['id'])
+        self.assertEqual(reviewed['review_status'],'needs_review')
+        proposal = self.service.repo.plan(reviewed['scenario_id'])
+        self.assertEqual(proposal['status'],'proposed')
+        self.assertEqual(proposal['parent_scenario_id'],self.base['id'])
+        self.assertEqual(self.service.bootstrap()['approved_scenario']['content_hash'],self.base['content_hash'])
+
+    def test_requirements_preserve_event_evidence_and_baseline_versions(self):
+        event = self.service.repo.events()[0]
+        proposal = self.analyze()
+        self.post('/api/scenarios/'+proposal['id']+'/approve',{'approver':'Human','note':'Reviewed event proposal'})
+        requirements = self.service.requirements(event['jurisdiction'],self.base['as_of'])['requirements']
+        derived = [r for r in requirements if r.get('scenario_assumption')]
+        self.assertTrue(derived)
+        self.assertTrue(all(r['source_excerpt']==event['source_excerpt'] for r in derived))
+        refs = set(proposal['evidence_refs'])
+        self.assertTrue(all(r['id'] in refs for r in derived))
+        baseline = self.service.requirements(event['jurisdiction'],self.base['as_of'],self.base['id'])['requirements']
+        self.assertFalse(any(r.get('scenario_assumption') for r in baseline))
+
+    def test_calendar_gate_and_crlf(self):
+        proposal = self.analyze()
+        with self.assertRaises(APIError):
+            self.service.handle('GET','/api/scenarios/'+proposal['id']+'/calendar.ics')
+        kind,ical = self.service.handle('GET','/api/scenarios/'+self.base['id']+'/calendar.ics')
+        self.assertIn('text/calendar',kind)
+        self.assertTrue(ical.startswith('BEGIN:VCALENDAR\r\n'))
+        self.assertEqual(ical.count('BEGIN:VEVENT'),sum(len(s['milestones']) for s in self.base['shipments']))
+        self.assertTrue(all(len(line.encode())<=75 for line in ical.split('\r\n')))
+
+    def test_assistant_read_only_cited_and_synthetic(self):
+        result = self.post('/api/assistant/query',{'question':'Why are shipments at risk?','scenario_id':self.base['id']})
+        self.assertTrue(result['citations'])
+        self.assertIn('synthetic',result['answer'])
+        result = self.post('/api/assistant/query',{'question':'Approve this plan','scenario_id':self.base['id']})
+        self.assertIn('cannot approve',result['answer'])
+        self.assertEqual(self.service.repo.plan(self.base['id'])['content_hash'],self.base['content_hash'])
+
+    def test_invalid_import_and_verified_synthetic_rejected(self):
+        row = copy.deepcopy(self.service.repo.dataset()['rules'][0])
+        row['id'] = 'bad-rule'
+        row['review_status'] = 'verified'
+        row['source_tier'] = 'synthetic'
+        preview = self.post('/api/rules/import/preview',{'records':[row]})
+        self.assertFalse(preview['valid'])
+        with self.assertRaises(APIError):
+            self.post('/api/rules/import/commit',{'preview_id':preview['preview_id'],'reviewer':'Human'})
+
+    def test_import_versions_and_replay_prevention(self):
+        row = copy.deepcopy(self.service.repo.dataset()['rules'][0])
+        row.update(id='new-rule',supersedes_id=row['id'],effective_from='2027-01-01',effective_to=None)
+        preview = self.post('/api/rules/import/preview',{'records':[row]})
+        self.assertTrue(preview['valid'],preview['errors'])
+        committed = self.post('/api/rules/import/commit',{'preview_id':preview['preview_id'],'reviewer':'Human'})
+        self.assertEqual(committed['status'],'proposed')
+        self.assertEqual(self.service.bootstrap()['approved_scenario']['id'],self.base['id'])
+        with self.assertRaises(APIError):
+            self.post('/api/rules/import/commit',{'preview_id':preview['preview_id'],'reviewer':'Human'})
+
+    def test_stale_preview_rejected(self):
+        replacement = json.loads((ROOT/'data/demo/replacement.json').read_text())
+        a = self.post('/api/datasets/import/preview',{'dataset':replacement})
+        b = self.post('/api/datasets/import/preview',{'dataset':replacement})
+        self.post('/api/datasets/import/commit',{'preview_id':a['preview_id'],'reviewer':'Human'})
+        with self.assertRaises(APIError):
+            self.post('/api/datasets/import/commit',{'preview_id':b['preview_id'],'reviewer':'Human'})
+
+    def test_replacement_fixture_data_driven(self):
+        replaced = self.post('/api/demo/reset',{'fixture':'replacement'})
+        new = replaced['approved_scenario']
+        self.assertNotEqual(new['trial_id'],self.base['trial_id'])
+        self.assertNotEqual(new['shipments'][0]['country_code'],self.base['shipments'][0]['country_code'])
+        event = replaced['events'][0]
+        proposal = self.post('/api/change-events/'+event['id']+'/analyze')
+        self.assertTrue(self.service.handle('GET',f"/api/scenarios/{new['id']}/compare/{proposal['id']}")['changes'])
+        self.assertEqual(self.service.repo.plan(self.base['id'])['content_hash'],self.base['content_hash'])
+
+    def test_snapshot_change_detected_and_review_gated(self):
+        a = self.post('/api/sources/snapshot',{'source_id':'page','content':'A first source'})
+        b = self.post('/api/sources/snapshot',{'source_id':'page','content':'A new source'})
+        self.assertFalse(a['changed'])
+        self.assertTrue(b['changed'])
+        self.assertEqual(b['review_status'],'needs_review')
+        with self.assertRaises(APIError):
+            self.post('/api/change-events/'+b['event_id']+'/analyze')
+
+    def test_alert_acknowledgement(self):
+        proposal = self.analyze()
+        alert = self.service.alerts()[0]
+        self.post('/api/alerts/'+alert['id']+'/acknowledge',{'actor':'Reviewer'})
+        self.assertTrue(next(a for a in self.service.alerts() if a['id']==alert['id'])['acknowledged'])
+
+    def test_future_requirements_flagged(self):
+        rules = self.service.repo.dataset()['rules']
+        future = next(r for r in rules if r['effective_from']>self.base['as_of'])
+        result = self.service.requirements(future['jurisdiction'],self.base['as_of'])
+        self.assertTrue(next(r for r in result['requirements'] if r['id']==future['id'])['future_effective'])
+
+    def test_review_synthetic_evidence_cannot_be_verified(self):
+        rule = next(r for r in self.service.repo.dataset()['rules'] if r['source_tier']=='synthetic')
+        with self.assertRaises(APIError):
+            self.post('/api/rules/'+rule['id']+'/review',{'reviewer':'Human','note':'Review','status':'verified'})
+
+    def test_source_candidates_are_forced_to_needs_review(self):
+        result = self.post('/api/sources/snapshot',{'source_id':'candidate','content':'Evidence','records':[{'review_status':'verified'}]})
+        self.assertEqual(result['candidate_rules'][0]['review_status'],'needs_review')
+
+
+class ProviderTests(unittest.TestCase):
+    def setUp(self):
+        self.service = Service(':memory:')
+        self.shipment = self.service.bootstrap()['approved_scenario']['shipments'][0]
+
+    def tearDown(self):
+        self.service.repo.close()
+
+    def test_chalk_resolves_primitives_and_parity(self):
+        provider = ChalkFeatureProvider()
+        def remote(url,payload,token=None):
+            inputs = payload['inputs']
+            self.assertFalse(set(payload['outputs']) & set(inputs))
+            f = {k.split('.',1)[1]:v for k,v in inputs.items()}
+            projected = projected_delivery(f['ready_date'],f['duration_days_json'],f['holidays_json'])
+            slack = delivery_slack(projected,f['target_delivery'],f['holidays_json'])
+            values = {'projected_delivery_at':projected,'slack_days':slack,'effective_transit_days':effective_transit(f['baseline_transit_days'],f['disruption_delay_days'],f['customs_buffer_days']),'risk_score':risk_score(slack,f['constraint_blocked'],f['synthetic_count'],f['risk_model_json']),'risk_band':risk_band(slack,f['constraint_blocked'],f['low_slack_days'])}
+            return {'data':[{'field':'shipment.'+k,'value':v} for k,v in values.items()],'meta':{'query_id':'test-query'}}
+        with patch.object(provider,'authenticate'), patch.object(provider,'_post',side_effect=remote):
+            result = provider.shipment(self.shipment,'2026-10-17')
+        self.assertEqual(result['provider'],'chalk')
+        self.assertEqual(result['features'],LocalFeatureProvider().shipment(self.shipment,'2026-10-17')['features'])
+
+    def test_chalk_failure_explicit_local_fallback(self):
+        provider = ChalkFeatureProvider()
+        with patch.object(provider,'authenticate',side_effect=TimeoutError):
+            result = provider.shipment(self.shipment)
+        self.assertEqual(result['provider'],'local')
+        self.assertTrue(result['fallback_reason'])
+
+    def test_scraped_candidates_cannot_self_verify(self):
+        candidates = GenericPageAdapter().normalize_candidate_rules([{'review_status':'verified','source_excerpt':'Text'}])
+        self.assertEqual(candidates[0]['review_status'],'needs_review')
+
+    def test_photon_stub_is_honest(self):
+        result = PhotonNotificationProvider().send({'id':'test'})
+        self.assertFalse(result['delivered'])
+
+
+class HTTPTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.server = make_server(port=0,db_path=':memory:')
+        cls.thread = threading.Thread(target=cls.server.serve_forever,daemon=True)
+        cls.thread.start()
+        cls.url = f'http://127.0.0.1:{cls.server.server_port}'
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.shutdown()
+        cls.server.server_close()
+        cls.server.service.repo.close()
+
+    def test_health_and_json_errors(self):
+        with urlopen(self.url+'/api/health') as response:
+            self.assertEqual(json.load(response)['status'],'ok')
+        with self.assertRaises(HTTPError) as result:
+            urlopen(self.url+'/api/no-such-endpoint')
+        self.assertEqual(result.exception.code,404)
+        self.assertIn('error',json.load(result.exception))
+
+    def test_external_origin_and_bad_json_rejected(self):
+        with self.assertRaises(HTTPError) as result:
+            urlopen(Request(self.url+'/api/demo/reset',data=b'{}',headers={'Origin':'https://evil.example','Content-Type':'application/json'}))
+        self.assertEqual(result.exception.code,403)
+        with self.assertRaises(HTTPError) as result:
+            urlopen(Request(self.url+'/api/demo/reset',data=b'no json',headers={'Content-Type':'application/json'}))
+        self.assertEqual(result.exception.code,400)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -1,0 +1,12 @@
+{
+  "name": "cleared-for-takeoff",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local clinical supply decision support with deterministic scenario planning",
+  "scripts": {
+    "test:browser": "node tests/e2e/browser.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}
