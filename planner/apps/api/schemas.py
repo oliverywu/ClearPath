@@ -39,6 +39,7 @@ SHIPMENT = {
         'route': {'type': 'object', 'required': ['id', 'name'], 'properties': {'id': STR, 'name': STR, 'gatewayAirport': STR_OR_NULL}},
         'deliveryRange': DELIVERY_RANGE, 'shipBy': SHIP_BY, 'worstCaseSlackDays': INT,
         'currentPlanId': STR, 'proposalIds': {'type': 'array', 'items': STR}, 'provenance': PROVENANCE,
+        'planningProvenance': PROVENANCE,
     },
 }
 

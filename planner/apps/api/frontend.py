@@ -81,6 +81,7 @@ class Frontend:
     def shipment(self, s, plan, trial, pending=None):
         route = next((r for r in s.get('route_options', []) if r['id'] == s['route_id']), {})
         synthetic = s.get('verification_status') == 'synthetic' or route.get('synthetic')
+        operational_provenance = 'sample' if s.get('data_provenance') == 'anna_sample' else 'synthetic'
         features = s.get('features', {})
         return {
             'id': s['id'], 'country': s['country_code'], 'countryName': s['country_name'], 'study': study_code(trial),
@@ -96,7 +97,9 @@ class Frontend:
             'sourceShippingDate': s.get('shipping_date'), 'dataProvenance': s.get('data_provenance', 'planner_demo'),
             'outlook': {'agentAnswer': features.get('agent_answer'), 'source': features.get('outlook_source', 'local')},
             'currentPlanId': plan['id'], 'proposalIds': (pending or {}).get(s['id'], []),
-            'provenance': 'synthetic' if synthetic else ('needs_review' if s.get('verification_status') == 'needs_review' else 'modeled'),
+            'provenance': operational_provenance,
+            'planningProvenance': 'modeled' if route.get('data_provenance') == 'modeled' else (
+                'synthetic' if synthetic else ('needs_review' if s.get('verification_status') == 'needs_review' else 'modeled')),
         }
 
     def evidence_from_event(self, event):

@@ -343,7 +343,10 @@ class ProvenanceTests(IntegratedCase):
         japan = next(w for w in warnings if w['country'] == 'JP')
         self.assertEqual((japan['provenance'], japan['source']), ('sample', 'Japan GCP Ordinance, Article 16'))
         self.assertTrue(all(w['provenance'] == 'synthetic' for w in warnings if w['country'] != 'JP'))
-        self.assertTrue(all(s['provenance'] == 'synthetic' for s in self.get('/api/shipments')))
+        shipments = self.get('/api/shipments')
+        self.assertEqual(4, sum(s['provenance'] == 'sample' for s in shipments))
+        self.assertEqual(20, sum(s['provenance'] == 'synthetic' for s in shipments))
+        self.assertTrue(all(s['planningProvenance'] == 'modeled' for s in shipments))
         for row in self.get('/api/tracking'):
             self.assertEqual((row['telemetry'], row['temperatureC'], row['synthetic']), ('none', None, True))
             self.assertTrue(row['statusLabel'].startswith('Planned'))
