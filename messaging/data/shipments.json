@@ -1,0 +1,40 @@
+{
+  "shipments": [
+    {
+      "shipment_id": "SHIP-001",
+      "drug_name": "Investigational Insulin Glargine",
+      "origin": "Indianapolis, US",
+      "destination": "Berlin, DE",
+      "shipping_date": "2026-10-01",
+      "estimated_transit_days": 5,
+      "required_delivery_date": "2026-10-10"
+    },
+    {
+      "shipment_id": "SHIP-002",
+      "drug_name": "Investigational Insulin Glargine",
+      "origin": "Indianapolis, US",
+      "destination": "Tokyo, JP",
+      "shipping_date": "2026-10-03",
+      "estimated_transit_days": 6,
+      "required_delivery_date": "2026-10-08"
+    },
+    {
+      "shipment_id": "SHIP-003",
+      "drug_name": "Investigational Insulin Aspart",
+      "origin": "Puerto Rico, US",
+      "destination": "Sao Paulo, BR",
+      "shipping_date": "2026-10-05",
+      "estimated_transit_days": 4,
+      "required_delivery_date": "2026-10-09"
+    },
+    {
+      "shipment_id": "SHIP-004",
+      "drug_name": "Investigational Insulin Aspart",
+      "origin": "Puerto Rico, US",
+      "destination": "Mumbai, IN",
+      "shipping_date": "2026-10-02",
+      "estimated_transit_days": 9,
+      "required_delivery_date": "2026-10-09"
+    }
+  ]
+}

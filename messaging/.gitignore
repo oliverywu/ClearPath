@@ -1,0 +1,6 @@
+.env
+.venv/
+__pycache__/
+.photon_bridge_state.json
+.qa_context_state.json
+.photon_bridge.lock

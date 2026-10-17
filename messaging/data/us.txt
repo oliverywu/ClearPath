@@ -1,0 +1,34 @@
+COUNTRY: United States
+AUTHORITY: FDA
+REGULATION: 21 CFR Part 312
+SECTION: § 312.6
+TITLE: Labeling of an investigational new drug
+
+SOURCE:
+https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312/subpart-A/section-312.6
+
+SOURCE VERSION:
+October 15, 2026
+
+REGULATORY TEXT:
+
+(a) The immediate package of an
+investigational new drug intended for
+human use shall bear a label with the
+statement “Caution: New Drug—Limited
+by Federal (or United States) law to
+investigational use.”
+
+(b) The label or labeling of an
+investigational new drug shall not
+bear any statement that is false or
+misleading in any particular and
+shall not represent that the
+investigational new drug is safe or
+effective for the purposes for which
+it is being investigated.
+
+(c) The appropriate FDA Center Director
+may grant certain exceptions or
+alternatives under the conditions
+specified in § 312.6(c).
