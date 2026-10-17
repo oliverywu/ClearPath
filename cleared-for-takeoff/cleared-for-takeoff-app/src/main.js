@@ -1,5 +1,5 @@
 import { $, initCursor, burst } from './ui.js';
-import { initLanding } from './views/landing.js';
+import { initLanding, refreshLanding } from './views/landing.js';
 import { renderWarnings } from './views/warnings.js';
 import { renderChats } from './views/chats.js';
 import { renderMonitor } from './views/monitor.js';
@@ -16,8 +16,9 @@ function route() {
   document.body.dataset.view = name;
   $('#v-warnings').hidden = name !== 'warnings'; $('#v-chats').hidden = name !== 'chats'; $('#v-monitor').hidden = name !== 'monitor';
   if (name !== last && last && name !== 'landing' && last !== 'landing') burst();
-  if (name === 'warnings') renderWarnings($('#v-warnings'), id);
-  if (name === 'chats') renderChats($('#v-chats'), id);
+  if (name === 'landing' && last && last !== 'landing') refreshLanding(); // approvals elsewhere change the plan
+  if (name === 'warnings') renderWarnings($('#v-warnings'), id, last !== 'warnings');
+  if (name === 'chats') renderChats($('#v-chats'), id, last !== 'chats');
   if (name === 'monitor') renderMonitor($('#v-monitor'));
   last = name;
 }

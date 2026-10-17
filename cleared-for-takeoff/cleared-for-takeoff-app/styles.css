@@ -429,3 +429,19 @@ body.drawer-open .drawer{transform:none}body.drawer-open .scrim{opacity:1}
 .threat-list{display:grid;gap:8px}.threat{display:grid;grid-template-columns:12px minmax(0,1fr) auto;align-items:start;gap:14px;padding:18px 20px;border-radius:18px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07)}
 .threat-dot{width:9px;height:9px;border-radius:50%;margin-top:7px;background:var(--ok);box-shadow:0 0 14px currentColor}.threat-orange .threat-dot{background:#ff9d45}.threat-red .threat-dot{background:var(--hot)}
 .threat-title{font-size:15px;font-weight:650}.threat-meta,.threat-distance span,.threat-distance time{display:block;color:var(--mute);font-size:11px;text-transform:capitalize}.threat p{color:var(--mute);font-size:12px;margin-top:8px;max-width:620px}.threat-distance{text-align:right;white-space:nowrap}.threat-distance b{font-size:14px}.clear-state{padding:30px;border:1px solid rgba(95,224,168,.2);border-radius:20px;color:var(--ok)}
+
+/* warning detail: remediation options, evidence, audit (integrated backend) */
+.wsec{margin:22px 0 18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08)}.wsec>.k{margin-bottom:10px}
+.wopt{padding:12px 14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);margin-bottom:8px;font-size:13px}
+.wopt.approved{border-color:rgba(95,224,168,.45)}.wopt.superseded,.wopt.rejected{opacity:.55}
+.wopt-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.wopt-h b{font-weight:600;margin-right:auto}
+.wopt-r{margin-top:6px;color:var(--paper)}.wopt-r b{font-weight:600}.wopt-m{margin-top:4px;font-size:11px;color:var(--mute);word-break:break-all}
+.badge.p-proposed{color:var(--warn);border-color:rgba(245,196,0,.35)}.badge.p-approved{color:var(--ok);border-color:rgba(95,224,168,.3)}
+.badge.p-rec{color:var(--paper);border-color:rgba(255,255,255,.35)}
+.ev-chip{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.15);color:var(--mute);vertical-align:1px}
+.ev-chip.ev-verified{color:var(--ok);border-color:rgba(95,224,168,.3)}.ev-chip.ev-needs_review{color:var(--warn);border-color:rgba(245,196,0,.35)}.ev-chip.ev-synthetic{color:#c9b8ff;border-color:rgba(201,184,255,.3)}
+.wev{font-size:13px;margin-bottom:12px}.wev p{color:var(--mute);margin:6px 0 4px;font-size:12px}.wev a,.wev small{font-size:11px;color:var(--mute);word-break:break-all}
+.waud{list-style:none;font-size:12px}.waud li{display:grid;grid-template-columns:64px 1fr;gap:2px 10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.waud time{color:var(--mute);grid-row:span 2}.waud small{color:var(--mute)}
+.grid>.state{grid-column:1/-1;max-width:560px}
+.b .bt{white-space:pre-line}

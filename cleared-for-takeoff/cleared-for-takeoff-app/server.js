@@ -13,7 +13,11 @@ try {
     process.env[match[1]] = match[2].replace(/^(['"])(.*)\1$/, '$2');
   }
 } catch (error) { if (error.code !== 'ENOENT') throw error; }
-const PORT = Number(process.env.PORT || 8000);
+const PORT = Number(process.env.PORT || process.env.WEB_PORT || 3000);
+// Unified backend. Every /api/* request except /api/route-analysis is proxied here, so the
+// browser only ever talks to this origin and never learns which subsystem answered.
+const API_ORIGIN = (process.env.API_ORIGIN || `http://127.0.0.1:${process.env.API_PORT || 8000}`).replace(/\/$/, '');
+const MAX_PROXY_BODY_BYTES = 1_000_000;
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || '';
 const GDACS_EVENTS_URL = process.env.GDACS_EVENTS_URL || 'https://www.gdacs.org/gdacsapi/api/Events/geteventlist/EVENTS4APP';
 const MAX_EVENT_AGE_DAYS = Number(process.env.DISASTER_MAX_AGE_DAYS || 30);
@@ -147,8 +151,33 @@ async function serveStatic(req, res, pathname) {
     res.end(contents);
   } catch { send(res, 404, { error: 'Not found.' }); }
 }
+async function proxyApi(req, res, url) {
+  let body;
+  if (!['GET', 'HEAD'].includes(req.method)) {
+    const chunks = []; let size = 0;
+    for await (const chunk of req) {
+      size += chunk.length;
+      if (size > MAX_PROXY_BODY_BYTES) return send(res, 413, { error: 'Request body is too large.' });
+      chunks.push(chunk);
+    }
+    body = Buffer.concat(chunks);
+  }
+  try {
+    const upstream = await fetch(API_ORIGIN + url.pathname + url.search, {
+      method: req.method,
+      headers: { 'Content-Type': req.headers['content-type'] || 'application/json', Accept: 'application/json' },
+      body, signal: AbortSignal.timeout(60_000)
+    });
+    const data = Buffer.from(await upstream.arrayBuffer());
+    res.writeHead(upstream.status, { 'Content-Type': upstream.headers.get('content-type') || 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+    return res.end(req.method === 'HEAD' ? undefined : data);
+  } catch (error) {
+    return send(res, 502, { error: `Planner API unavailable at ${API_ORIGIN} (${error.cause?.code || error.name}). Start the app with "python start.py".` });
+  }
+}
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  if (url.pathname.startsWith('/api/') && url.pathname !== '/api/route-analysis') return proxyApi(req, res, url);
   if (url.pathname === '/api/route-analysis') {
     if (req.method !== 'POST') return send(res, 405, { error: 'Method not allowed.' }, { Allow: 'POST' });
     try { return send(res, 200, await analyzeRoute(await readJson(req))); }
@@ -157,4 +186,5 @@ const server = http.createServer(async (req, res) => {
   if (!['GET', 'HEAD'].includes(req.method)) return send(res, 405, { error: 'Method not allowed.' }, { Allow: 'GET, HEAD' });
   return serveStatic(req, res, url.pathname);
 });
-server.listen(PORT, () => console.log(`Cleared for Takeoff listening on http://localhost:${PORT}`));
+server.listen(PORT, process.env.HOST || '127.0.0.1', () => console.log(`Cleared for Takeoff website http://localhost:${PORT} (API proxied to ${API_ORIGIN})`));
+for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => server.close(() => process.exit(0)));

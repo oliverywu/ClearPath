@@ -1,7 +1,31 @@
+# OS / editor
 .DS_Store
+Thumbs.db
+
+# Credentials (keep all keys server-side and out of git)
 .env
+.env.*
+!.env.example
+**/.env.local
+cleared-for-takeoff/cleared-for-takeoff-app/src/config.local.js
+
+# Local state, generated databases and caches
 .local/
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
 __pycache__/
+*.py[cod]
+.pytest_cache/
+node_modules/
+test-results/
+playwright-report/
+
+# Anna's standalone messaging state (not used by the integrated app)
 messaging/.conversation_state.json
 messaging/.notification_manager_state.json
 messaging/.photon_bridge_state.json
+messaging/.qa_context_state.json
+messaging/.audit_log.jsonl
+messaging/.photon_bridge.lock

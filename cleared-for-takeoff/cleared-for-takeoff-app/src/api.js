@@ -26,8 +26,19 @@ export async function getWarning(id) {
 }
 /** GET /api/shipments → Shipment[] */
 export async function getShipments() { return USE_MOCK ? mock('shipments') : http('/shipments'); }
-/** GET /api/inventory → InventoryItem[] (recurring shipments) */
-export async function getInventory() { return USE_MOCK ? mock('inventory') : http('/inventory'); }
+/** GET /api/inventory → { configured, items: InventoryItem[], message, provenance }
+ *  The integrated backend has no inventory source, so it returns configured:false with an
+ *  explanation instead of passing shipment schedules off as stock. */
+export async function getInventoryStatus() {
+  if (USE_MOCK) return { configured: true, items: await mock('inventory'), message: '', provenance: 'sample' };
+  return http('/inventory');
+}
+export async function getInventory() { return (await getInventoryStatus()).items; }
+/** GET /api/context → { today, trial, currentPlan, providers } (planning date and current-plan state) */
+export async function getContext() {
+  if (USE_MOCK) return { today: '2026-10-17', trial: { study: 'NOVA-24' }, currentPlan: null, providers: {}, mock: true };
+  return http('/context');
+}
 /** GET /api/photon/chats → Chat[] */
 export async function getPhotonChats() {
   if (!USE_MOCK) return http('/photon/chats');
@@ -40,8 +51,9 @@ export async function getChatMessages(chatId) {
 }
 /** POST /api/photon/chats/:id/messages  body {text} → { message: Message, replies: Message[] }
  *  `replies` are Max's responses (may be empty if Max answers later; then poll getChatMessages). */
-export async function sendChatMessage(chatId, text) {
-  if (!USE_MOCK) return http(`/photon/chats/${encodeURIComponent(chatId)}/messages`, { method: 'POST', body: JSON.stringify({ text }) });
+export async function sendChatMessage(chatId, text, clientMessageId = newMessageId()) {
+  // clientMessageId lets the backend dedupe a resend of the same message (no duplicate decisions).
+  if (!USE_MOCK) return http(`/photon/chats/${encodeURIComponent(chatId)}/messages`, { method: 'POST', body: JSON.stringify({ text, clientMessageId }) });
   await sleep(); if (q.has('fail')) throw new Error('Simulated send error');
   const all = cache.messages || (cache.messages = await (await fetch(new URL('./mock/messages.json', import.meta.url))).json());
   const list = (all[chatId] ||= []);
@@ -51,6 +63,8 @@ export async function sendChatMessage(chatId, text) {
   list.push(...replies);
   return { message, replies };
 }
+function newMessageId() { return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`; }
+// Mock-only scripted replies for isolated frontend development. Never used with the real backend.
 function scriptedReply(chatId, text) {
   const t = text.trim().toUpperCase();
   const fixes = { '1': 'Relabel in Boston before departure (+2 days)', '2': 'Relabel at the Tokyo depot (+9 days)', '3': 'Split shipment: 12 kits now, 11 after relabel' };
@@ -88,6 +102,12 @@ export async function getTrackingDetail(id) {
   if (!USE_MOCK) return http(`/tracking/${encodeURIComponent(id)}`);
   const t = (await getTracking()).find(x => x.id === id); if (!t) throw new Error(`Tracking ${id} not found`); return t;
 }
+/** Governance reads (real backend only; mock mode has no planner). */
+export const getProposal = id => http(`/proposals/${encodeURIComponent(id)}`);
+export const getProposalComparison = id => http(`/proposals/${encodeURIComponent(id)}/comparison`);
+export const getCurrentPlan = () => USE_MOCK ? Promise.resolve(null) : http('/current-plan');
+export const getAuditHistory = (entityIds = []) => USE_MOCK ? Promise.resolve([]) : http(`/audit-history?entityId=${encodeURIComponent(entityIds.join(','))}`);
+export const getEvidence = warningId => USE_MOCK ? Promise.resolve([]) : http(`/evidence?warningId=${encodeURIComponent(warningId)}`);
 // "Max" aliases (Max is the assistant behind the Photon messaging integration)
 export const getMaxChats = getPhotonChats;
 export const getMaxMessages = getChatMessages;

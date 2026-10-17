@@ -3,13 +3,14 @@ import { $, $$, esc, ago, load, loading, errorState } from '../ui.js';
 import { getMaxChats, getMaxMessages, sendMaxMessage } from '../api.js';
 let chats = [], term = '', current = null;
 const stamp = iso => { const d = new Date(iso); return isNaN(d) ? esc(iso) : d.toLocaleDateString('en-US', { weekday: 'short' }) + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); };
-export async function renderChats(root, id) {
-  if (!root.dataset.ready) {
+export async function renderChats(root, id, entered = true) {
+  if (!root.dataset.ready || entered) {
+    const first = !root.dataset.ready;
     root.dataset.ready = 1;
-    root.innerHTML = `<div class="vhead"><a class="back" href="#/">← Landing</a><div class="k">Max · your supply assistant</div><h2>Text <em>Max.</em></h2></div>
+    if (first) root.innerHTML = `<div class="vhead"><a class="back" href="#/">← Landing</a><div class="k">Max · your supply assistant</div><h2>Text <em>Max.</em></h2></div>
     <div class="mlay"><div class="cside"><label class="search"><input id="csearch" placeholder="Search conversations" autocomplete="off"></label><div id="clist" class="clist"></div></div>
     <section class="phone" id="thread"></section></div><div class="call" id="call" hidden></div>`;
-    $('#csearch', root).oninput = e => { term = e.target.value.toLowerCase(); list(); };
+    if (first) $('#csearch', root).oninput = e => { term = e.target.value.toLowerCase(); list(); };
     await load($('#clist', root), getMaxChats, d => { chats = d; list(); }, { emptyMsg: 'No conversations with Max yet.', label: 'Loading conversations' });
   }
   if (!id && chats.length && innerWidth > 900) { location.replace('#/max/' + chats[0].id); return; }
@@ -29,7 +30,7 @@ export async function renderChats(root, id) {
     el.innerHTML = loading('Loading messages');
     try {
       const msgs = await getMaxMessages(cid);
-      el.innerHTML = `<header class="ph-h"><a class="ph-back" href="#/max">‹</a><span class="mav">M</span><div><div class="cnm">Max</div><div class="sub">iMessage · to ${esc(c?.name || '')}, ${esc(c?.role || '')}</div></div></header>
+      el.innerHTML = `<header class="ph-h"><a class="ph-back" href="#/max">‹</a><span class="mav">M</span><div><div class="cnm">Max</div><div class="sub">iMessage · to ${esc(c?.name || '')}, ${esc(c?.role || '')}${c?.canApprove === false ? ' · cannot approve plans' : c?.canApprove ? ' · can approve plans' : ''}</div></div></header>
         <div class="msgs" id="msgs"></div><div class="qr" id="qr"></div>
         <form class="ibar" id="send"><input id="msg" placeholder="iMessage" autocomplete="off"><button aria-label="Send">↑</button></form>`;
       const box = $('#msgs', el); let prev = null;

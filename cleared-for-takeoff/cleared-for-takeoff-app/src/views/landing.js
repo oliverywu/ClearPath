@@ -1,7 +1,10 @@
 import { $, $$, esc, STATUS, fmtDate, load, burst } from '../ui.js';
 import { loadGoogleMaps, buildMap } from '../map.js';
-import { getShipments, getInventory, getWarnings, getCalendar, getDaySchedule, getChalkInsight, getTracking, getTrackingDetail } from '../api.js';
+import { getInventoryStatus, getWarnings, getCalendar, getDaySchedule, getChalkInsight, getTracking, getTrackingDetail, getContext } from '../api.js';
 const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+let loadRoutes = () => {}, refresh = () => {};
+/** Re-read plan-derived data (routes, calendar, provenance) when the landing view is re-entered. */
+export function refreshLanding() { refresh(); }
 export function initLanding(ptr) {
   const img = $('#img'), n = $('#notif');
   // capsule text from the newest open warning
@@ -18,14 +21,17 @@ export function initLanding(ptr) {
     n.style.setProperty('--nx', dx * 36 + 'px'); n.style.setProperty('--ny', dy * 36 + 'px'); requestAnimationFrame(f); })();
   // routes = live tracking (same arcs/slack; adds marker, status, hover, click → drawer)
   const bez = t => [(1 - t) ** 2 * 2 + 2 * (1 - t) * t * 150 + t * t * 298, (1 - t) ** 2 * 28 + 2 * (1 - t) * t * -12 + t * t * 28];
-  load($('#routes'), getTracking, list => {
+  loadRoutes = () => load($('#routes'), getTracking, list => {
     $('#routes').innerHTML = list.map(s => { const [x, y] = bez(s.progress), c = STATUS[s.status][1];
       return `<div class="rt" data-id="${esc(s.id)}" data-t="${s.progress}" tabindex="0" role="button" aria-label="Track ${esc(s.countryName)} shipment"><div>${esc(s.countryName)}<small>${esc(s.study)} · ${esc(s.origin)} → ${esc(s.destination)}</small></div><div class="arc"><svg viewBox="0 0 300 30" preserveAspectRatio="none"><path d="M2 28 Q150 -12 298 28" stroke="${c}" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg><i class="mk" style="left:${x / 3}%;top:${y / .3}%;--c:${c}"></i><span class="st" style="left:${x / 3}%">${esc(s.statusLabel)}</span></div><div class="sl">${s.slackDays}d</div></div>`; }).join('');
     const u = list[0]?.updatedAt; $('#live').hidden = false; $('#liveu').textContent = u ? new Date(u).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) + ' ET' : '—';
     $$('.rt').forEach(r => { r.onclick = () => openTracking(r.dataset.id); r.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTracking(r.dataset.id); } }; });
     onScroll(); mountMap(list); }, { emptyMsg: 'No shipments in the current plan.', label: 'Loading routes' });
+  loadRoutes();
   initInventory();
   initCalendar();
+  refresh = () => { loadRoutes(); loadContext(); };
+  loadContext();
   function onScroll() { const lp = clamp(scrollY / innerHeight), H = document.documentElement.scrollHeight - innerHeight, s = img.style;
     document.documentElement.style.setProperty('--p', clamp(scrollY / (H || 1)));
     s.setProperty('--sx', lp * 24 + 'vw'); s.setProperty('--sy', lp * 4 + 'vh'); s.setProperty('--rz', (-14 + clamp(scrollY / (H || 1)) * 120) + 'deg'); s.setProperty('--sc', 1 - lp * .25); s.setProperty('--io', 1 - lp * .94); s.setProperty('--br', 1 - lp * .4);
@@ -36,8 +42,18 @@ export function initLanding(ptr) {
   const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && e.target.classList.add('in')), { threshold: .3 }); $$('.rv').forEach(e => io.observe(e));
 }
 
+// Planning date and data provenance come from the backend; mock mode keeps the sample date.
+function loadContext() {
+  getContext().then(c => { const first = TODAY !== c.today; TODAY = c.today; if (first) calMonth = TODAY.slice(0, 7); drawCal();
+    if (!c.mock) {
+      const updated = $('#liveu')?.textContent || '—';
+      $('#live').innerHTML = `<span></span>Modeled · plan v${esc(c.currentPlan?.version ?? '—')} · no telemetry · <b id="liveu">${esc(updated)}</b>`;
+      $('.foot span').textContent = `Synthetic demo data · planning date ${c.today} · current plan v${c.currentPlan?.version ?? '—'} · features: ${c.providers?.features || 'local'}`;
+    } }).catch(() => drawCal());
+}
+
 /* ---------- calendar (far right) + day drawer ---------- */
-const TODAY = '2026-10-17'; // demo "today" matching the mock data; use the real date with a backend
+let TODAY = '2026-10-17'; // replaced by the backend planning date from GET /api/context
 let calMonth = TODAY.slice(0, 7);
 const TYPE = { packed: 'Packed', customs: 'Customs', in_transit: 'In transit', delivered: 'Delivered', deadline: 'Deadline', alert: 'Alert', review: 'Review' };
 const RISKC = { critical: 'var(--hot)', high: 'var(--hot)', medium: 'var(--warn)', low: 'var(--ok)' };
@@ -46,7 +62,6 @@ function initCalendar() {
   addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#drawer').hidden) { e.stopImmediatePropagation(); closeDrawer(); } }, true);
   const shift = n => { const [y, m] = calMonth.split('-').map(Number), d = new Date(y, m - 1 + n, 1); calMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; drawCal(); };
   $('#calp').onclick = () => shift(-1); $('#caln').onclick = () => shift(1);
-  drawCal();
 }
 function drawCal() {
   const [y, m] = calMonth.split('-').map(Number), first = new Date(y, m - 1, 1), days = new Date(y, m, 0).getDate(), pad = (first.getDay() + 6) % 7;
@@ -72,7 +87,7 @@ async function openDay(date, events) {
   $('#dai').innerHTML = '<div class="chalk"><div class="state"><span class="spin"></span>Chalk AI is thinking…</div></div>';
   getChalkInsight(date).then(i => {
     $('#dai').innerHTML = `<div class="chalk"><div class="chh"><span class="chb">✦ Powered by Chalk AI</span><span class="risk" style="color:${RISKC[i.risk] || 'var(--mute)'}">${esc(i.risk)} risk</span></div>
-      <div class="cht">Chalk AI: risk &amp; recommendations</div><p>${esc(i.summary)}</p>${i.recommendations.length ? `<ul>${i.recommendations.map(r => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}<div class="cap">Synthetic demo insight</div></div>`;
+      <div class="cht">${i.source?.provider === 'local' ? 'Chalk features · local fallback' : 'Chalk AI: risk &amp; recommendations'}</div><p>${esc(i.summary)}</p>${i.recommendations.length ? `<ul>${i.recommendations.map(r => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}<div class="cap">${esc(i.source?.label || 'Synthetic demo insight')}</div></div>`;
   }).catch(e => { $('#dai').innerHTML = `<div class="chalk"><div class="state err">Chalk AI unavailable: ${esc(e.message)}</div></div>`; });
 }
 function closeDrawer() { document.body.classList.remove('drawer-open'); $$('.rt,.ti2').forEach(x => x.classList.remove('sel')); $$('#calg .cd').forEach(x => x.classList.remove('sel')); setTimeout(() => { $('#drawer').hidden = true; $('#scrim').hidden = true; }, 450); }
@@ -82,7 +97,8 @@ function initInventory() {
     [['All', 'Any status'], ['at_risk', 'At risk'], ['blocked', 'Blocked'], ['on_track', 'On track']].map(([k, l]) => `<button class="chip ${k === 'All' ? 'on' : ''}" data-ss="${k}">${l}</button>`).join('') + '<span class="sep"></span>' +
     [['date', 'Next date'], ['risk', 'Risk']].map(([k, l]) => `<button class="chip ${k === 'date' ? 'on' : ''}" data-so="${k}">Sort · ${l}</button>`).join('');
   const grid = $('#grid');
-  load(grid, getInventory, list => {
+  let invMessage = 'No recurring shipments.';
+  load(grid, async () => { const st = await getInventoryStatus(); if (!st.configured) { invMessage = st.message; $('#invbar').style.display = 'none'; } return st.items; }, list => {
     items = list;
     grid.innerHTML = list.map((t, i) => { const max = Math.max(t.onHand, t.reorderLevel) * 1.2 || 1, d0 = new Date(t.nextShipDate + 'T12:00');
       const next3 = [1, 2, 3].map(k => fmtDate(new Date(+d0 + k * t.cadenceWeeks * 7 * 864e5).toISOString()));
@@ -99,7 +115,7 @@ function initInventory() {
     tiles.forEach(t => { t.addEventListener('mousemove', e => { const r = t.getBoundingClientRect(); t.style.setProperty('--ty', ((e.clientX - r.left) / r.width - .5) * 14 + 'deg'); t.style.setProperty('--tx', -((e.clientY - r.top) / r.height - .5) * 14 + 'deg'); });
       t.addEventListener('click', () => flip(() => { const o = t.classList.contains('open'); tiles.forEach(x => x.classList.remove('open')); if (!o) t.classList.add('open'); })); });
     apply();
-  }, { emptyMsg: 'No recurring shipments.', label: 'Loading inventory' });
+  }, { emptyMsg: () => invMessage, label: 'Loading inventory' });
   function flip(mut) { const f = new Map(tiles.filter(t => !t.classList.contains('gone')).map(t => [t, t.getBoundingClientRect()])); mut();
     tiles.forEach(t => { if (t.classList.contains('gone')) return; const a = f.get(t), b = t.getBoundingClientRect(); t.style.transitionDelay = '0s';
       if (a) t.animate([{ transform: `translate(${a.left - b.left}px,${a.top - b.top}px)` }, { transform: 'none' }], { duration: 650, easing: 'cubic-bezier(.16,1,.3,1)' });
@@ -122,13 +138,15 @@ async function openTracking(id) {
     const t = await getTrackingDetail(id), c = STATUS[t.status][1];
     d.style.setProperty('--c', c);
     const tm = s => s ? new Date(s).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) + ' ET' : '';
-    body.innerHTML = `<div class="k">Live tracking · ${esc(t.id.toUpperCase())}</div><h3>${esc(t.countryName)}</h3>
+    const modeled = t.telemetry === 'none';
+    body.innerHTML = `<div class="k">${modeled ? 'Planned tracking' : 'Live tracking'} · ${esc(t.id.toUpperCase())}</div><h3>${esc(t.countryName)}</h3>
       <p class="dsub">${esc(t.study)} · ${esc(t.kit)}</p>
       <div class="trk-path"><span>${esc(t.origin)}</span><b>${esc(t.currentLocation)}</b><span>${esc(t.destination)}</span><i style="--p:${t.progress * 100}%"></i></div>
-      <dl class="trk-kv"><div><dt>ETA</dt><dd>${t.eta ? fmtDate(t.eta) : 'On hold'}</dd></div><div><dt>Target</dt><dd>${fmtDate(t.targetDelivery)}</dd></div><div><dt>Slack</dt><dd style="color:${t.slackDays < 0 ? 'var(--hot)' : t.slackDays === 0 ? 'var(--warn)' : 'var(--ok)'}">${t.slackDays > 0 ? '+' : ''}${t.slackDays}d</dd></div><div><dt>Temp</dt><dd>${t.temperatureC.toFixed(1)} °C <small>${esc(t.tempRange)}</small></dd></div></dl>
+      <dl class="trk-kv"><div><dt>ETA</dt><dd>${t.eta ? fmtDate(t.eta) : 'On hold'}</dd></div><div><dt>Target</dt><dd>${fmtDate(t.targetDelivery)}</dd></div><div><dt>Slack</dt><dd style="color:${t.slackDays < 0 ? 'var(--hot)' : t.slackDays === 0 ? 'var(--warn)' : 'var(--ok)'}">${t.slackDays > 0 ? '+' : ''}${t.slackDays}d</dd></div><div><dt>Temp</dt><dd>${t.temperatureC == null ? 'No telemetry' : t.temperatureC.toFixed(1) + ' °C'} <small>${esc(t.tempRange)}</small></dd></div></dl>
       <p class="trk-note">${esc(t.statusLabel)} — ${esc(t.note)}</p>
       <ol class="tl">${t.milestones.map(m => `<li class="${m.state}"><i>${MS_ICON[m.state]}</i><div><b>${esc(m.label)}</b><small>${m.state === 'upcoming' ? 'Upcoming' : m.state === 'current' ? 'Current · ' + tm(m.at) : tm(m.at)}</small></div></li>`).join('')}</ol>
-      <p class="syn">Synthetic demo data · updated ${tm(t.updatedAt)}</p>`;
+      ${t.shipBy ? `<p class="trk-note">Safe ship-by ${fmtDate(t.shipBy.safe)} · likely ship-by ${fmtDate(t.shipBy.likely)} · delivery ${fmtDate(t.deliveryRange.best)}–${fmtDate(t.deliveryRange.worst)}</p>` : ''}
+      <p class="syn">${modeled ? `Modeled from plan ${esc(t.currentPlanId)} · ${esc(t.provenance)} inputs · no carrier telemetry` : 'Synthetic demo data'} · updated ${tm(t.updatedAt)}</p>`;
   } catch (err) { body.innerHTML = `<div class="state err">Couldn’t load tracking: ${esc(err.message)}</div>`; }
 }
 

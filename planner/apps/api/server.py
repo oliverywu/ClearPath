@@ -1,4 +1,7 @@
-"""Run: python -m apps.api.server --host 127.0.0.1 --port 8000 --db data/local.sqlite3"""
+"""Run: python -m apps.api.server --host 127.0.0.1 --port 8000 --db data/local.sqlite3 [--integrated]
+
+--integrated serves the unified application API (planner + governed approvals +
+messaging + frontend adapters). Without it, the planner's original API is served."""
 import argparse
 import json
 import logging
@@ -8,8 +11,12 @@ from urllib.parse import urlsplit, parse_qs, unquote
 from .service import Service, APIError
 
 
-def make_server(host='127.0.0.1',port=8000,db_path='data/local.sqlite3',fixture=None):
-    service = Service(db_path,fixture)
+def make_server(host='127.0.0.1',port=8000,db_path='data/local.sqlite3',fixture=None,integrated=False):
+    if integrated:
+        from .integrated import IntegratedService
+        service = IntegratedService(db_path,fixture)
+    else:
+        service = Service(db_path,fixture)
     class Handler(BaseHTTPRequestHandler):
         server_version = 'ClearedForTakeoff/1'
 
@@ -105,15 +112,29 @@ def main():
     parser.add_argument('--port',type=int,default=int(os.getenv('API_PORT','8000')))
     parser.add_argument('--db',default=os.getenv('DATABASE_PATH','data/local.sqlite3'))
     parser.add_argument('--fixture')
+    parser.add_argument('--integrated',action='store_true',default=os.getenv('INTEGRATED','').lower() in ('1','true'))
+    parser.add_argument('--state-dir',default=os.getenv('STATE_DIR','.local'))
     args = parser.parse_args()
-    server = make_server(args.host,args.port,args.db,args.fixture)
-    print(f'Cleared for Takeoff API http://{args.host}:{server.server_port}',flush=True)
+    server = make_server(args.host,args.port,args.db,args.fixture,args.integrated)
+    if args.integrated:
+        os.makedirs(args.state_dir,exist_ok=True)
+        if server.service.start_background(args.state_dir):
+            print('Photon inbound bridge: polling',flush=True)
+    print(f'Cleared for Takeoff API http://{args.host}:{server.server_port}' + (' (integrated)' if args.integrated else ''),flush=True)
+    import signal
+    if hasattr(signal,'SIGTERM'):
+        # Treat a launcher's terminate() like Ctrl+C so the database closes cleanly.
+        def stop(*_):
+            raise KeyboardInterrupt
+        signal.signal(signal.SIGTERM,stop)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
         server.server_close()
+        if hasattr(server.service,'stop_background'):
+            server.service.stop_background()
         server.service.repo.close()
 
 

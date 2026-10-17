@@ -26,6 +26,7 @@ class Repository:
         if str(path) != ':memory:':
             Path(path).parent.mkdir(parents=True, exist_ok=True)
         self.lock = threading.RLock()
+        self._plans = {}
         self.db = sqlite3.connect(str(path), check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.db.execute('PRAGMA foreign_keys=ON')
@@ -53,7 +54,33 @@ class Repository:
         CREATE TRIGGER IF NOT EXISTS immutable_audit_delete BEFORE DELETE ON audit BEGIN SELECT RAISE(ABORT,'Audit is append-only'); END;
         ''')
         self.db.execute('INSERT OR IGNORE INTO migrations VALUES(1,?)', (now(),))
+        # Migration 2: the integrated application. The planner database is the single
+        # authority for proposals, the current-plan pointer, approvals, conversations and
+        # inbound-message dedupe; messaging keeps no authoritative copy of any plan.
+        self.db.executescript('''
+        CREATE TABLE IF NOT EXISTS proposal_options(proposal_id TEXT PRIMARY KEY REFERENCES scenarios(id),
+            event_id TEXT NOT NULL, option_key TEXT NOT NULL, option_number INTEGER NOT NULL,
+            parent_id TEXT, created_at TEXT NOT NULL);
+        CREATE INDEX IF NOT EXISTS proposal_options_event ON proposal_options(event_id, parent_id);
+        CREATE TABLE IF NOT EXISTS decision_requests(idempotency_key TEXT PRIMARY KEY, proposal_id TEXT NOT NULL,
+            action TEXT NOT NULL, actor_id TEXT NOT NULL, result TEXT NOT NULL, created_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS chats(id TEXT PRIMARY KEY, actor_id TEXT NOT NULL, name TEXT NOT NULL,
+            role TEXT NOT NULL, initial TEXT NOT NULL, photon_space_id TEXT UNIQUE, created_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS chat_messages(id TEXT PRIMARY KEY, chat_id TEXT NOT NULL REFERENCES chats(id),
+            sender TEXT NOT NULL CHECK(sender IN ('me','max')), payload TEXT NOT NULL, read INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS inbound_messages(external_id TEXT PRIMARY KEY, chat_id TEXT NOT NULL,
+            message_id TEXT NOT NULL, reply_ids TEXT NOT NULL, created_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS conversations(key TEXT PRIMARY KEY, chat_id TEXT NOT NULL, event_id TEXT NOT NULL,
+            status TEXT NOT NULL, selected_option INTEGER, selected_proposal_id TEXT, approved_proposal_id TEXT,
+            created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS notifications(key TEXT PRIMARY KEY, payload TEXT NOT NULL, result TEXT NOT NULL, created_at TEXT NOT NULL);
+        ''')
+        self.db.execute('INSERT OR IGNORE INTO migrations VALUES(2,?)', (now(),))
         self.db.commit()
+
+    def schema_version(self):
+        return self.db.execute('SELECT MAX(version) FROM migrations').fetchone()[0]
 
     @contextmanager
     def transaction(self):
@@ -92,10 +119,15 @@ class Repository:
         self.audit('scenario.generated', plan['id'], payload={'calculation_version':plan.get('calculation_version'),'input_dataset_id':self.setting('dataset_id')})
 
     def plan(self, key):
-        row = self.db.execute('SELECT * FROM scenarios WHERE id=?', (key,)).fetchone()
-        if not row:
-            raise KeyError('Scenario not found')
-        plan = json.loads(row['payload'])
+        cached = self._plans.get(key)
+        if cached is None:
+            row = self.db.execute('SELECT payload, content_hash FROM scenarios WHERE id=?', (key,)).fetchone()
+            if not row:
+                raise KeyError('Scenario not found')
+            # Scenario rows are immutable (enforced by trigger), so the parsed payload can be cached.
+            cached = self._plans[key] = (row['payload'], row['content_hash'])
+        plan = json.loads(cached[0])
+        row = {'content_hash': cached[1]}
         decision = self.db.execute('SELECT * FROM decisions WHERE scenario_id=? ORDER BY rowid DESC LIMIT 1', (key,)).fetchone()
         plan['status'] = decision['status'] if decision else 'proposed'
         plan['approval'] = dict(decision) if decision else None

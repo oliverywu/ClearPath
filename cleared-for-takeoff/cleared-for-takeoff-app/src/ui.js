@@ -11,7 +11,7 @@ export const errorState = (err, retryId) => `<div class="state err">Couldn’t l
 /** Run an async loader into an element with loading / empty / error states. */
 export async function load(el, fn, render, { emptyMsg = 'Nothing here yet.', label } = {}) {
   el.innerHTML = loading(label);
-  try { const d = await fn(); el.innerHTML = (Array.isArray(d) && !d.length) ? empty(emptyMsg) : ''; if (!(Array.isArray(d) && !d.length)) render(d); return d; }
+  try { const d = await fn(); el.innerHTML = (Array.isArray(d) && !d.length) ? empty(typeof emptyMsg === 'function' ? emptyMsg() : emptyMsg) : ''; if (!(Array.isArray(d) && !d.length)) render(d); return d; }
   catch (e) { console.warn(e); const id = 'r' + Math.random().toString(36).slice(2); el.innerHTML = errorState(e, id); $('#' + id).onclick = () => load(el, fn, render, { emptyMsg, label }); }
 }
 export function burst(x = innerWidth / 2, y = innerHeight / 2) { const w = $('#wipe'); w.style.setProperty('--wx', x + 'px'); w.style.setProperty('--wy', y + 'px'); w.classList.remove('go'); void w.offsetWidth; w.classList.add('go'); }

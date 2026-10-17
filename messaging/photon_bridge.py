@@ -22,7 +22,6 @@ ANTHROPIC_API_KEY.
 
 from __future__ import annotations
 
-import fcntl
 import json
 import os
 import signal
@@ -31,17 +30,40 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
-from dotenv import load_dotenv
+try:  # POSIX advisory lock; Windows falls back to an in-process lock (see poll_once).
+    import fcntl
+except ImportError:  # pragma: no cover - exercised on Windows only
+    fcntl = None
 
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:  # python-dotenv is optional for the integrated app
+    pass
 
-import anthropic
-from photon_api import Photon
-from photon_api.rpc_generated import ListMessagesInput, MarkMessageReadInput, SendMessageInput
+# The Photon and Anthropic SDKs are optional in the integrated application: the
+# unified planner API imports this module only for the inbound bridge, and only when
+# Photon credentials are configured. The standalone bridge still requires both.
+try:
+    import anthropic
+except ImportError:  # pragma: no cover
+    anthropic = None
+try:
+    from photon_api import Photon
+    from photon_api.rpc_generated import ListMessagesInput, MarkMessageReadInput, SendMessageInput
+except ImportError:  # pragma: no cover
+    Photon = ListMessagesInput = MarkMessageReadInput = SendMessageInput = None
 
 import decision_agent
-from agent import answer_question
+
+try:
+    from agent import answer_question
+except ImportError:  # pragma: no cover - agent.py needs the anthropic SDK
+    answer_question = None
 from retrieval import load_regulations
+import threading
+
+_THREAD_LOCK = threading.Lock()
 
 STATE_PATH = Path(__file__).parent / ".photon_bridge_state.json"
 QA_STATE_PATH = Path(__file__).parent / ".qa_context_state.json"
@@ -197,6 +219,7 @@ def poll_once(
     qa_state_path: Path = QA_STATE_PATH,
     roles: Optional[dict] = None,
     lock_path: Path = LOCK_PATH,
+    handler: Optional[Any] = None,
 ) -> dict:
     """Acquire an exclusive, non-blocking lock around one poll cycle.
 
@@ -211,6 +234,15 @@ def poll_once(
     is returned unchanged -- safe, since the message is simply retried by
     whichever instance currently holds the lock.
     """
+    if fcntl is None:  # Windows: serialize polls within this process
+        if not _THREAD_LOCK.acquire(blocking=False):
+            return state
+        try:
+            return _poll_once_locked(client, project_id, regulations, anthropic_client, state,
+                                     conversation_state_path=conversation_state_path, audit_log_path=audit_log_path,
+                                     qa_state_path=qa_state_path, roles=roles, handler=handler)
+        finally:
+            _THREAD_LOCK.release()
     lock_file = open(lock_path, "a+")
     try:
         fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -233,6 +265,7 @@ def poll_once(
             audit_log_path=audit_log_path,
             qa_state_path=qa_state_path,
             roles=roles,
+            handler=handler,
         )
     finally:
         fcntl.flock(lock_file, fcntl.LOCK_UN)
@@ -250,8 +283,15 @@ def _poll_once_locked(
     audit_log_path: Path = decision_agent.AUDIT_LOG_PATH,
     qa_state_path: Path = QA_STATE_PATH,
     roles: Optional[dict] = None,
+    handler: Optional[Any] = None,
 ) -> dict:
     """Fetch new inbound messages, answer each, reply, and return updated state.
+
+    When `handler` is given (the integrated application), every human text message
+    is passed to `handler(space_id, actor_id, text, message_id)` instead of the local
+    decision_agent / Q&A routing below; the handler returns the reply text. The
+    planner-backed handler dedupes on the Photon message id itself, so a replayed
+    message never repeats a decision.
 
     Each human text message is routed one of two ways:
       - If its space has an active (pending) decision conversation, the
@@ -318,6 +358,8 @@ def _poll_once_locked(
         actor_id = _actor_id(message)
 
         try:
+            if handler is not None:
+                answer = handler(space_id, actor_id, text, message.id)
             # Route to decision_agent only when BOTH a conversation exists
             # for this space (any status -- including already resolved, so
             # a duplicate APPROVE or a DETAILS follow-up still reaches
@@ -325,8 +367,10 @@ def _poll_once_locked(
             # falling through to Q&A) AND the reply text actually looks
             # like decision-flow grammar, so an ordinary regulatory
             # question asked later in the same space still falls through.
-            active = decision_agent.find_conversation_for_space(space_id, state_path=conversation_state_path)
-            if active is not None and decision_agent.is_decision_reply(text):
+            active = None if handler is not None else decision_agent.find_conversation_for_space(space_id, state_path=conversation_state_path)
+            if handler is not None:
+                pass
+            elif active is not None and decision_agent.is_decision_reply(text):
                 active_event_id, _convo = active
                 print(f"[photon_bridge] {message.id}: routed to decision_agent (event={active_event_id})", file=sys.stderr)
                 answer = decision_agent.handle_reply(

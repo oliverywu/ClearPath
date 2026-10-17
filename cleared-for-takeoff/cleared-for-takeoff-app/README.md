@@ -1,6 +1,11 @@
 # Cleared for Takeoff — frontend (v5)
 
-Plain HTML/CSS and ES modules. No build step and no dependencies. All data is **sample/mock** data.
+Plain HTML/CSS and ES modules. No build step and no dependencies.
+
+**Integrated app:** start everything from the repository root with `python start.py` (see the root README).
+This server then runs on http://localhost:3000 and proxies every `/api/*` request (except `/api/route-analysis`)
+to the unified planner API (`API_ORIGIN`, default http://127.0.0.1:8000). `USE_MOCK` is false; open with `?mock=1`
+to use the sample JSON in `src/mock/` for isolated frontend work.
 
 ## Run
 For live route analysis, run the included Node backend (Node 18+):
@@ -9,7 +14,7 @@ cd cleared-for-takeoff/cleared-for-takeoff-app
 cp .env.example .env.local
 # Put the rotated key in .env.local, then run:
 npm start
-# open http://localhost:8000
+# open http://localhost:3000  (the planner API must be running; see the root README)
 ```
 The key is read only by the backend from `.env.local` or its environment; it is never sent to the browser. `.env.local` is git-ignored. Enable Google Routes API and restrict the key in Google Cloud. `GDACS_EVENTS_URL`, `DISASTER_MAX_AGE_DAYS`, and `PORT` can also be set as environment variables. The default GDACS source is its recent-events GeoJSON endpoint. The older static preview can still be served with `python3 -m http.server 8000`, but route analysis requires the Node server.
 Debug flags: `?fail=1` makes every API call fail (error states), and `?empty=1` makes every list come back empty (empty states).
