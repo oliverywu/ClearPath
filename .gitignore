@@ -1,0 +1,7 @@
+.DS_Store
+.env
+.local/
+__pycache__/
+messaging/.conversation_state.json
+messaging/.notification_manager_state.json
+messaging/.photon_bridge_state.json
