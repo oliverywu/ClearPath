@@ -7,6 +7,28 @@ from datetime import datetime, timezone
 from typing import Protocol
 from urllib.request import Request, urlopen
 from .formulas import effective_transit
+from . import logistics
+
+# Shipment outlook features: the facts the messaging agent is allowed to state.
+OUTLOOK_OUTPUTS = ('delivery_best_at','delivery_likely_at','delivery_worst_at','ship_by_likely','ship_by_safe','worst_case_slack_days','agent_answer')
+
+
+def outlook_inputs(shipment, features):
+    """Primitive query inputs for the outlook; None when the plan predates them."""
+    keys = ('dispatch_date','planning_date','leg_ranges_json','country_name')
+    if any(not features.get(key) for key in keys):
+        return None
+    return {'dispatch_date':features['dispatch_date'],'planning_date':features['planning_date'],'target_delivery':shipment['target_delivery'],
+            'leg_ranges_json':features['leg_ranges_json'],'disruption_delay_days':features.get('disruption_delay_days',0),
+            'holidays_json':json.dumps(features.get('calendar_holidays',[])),'country_name':features['country_name'],
+            'gateway_airport':features.get('gateway_airport',''),'customs_source':features.get('customs_source','demo estimate')}
+
+
+def local_outlook(inputs):
+    values = logistics.outlook(inputs['dispatch_date'],inputs['target_delivery'],inputs['leg_ranges_json'],inputs['disruption_delay_days'],inputs['holidays_json'])
+    values['agent_answer'] = logistics.agent_answer(inputs['country_name'],inputs['planning_date'],inputs['dispatch_date'],inputs['target_delivery'],
+                                                    inputs['gateway_airport'],inputs['customs_source'],inputs['leg_ranges_json'],inputs['disruption_delay_days'],inputs['holidays_json'])
+    return values
 
 
 class FeatureProvider(Protocol):
@@ -21,6 +43,10 @@ class LocalFeatureProvider:
         features.update({k:shipment[k] for k in ('slack_days','risk_score','risk_band','projected_delivery') if k in shipment})
         features['projected_delivery_at'] = shipment['projected_delivery']
         features['effective_transit_days'] = effective_transit(features.get('baseline_transit_days',0),features.get('disruption_delay_days',0),features.get('customs_buffer_days',0))
+        inputs = outlook_inputs(shipment,features)
+        if inputs:
+            features.update(local_outlook(inputs))
+            features['outlook_source'] = 'local'
         return {'features':features,'provider':'local','as_of':as_of,'calculation_version':'cft-features-1','fallback_reason':None}
 
     def enrich(self, plan):
@@ -82,18 +108,29 @@ class ChalkFeatureProvider(LocalFeatureProvider):
                       'shipment.ready_date':shipment['milestones'][0]['projected_date'],'shipment.duration_days_json':json.dumps([m['duration_days'] for m in shipment['milestones']]),'shipment.holidays_json':json.dumps(f.get('calendar_holidays',[])),
                       'shipment.target_delivery':shipment['target_delivery'],'shipment.constraint_blocked':bool(f.get('unresolved_requirement_count') or not f.get('temperature_compatible',True) or not f.get('label_ready',True) or shipment.get('route_id')=='missing'),
                       'shipment.synthetic_count':f.get('synthetic_count',0),'shipment.risk_model_json':json.dumps(f['risk_model']),'shipment.low_slack_days':f.get('low_slack_days',3)}
-            response = self._post(self.query_server + '/v1/query/online',{'inputs':inputs,'outputs':self.outputs},self.token)
+            outputs = list(self.outputs)
+            extra = outlook_inputs(shipment,f)
+            if extra:
+                # One query returns the schedule features and the outlook facts the agent may state.
+                inputs.update({'shipment.'+key:value for key,value in extra.items() if key not in ('target_delivery','disruption_delay_days','holidays_json')})
+                outputs += ['shipment.'+key for key in OUTLOOK_OUTPUTS]
+            response = self._post(self.query_server + '/v1/query/online',{'inputs':inputs,'outputs':outputs},self.token)
             if response.get('errors'):
                 raise ValueError('Chalk query returned feature errors')
             data = response.get('data',[])
             values = {item['field']:item.get('value') for item in data} if isinstance(data,list) else data
-            if any(key not in values or values[key] is None for key in self.outputs):
+            if any(key not in values or values[key] is None for key in outputs):
                 raise ValueError('Incomplete Chalk feature response')
-            # Parity is a safety invariant: different deployed resolver versions cannot change approval inputs.
+            # Parity is a safety invariant: different deployed resolver versions cannot change approval inputs
+            # or the dates the agent tells people.
             expected = {'shipment.'+key:f[key] for key in ('effective_transit_days','risk_score','risk_band','projected_delivery_at','slack_days')}
-            if any(values[key] != expected[key] for key in self.outputs):
+            if extra:
+                expected.update({'shipment.'+key:f[key] for key in OUTLOOK_OUTPUTS})
+            if any(values[key] != expected[key] for key in outputs):
                 raise ValueError('Chalk/local feature parity mismatch')
-            local['features'].update({key.split('.',1)[1]:values[key] for key in self.outputs})
+            local['features'].update({key.split('.',1)[1]:values[key] for key in outputs})
+            if extra:
+                local['features']['outlook_source'] = 'chalk'
             return {**local,'provider':'chalk','query_id':response.get('meta',{}).get('query_id')}
         except Exception as exc:
             # Never leak service response bodies, credentials, or request headers into diagnostics.

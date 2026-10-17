@@ -448,6 +448,11 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(proposal['trigger_event_id'],event['id'])
 
 
+import importlib.util as _ilu
+_spec = _ilu.spec_from_file_location('chalk_logistics', Path(__file__).resolve().parents[2] / 'chalk' / 'logistics_formulas.py')
+chalk_logistics = _ilu.module_from_spec(_spec); _spec.loader.exec_module(chalk_logistics)
+
+
 class ProviderTests(unittest.TestCase):
     def setUp(self):
         self.service = Service(':memory:')
@@ -465,11 +470,19 @@ class ProviderTests(unittest.TestCase):
             projected = projected_delivery(f['ready_date'],f['duration_days_json'],f['holidays_json'])
             slack = delivery_slack(projected,f['target_delivery'],f['holidays_json'])
             values = {'projected_delivery_at':projected,'slack_days':slack,'effective_transit_days':effective_transit(f['baseline_transit_days'],f['disruption_delay_days'],f['customs_buffer_days']),'risk_score':risk_score(slack,f['constraint_blocked'],f['synthetic_count'],f['risk_model_json']),'risk_band':risk_band(slack,f['constraint_blocked'],f['low_slack_days'])}
+            if 'dispatch_date' in f:
+                # Simulates the deployed outlook resolvers, using the deployment copy of the formulas.
+                values.update(chalk_logistics.outlook(f['dispatch_date'],f['target_delivery'],f['leg_ranges_json'],f['disruption_delay_days'],f['holidays_json']))
+                values['agent_answer'] = chalk_logistics.agent_answer(f['country_name'],f['planning_date'],f['dispatch_date'],f['target_delivery'],f['gateway_airport'],f['customs_source'],f['leg_ranges_json'],f['disruption_delay_days'],f['holidays_json'])
             return {'data':[{'field':'shipment.'+k,'value':v} for k,v in values.items()],'meta':{'query_id':'test-query'}}
         with patch.object(provider,'authenticate'), patch.object(provider,'_post',side_effect=remote):
             result = provider.shipment(self.shipment,'2026-10-17')
         self.assertEqual(result['provider'],'chalk')
-        self.assertEqual(result['features'],LocalFeatureProvider().shipment(self.shipment,'2026-10-17')['features'])
+        self.assertEqual(result['features'].pop('outlook_source'),'chalk')
+        local = LocalFeatureProvider().shipment(self.shipment,'2026-10-17')['features']
+        self.assertEqual(local.pop('outlook_source'),'local')
+        self.assertEqual(result['features'],local)
+        self.assertIn('dispatch by',result['features']['agent_answer'])
 
     def test_chalk_failure_explicit_local_fallback(self):
         provider = ChalkFeatureProvider()

@@ -11,3 +11,9 @@ Official references used: [Online queries](https://docs.chalk.ai/docs/query-onli
 ## Agent Evals
 
 The repository's `evals/gold.json` contains planner, extraction, change-analysis, citation, and abstention cases. Run `python evals/run.py` from the repository root for the credential-free score. In Chalk Agent Evals, upload the same JSON, use `kind` for evaluation slices, reproduce the pass/fail fields as scorers, and attach the current Git commit as run metadata. This makes the hosted evaluation directly comparable to the local regression report.
+
+## Shipment outlook (agent facts)
+
+`shipment_outlook` and `shipment_agent_answer` in `resolvers.py` turn planner inputs (dispatch date, best/likely/worst leg ranges, holidays, gateway airport, customs source) into best/likely/worst delivery dates, likely and safe ship-by dates, worst-case slack, and the one sentence the Photon agent may say about a shipment's timing. The app requests them in the same online query as the schedule features and checks every value against its own calculation before the agent uses it; on any mismatch or outage the agent falls back to the local calculation and says so.
+
+`logistics_formulas.py` is a byte-identical copy of `packages/feature_provider/logistics.py`, so the deployment stays self-contained. After changing the formulas, copy the file again; `tests/unit/test_chalk_outlook.py` fails until the copies match. `python evals/run.py` includes `ship_by_accuracy` cases that ask the agent about every country and require each answer to state the planner's own dates.
