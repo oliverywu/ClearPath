@@ -46,6 +46,22 @@ flowchart LR
 
 The implementation covers AI-assisted candidate extraction and semantic source-change analysis, validated structured inputs, deterministic what-if simulation, planning, comparison, approval, audit, calendar export, and Photon 2.0 alerts/follow-up. AI and Photon are optional and fail safely when they are not configured. A credentialed live-provider smoke test remains before the demo. Detailed product decisions and the prioritized work list are in [`PLANNING_NOTES.txt`](PLANNING_NOTES.txt).
 
+## Operating workflow
+
+```mermaid
+flowchart TD
+    R["Review country requirements<br/>and source evidence"] --> P["Recalculate supply plan<br/>creates a proposal"]
+    P --> C["See what changed<br/>against the current plan"]
+    C --> D{"Human decision"}
+    D -->|Use as current plan| A["Current working plan"]
+    D -->|Keep current plan| A
+    A --> E["Potential disruption occurs<br/>regulatory or logistics"]
+    E --> I["Calculate impact<br/>creates another proposal"]
+    I --> C
+```
+
+The loop repeats whenever requirements, routes, or operating conditions change. Calculation never changes the current plan by itself: every proposal returns to **See what changed** and a named person chooses **Use as current plan** or **Keep current plan**.
+
 ## Start
 
 Prerequisite: **Python 3.11+**. No runtime package installation, Docker, cloud service, model key, Chalk or Photon credentials are needed. The Windows launcher also detects Codex's bundled Python.

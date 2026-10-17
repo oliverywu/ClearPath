@@ -14,6 +14,14 @@ The Requirements screen shows every dated record, including review-gated candida
 
 The browser presents the scenario data model in operational language: **Plans & decisions**, **Potential disruptions**, **Calculate impact**, **See what changed**, **Use as current plan**, and **Keep current plan**. These labels do not alter immutable scenario or decision API contracts. Readability styling uses larger minimum text and control sizes, darker semantic colors, explicit action hierarchy, and visible keyboard focus indicators.
 
+## Operating loop
+
+Requirements and reviewed evidence feed a deterministic plan calculation. The result is always a proposal, which is compared with the current working plan before a named human either adopts it or keeps the existing plan. When a regulatory or logistics disruption occurs, impact analysis produces another immutable proposal and returns to the same comparison and decision gate. The loop is therefore:
+
+`Requirements → Recalculate supply plan → See what changed → Human decision → Current plan → Potential disruption → Calculate impact → See what changed → Human decision`
+
+Neither initial calculation nor disruption analysis mutates the current plan. Only the recorded **Use as current plan** decision changes which immutable plan is current.
+
 `packages/research` implements the optional AI research layer between source collection and human evidence review. It uses the OpenAI Responses API with strict JSON Schema output and storage disabled. Requirement extraction is normalized with registered source metadata, checked for a verbatim quotation in the saved snapshot, validated against the domain schema, and forced to `needs_review`. Invalid or unsupported candidates are returned as errors and cannot enter an import preview.
 
 Semantic change analysis compares the newest two immutable snapshots for one jurisdiction. The saved analysis includes the raw unified diff, exact before/after citations, proposed materiality, affected jurisdictions, likely requirement keys, ambiguity note, and normalized event. It remains a preview until a named reviewer records a confirmation note. Only the confirmed event can enter the deterministic planner. Provider failures create neither rules nor events.

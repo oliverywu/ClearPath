@@ -18,6 +18,13 @@ Cleared for Takeoff has two complementary parts:
 Photon is the coordination surface. It should deliver important scenario alerts and let users ask follow-up questions, but it must not become the system of record or bypass approval controls.
 
 
+OPERATING LOOP
+
+Requirements → Recalculate supply plan → See what changed → named human chooses Use as current plan or Keep current plan → a regulatory/logistics disruption occurs → Calculate impact → See what changed → named human decides again.
+
+Every calculation produces an immutable proposal. Only a named Use as current plan decision changes the current working plan; the same comparison and decision gate repeats after every disruption.
+
+
 IMPLEMENTED FOUNDATION
 
 - Data-driven 24-country synthetic trial plus a disjoint replacement dataset.
