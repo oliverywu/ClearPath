@@ -14,6 +14,9 @@ export function estimatePosition({ shipment, points, cum, durationSec, now = Dat
     if (n.distanceKm > 5) note = `GPS fix is ${n.distanceKm.toFixed(1)} km off the planned route.`;
   } else if (demo) {
     progress = ((now / 1000) % demoCycleSec) / demoCycleSec; traveledKm = progress * totalKm; mode = 'demo'; label = 'Demo · simulated movement';
+  } else if (Number.isFinite(shipment.progressOverride)) {
+    progress = Math.max(0, Math.min(1, shipment.progressOverride)); traveledKm = progress * totalKm; mode = 'estimated'; label = 'Estimated position';
+    note = 'No live GPS feed; position estimated from the latest tracking milestone.';
   } else if (Number.isFinite(dep) && Number.isFinite(eta) && eta > dep) {
     progress = Math.max(0, Math.min(1, (now - dep) / (eta - dep))); traveledKm = progress * totalKm; mode = 'estimated'; label = 'Estimated position';
     note = gps ? 'Last GPS fix is too old; position estimated from departure and ETA.' : 'No live GPS feed; position estimated from departure and ETA.';

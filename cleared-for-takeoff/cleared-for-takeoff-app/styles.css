@@ -451,4 +451,4 @@ body.drawer-open .drawer{transform:none}body.drawer-open .scrim{opacity:1}
 .ipop{position:absolute;right:12px;top:46px;width:min(280px,70%);padding:12px 14px;border-radius:14px;background:rgba(12,12,16,.94);border:1px solid rgba(255,157,69,.35);font-size:11px;z-index:4}
 .ipop[hidden]{display:none}.ipop dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:8px 0}.ipop dt{color:var(--mute)}.ipop .note{color:var(--mute);font-size:10px}.ipop .dx{position:absolute;right:8px;top:4px;font-size:16px}
 .itrk{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;border:2.5px solid #5fe0a8;background:rgba(95,224,168,.25);box-shadow:0 0 14px #5fe0a8}.itrk.est{border-style:dashed}
-.ti2.live{border-style:dashed}
+.ti2 .ldot{display:inline-block;width:5px;height:5px;margin-left:6px;border-radius:50%;background:var(--ok);vertical-align:middle;text-decoration:none}

@@ -1,10 +1,10 @@
 // Orchestrates route → position → NASA FIRMS → risk → warnings → Photon notifications for each shipment.
-import { cumulativeKm, bbox, simplify, sliceRoute } from './geo.js';
+import { cumulativeKm, chunkBoxes, simplify, sliceRoute, greatCircle } from './geo.js';
 import { getFires } from './firms.js';
 import { analyzeFires, compareAlternatives, riskRank } from './fire-analysis.js';
 import { estimatePosition } from './tracking.js';
 import { computeRoutes as googleRoutes } from './google-routes.js';
-import { sendPhotonText, buildAlertText, photonConfig } from './photon.js';
+import { sendPhotonText, buildAlertText, photonConfig, photonProblems, spaceProblem } from './photon.js';
 import { IntelStore } from './store.js';
 const SEVERITY = { high: 'high', medium: 'medium', low: 'low' };
 
@@ -19,6 +19,11 @@ export class FireMonitor {
   async route(s) {
     const hit = this.routeCache.get(s.id);
     if (hit && this.now() - hit.at < 30 * 60_000) return hit.route;
+    if (s.pathMode === 'geodesic') {
+      const points = greatCircle(s.coords.origin, s.coords.destination, 160), km = cumulativeKm(points).at(-1);
+      const route = { points, distanceMeters: Math.round(km * 1000), durationSec: Math.round(km / 800 * 3600), estimatedPath: true };
+      this.routeCache.set(s.id, { at: this.now(), route }); return route;
+    }
     const [route] = await this.computeRoutes({ origin: s.originAddress || s.origin, destination: s.destinationAddress || s.destination, intermediates: (s.stops || []).filter(x => x.via).map(x => ({ lat: x.lat, lng: x.lng })) });
     this.routeCache.set(s.id, { at: this.now(), route }); return route;
   }
@@ -27,7 +32,19 @@ export class FireMonitor {
     const dep = this.bootAt - (s.schedule.departedHoursAgo || 0) * 3600_000;
     return { departedAt: new Date(dep).toISOString(), eta: new Date(dep + route.durationSec * 1000 + (s.schedule.bufferMinutes || 0) * 60_000).toISOString(), scheduleNote: 'Demo schedule: departure anchored to server start.' };
   }
+  async firesAlong(points, now) {
+    const boxes = chunkBoxes(points, this.corridorKm + 5), parts = [];
+    for (const b of boxes) parts.push(await this.getFires(b, { days: this.firmsDays, now }));
+    if (parts.length === 1) return parts[0];
+    const seen = new Set(), fires = [];
+    parts.forEach(p => p.fires.forEach(f => { if (!seen.has(f.id)) { seen.add(f.id); fires.push(f); } }));
+    const st = parts.map(p => p.status), errors = parts.flatMap(p => p.errors || []);
+    const status = st.includes('no_key') ? 'no_key' : st.every(x => x === 'error') ? 'error' : st.includes('ok') ? 'ok' : st.includes('stale') ? 'stale' : st.includes('error') && !fires.length ? 'error' : 'empty';
+    const newest = fires.reduce((m, f) => f.observedAt && f.observedAt > m ? f.observedAt : m, '') || null;
+    return { ...parts[0], status, fires, errors, newestObservation: newest, boxes: boxes.length, message: parts.find(p => p.status === status)?.message || null };
+  }
   async alternatives(s, event, fires, eta) {
+    if (s.pathMode === 'geodesic') return { available: false, revisedEta: null, delayMinutes: null, reason: 'Estimated air/sea leg: no road alternative available.' };
     const k = `${s.id}|${event.id}`, hit = this.altCache.get(k);
     if (hit && this.now() - hit.at < 30 * 60_000) return hit.value;
     let value;
@@ -44,7 +61,9 @@ export class FireMonitor {
     for (const c of this.recipients(s)) {
       const dedupeKey = `${w.key}|${kind}|${w.risk}|${c.id}`;
       const prev = this.store.findNotification(dedupeKey);
-      if (prev && (prev.status !== 'failed' || prev.attempts >= 3)) { out.push(prev); continue; } // dedupe
+      const nowValid = !photonProblems(cfg).length && !spaceProblem(c.spaceId);
+      const retry = prev && ((prev.status === 'failed' && prev.attempts < 3) || (prev.status === 'drafted' && nowValid));
+      if (prev && !retry) { out.push(prev); continue; } // dedupe
       const text = buildAlertText({ shipment: s, warning: w, kind });
       const res = await sendPhotonText({ config: cfg, spaceId: c.spaceId, text, idempotencyKey: dedupeKey.replace(/[^\x21-\x7e]/g, '_').slice(0, 255), fetchImpl: this.fetchImpl });
       const at = new Date(this.now()).toISOString();
@@ -59,8 +78,7 @@ export class FireMonitor {
     const sched = this.schedule(s, route), sx = { ...s, ...sched };
     const cum = cumulativeKm(route.points);
     const tracker = estimatePosition({ shipment: sx, points: route.points, cum, durationSec: route.durationSec, now, demo });
-    const box = bbox(route.points, this.corridorKm + 5);
-    const firms = await this.getFires(box, { days: this.firmsDays, now });
+    const firms = await this.firesAlong(route.points, now);
     const usable = firms.status === 'ok' || firms.status === 'empty';
     const analysis = analyzeFires({ points: route.points, cum, fires: firms.fires, corridorKm: this.corridorKm, traveledKm: tracker.traveledKm, stops: tracker.stops, now });
     const relevant = usable ? analysis.events.filter(e => riskRank(e.risk) >= 2 && !e.outdated) : [];
@@ -70,7 +88,7 @@ export class FireMonitor {
       const key = `${s.id}|${e.id}`; active.add(key);
       const impact = alt.revisedEta && alt.delayMinutes > 0 ? `Potential delay of about ${alt.delayMinutes} min if rerouted around the area.` : alt.primaryAvoids ? 'Route stays clear of the detection; no delay expected.' : 'Shipment may be affected; delay unconfirmed.';
       const data = {
-        id: `fw-${s.id}-${e.id}`, kind: 'fire', shipmentId: s.id, countryName: s.id, requirement: 'Route fire review', study: s.study || s.product || 'Shipment', shipmentsAffected: 1,
+        id: `fw-${s.id}-${e.id}`, kind: 'fire', shipmentId: s.id, countryName: s.label || s.id, requirement: 'Route fire review', study: s.study || s.product || 'Shipment', shipmentsAffected: 1,
         severity: SEVERITY[e.risk], risk: e.risk, confirmation: 'potential',
         summary: `NASA FIRMS fire detection ${e.distanceKm.toFixed(1)} km from the planned route ${e.segment.label}. Potential disruption; not a confirmed road closure.`,
         recommendedAction: alt.available && !alt.primaryAvoids ? `Consider the alternative route (+${alt.delayMinutes} min) and confirm road status with DOT/511 traffic data.` : 'Monitor; confirm road status with DOT/511 traffic data before rerouting.',
@@ -88,8 +106,8 @@ export class FireMonitor {
     this.store.save();
     const warnings = this.store.list().filter(w => w.shipmentId === s.id);
     const result = {
-      shipment: { id: s.id, product: s.product, study: s.study, origin: s.origin, destination: s.destination, departedAt: sched.departedAt, eta: sched.eta, scheduleNote: sched.scheduleNote, contacts: this.recipients(s).map(c => ({ name: c.name, role: c.role, hasRecipient: !!c.spaceId })) },
-      route: { distanceMeters: route.distanceMeters, durationSec: route.durationSec, origin: route.points[0], destination: route.points[route.points.length - 1], traveled: simplify(sliceRoute(route.points, cum, 0, tracker.traveledKm), 250), remaining: simplify(sliceRoute(route.points, cum, tracker.traveledKm, cum[cum.length - 1]), 250) },
+      shipment: { id: s.id, label: s.label || s.id, pathMode: s.pathMode || 'road', milestones: s.milestones || null, product: s.product, study: s.study, origin: s.origin, destination: s.destination, departedAt: sched.departedAt, eta: sched.eta, scheduleNote: sched.scheduleNote, contacts: this.recipients(s).map(c => ({ name: c.name, role: c.role, hasRecipient: !!c.spaceId })) },
+      route: { estimatedPath: !!route.estimatedPath, distanceMeters: route.distanceMeters, durationSec: route.durationSec, origin: route.points[0], destination: route.points[route.points.length - 1], traveled: simplify(sliceRoute(route.points, cum, 0, tracker.traveledKm), 250), remaining: simplify(sliceRoute(route.points, cum, tracker.traveledKm, cum[cum.length - 1]), 250) },
       tracker,
       firms: { status: firms.status, message: firms.message || null, fetchedAt: firms.fetchedAt, newestObservation: firms.newestObservation, errors: firms.errors, sources: firms.sources, days: firms.days, corridorKm: this.corridorKm, detectionsInBox: firms.fires.length, ignoredFar: analysis.ignoredFar, ignoredOutdated: analysis.ignoredOutdated },
       fires: analysis.fires.map(f => ({ id: f.id, lat: f.lat, lng: f.lng, distanceKm: f.distanceKm, alongKm: f.alongKm, observedAt: f.observedAt, confidence: f.confidence, frpMW: f.frpMW, satellite: f.satellite, instrument: f.instrument, source: f.source, daynight: f.daynight, risk: f.risk, ahead: f.ahead, outdated: f.outdated })),

@@ -76,3 +76,29 @@ export function simplify(points, max = 400) {
   for (let i = 0; i < max; i++) out.push(points[Math.round(i * step)]);
   return out;
 }
+
+/** Great-circle path a→b with n segments (longitudes normalized to [-180,180]). */
+export function greatCircle(a, b, n = 128) {
+  const r = Math.PI / 180, φ1 = a.lat * r, λ1 = a.lng * r, φ2 = b.lat * r, λ2 = b.lng * r;
+  const d = 2 * Math.asin(Math.sqrt(Math.sin((φ2 - φ1) / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin((λ2 - λ1) / 2) ** 2));
+  if (!d) return [a, b];
+  const out = [];
+  for (let i = 0; i <= n; i++) {
+    const f = i / n, A = Math.sin((1 - f) * d) / Math.sin(d), B = Math.sin(f * d) / Math.sin(d);
+    const x = A * Math.cos(φ1) * Math.cos(λ1) + B * Math.cos(φ2) * Math.cos(λ2), y = A * Math.cos(φ1) * Math.sin(λ1) + B * Math.cos(φ2) * Math.sin(λ2), z = A * Math.sin(φ1) + B * Math.sin(φ2);
+    out.push({ lat: +(Math.atan2(z, Math.hypot(x, y)) / r).toFixed(5), lng: +(Math.atan2(y, x) / r).toFixed(5) });
+  }
+  return out;
+}
+/** Split a long path into padded bboxes of ~maxKm each, breaking at the antimeridian. */
+export function chunkBoxes(points, padKm = 30, maxKm = 1000) {
+  const boxes = []; let cur = [points[0]], len = 0;
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i];
+    if (Math.abs(b.lng - a.lng) > 180) { boxes.push(bbox(cur, padKm)); cur = [b]; len = 0; continue; }
+    cur.push(b); len += pointDistanceKm(a, b);
+    if (len >= maxKm) { boxes.push(bbox(cur, padKm)); cur = [b]; len = 0; }
+  }
+  if (cur.length) boxes.push(bbox(cur, padKm));
+  return boxes;
+}

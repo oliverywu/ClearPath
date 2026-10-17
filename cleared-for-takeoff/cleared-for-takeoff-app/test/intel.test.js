@@ -7,8 +7,11 @@ import { estimatePosition } from '../lib/tracking.js';
 import { cumulativeKm } from '../lib/geo.js';
 import { FireMonitor } from '../lib/monitor.js';
 import { IntelStore } from '../lib/store.js';
-import { sendPhotonText } from '../lib/photon.js';
+import { sendPhotonText, photonProblems } from '../lib/photon.js';
+import { greatCircle, chunkBoxes } from '../lib/geo.js';
+import { loadShipments } from '../lib/intel-routes.js';
 
+const PRJ = 'pho_prj_00000000000000000000000001', USR = 'pho_usr_00000000000000000000000001', SPC = 'pho_spc_00000000000000000000000001';
 const NOW = Date.parse('2026-10-17T20:00:00Z');
 // Straight north-south route along -75.64 from 40.5 to 43.5 (~333 km).
 const ROUTE = Array.from({ length: 31 }, (_, i) => ({ lat: 40.5 + i * 0.1, lng: -75.64 }));
@@ -139,9 +142,46 @@ test('Photon failed delivery is recorded as failed and retried at most 3 times',
 
 test('Photon request uses the documented endpoint, headers and body', async () => {
   let seen;
-  const res = await sendPhotonText({ config: { ...{ apiKey: 'pho_sk_x', projectId: 'pho_prj_1', senderId: 'pho_usr_1', base: 'https://api.photon.codes' } }, spaceId: 'pho_spc_1', text: 'hi', idempotencyKey: 'abc', fetchImpl: async (url, opts) => { seen = { url, opts }; return new Response('{"id":"pho_msg_1","status":"dispatched"}', { status: 202 }); } });
-  assert.equal(seen.url, 'https://api.photon.codes/v1/projects/pho_prj_1/messages');
+  const res = await sendPhotonText({ config: { ...{ apiKey: 'pho_sk_x', projectId: PRJ, senderId: USR, base: 'https://api.photon.codes' } }, spaceId: SPC, text: 'hi', idempotencyKey: 'abc', fetchImpl: async (url, opts) => { seen = { url, opts }; return new Response('{"id":"pho_msg_1","status":"dispatched"}', { status: 202 }); } });
+  assert.equal(seen.url, `https://api.photon.codes/v1/projects/${PRJ}/messages`);
   assert.equal(seen.opts.headers.Authorization, 'Bearer pho_sk_x'); assert.equal(seen.opts.headers['idempotency-key'], 'abc');
-  assert.deepEqual(JSON.parse(seen.opts.body), { senderId: 'pho_usr_1', spaceId: 'pho_spc_1', content: { type: 'text', format: 'plain', text: 'hi' } });
+  assert.deepEqual(JSON.parse(seen.opts.body), { senderId: USR, spaceId: SPC, content: { type: 'text', format: 'plain', text: 'hi' } });
   assert.equal(res.status, 'submitted'); assert.equal(res.photonMessageId, 'pho_msg_1');
+});
+
+test('placeholder / wrong-prefix Photon values are treated as not configured', async () => {
+  const bad = { apiKey: 'sk_live_abc', projectId: PRJ, senderId: 'pho_org_00000000000000000000000001' };
+  const p = photonProblems(bad);
+  assert.ok(p.some(x => /pho_sk_/.test(x))); assert.ok(p.some(x => /pho_usr_.*pho_org_/.test(x)));
+  assert.ok(!p.join(' ').includes('abc'), 'never echoes secret values');
+  let called = false;
+  const r = await sendPhotonText({ config: { ...bad, apiKey: 'pho_sk_ok' , senderId: USR }, spaceId: 'pho_spc_xxxxxxxx', text: 't', idempotencyKey: 'k', fetchImpl: async () => { called = true; } });
+  assert.equal(r.status, 'drafted'); assert.match(r.reason, /placeholder/); assert.equal(called, false);
+});
+
+test('drafted alert is sent once Photon config becomes valid, then deduped', async () => {
+  const env = { ...PHOTON_ENV, PHOTON_SENDER_ID: 'pho_org_00000000000000000000000001' };
+  const { m, calls } = monitorWith({ env });
+  const a = await m.run('RX-1042');
+  assert.equal(a.warnings[0].notifications[0].status, 'drafted'); assert.equal(calls.photon, 0);
+  env.PHOTON_SENDER_ID = USR; m.store.list()[0].risk = 'medium'; // force a change cycle
+  await m.run('RX-1042');
+  assert.equal(calls.photon, 1);
+  await m.run('RX-1042'); assert.equal(calls.photon, 1);
+});
+
+test('overseas shipment uses an estimated great-circle path with FIRMS checks per chunk', async () => {
+  const gc = greatCircle({ lat: 42.36, lng: -71.01 }, { lat: 35.77, lng: 140.39 }, 160);
+  assert.ok(gc.some((p, i) => i && Math.abs(p.lng - gc[i - 1].lng) > 180), 'crosses antimeridian');
+  const boxes = chunkBoxes(gc, 30);
+  assert.ok(boxes.length > 5 && boxes.every(b => b[0] <= b[2]));
+  const ships = loadShipments(new URL('..', import.meta.url).pathname);
+  const jp = ships.find(s => s.id === 'shp-001');
+  assert.equal(jp.pathMode, 'geodesic'); assert.ok(ships.find(s => s.id === 'RX-1042'));
+  let boxCalls = 0;
+  const mon = new FireMonitor({ shipments: [jp], store: new IntelStore(), env: {}, now: () => NOW, computeRoutes: async () => { throw new Error('should not call Google'); },
+    getFiresImpl: async () => { boxCalls++; return { status: 'empty', fires: [], errors: [], sources: [], days: 2 }; } });
+  const out = await mon.run('shp-001');
+  assert.equal(out.route.estimatedPath, true); assert.equal(out.tracker.label, 'Estimated position'); assert.equal(out.tracker.progress, 0.62);
+  assert.equal(boxCalls, boxes.length); assert.equal(out.firms.status, 'empty'); assert.equal(out.shipment.label, 'Japan');
 });

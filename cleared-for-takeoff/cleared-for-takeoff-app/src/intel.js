@@ -10,13 +10,18 @@ const dur = s => { if (s == null) return '—'; const h = Math.floor(s / 3600), 
 const FIRMS_MSG = { ok: 'NASA FIRMS live', empty: 'NASA FIRMS: no detections in area', stale: 'NASA FIRMS data outdated', no_key: 'NASA FIRMS key not set', error: 'NASA FIRMS unavailable' };
 let state = { id: null, demo: false, timer: null, view: null };
 
-/** Append live shipments to the tracking list; clicking one opens the intel panel over the map. */
+const card = s => `<button class="ti2" role="listitem" data-id="${esc(s.id)}" style="--c:${STATUS_C[s.status] || 'var(--ok)'}"><i></i><span><b>${esc(s.label)}<s class="ldot" title="Live route view"></s></b><small>${esc(s.statusLabel || `${s.origin} → ${s.destination}`)}</small></span><em>${s.slackDays ?? '—'}d</em></button>`;
+const STATUS_C = { on_track: 'var(--ok)', at_risk: 'var(--warn)', blocked: 'var(--hot)', no_shipment: 'var(--none)' };
+/** Every shipment card in the tracking list opens the route/progress/fire panel over the map. */
 export async function attachLiveShipments() {
   const list = await getLiveShipments().catch(() => []);
   const tl = $('#tlist'); if (!list.length || !tl) return;
-  tl.insertAdjacentHTML('afterbegin', list.map(s => `<button class="ti2 live" role="listitem" data-live="${esc(s.id)}" style="--c:${C.tracker}"><i></i><span><b>${esc(s.id)}</b><small>${esc(s.origin.split(',')[0])} → ${esc(s.destination.split(',')[0])}</small></span><em>live</em></button>`).join(''));
-  $$('#tlist [data-live]').forEach(b => b.onclick = () => { $$('#tlist .ti2').forEach(x => x.classList.toggle('sel', x === b)); open(b.dataset.live); });
-  $$('#tlist .ti2:not([data-live])').forEach(b => b.addEventListener('click', close));
+  const have = new Set($$('#tlist .ti2').map(b => b.dataset.id));
+  tl.insertAdjacentHTML('afterbegin', list.filter(s => !have.has(s.id)).map(card).join(''));
+  const ids = new Set(list.map(s => s.id));
+  $$('#tlist .ti2').forEach(b => { if (!ids.has(b.dataset.id)) return;
+    if (!b.querySelector('.ldot')) b.querySelector('b')?.insertAdjacentHTML('beforeend', '<s class="ldot" title="Live route view"></s>');
+    b.onclick = () => { $$('#tlist .ti2').forEach(x => x.classList.toggle('sel', x === b)); open(b.dataset.id); }; });
 }
 function shell() {
   let el = $('#intel');
@@ -39,9 +44,10 @@ async function refresh() {
 }
 function render(d) {
   const t = d.tracker, f = d.firms, open = d.warnings.filter(w => w.status !== 'resolved');
-  $('#ilabel').innerHTML = `<b>${esc(d.shipment.id)}</b> · <span class="${t.isLive ? 'ok' : 'est'}">${esc(t.label)}</span>`;
+  $('#ilabel').innerHTML = `<b>${esc(d.shipment.label || d.shipment.id)}</b> · <span class="${t.isLive ? 'ok' : 'est'}">${esc(t.label)}</span>${d.route.estimatedPath ? ' · <span class="est">estimated air/sea path</span>' : ''}`;
   $('#ilabel').title = [t.note, d.shipment.scheduleNote].filter(Boolean).join(' ');
-  const stops = t.stops.map(s => `<span class="st-${s.state}" title="${esc(s.name)} · ${s.state}"><i></i>${esc(s.name.split(/[,(]/)[0])}</span>`).join('');
+  const ms = d.shipment.milestones;
+  const stops = ms?.length ? ms.map(m => `<span class="st-${esc(m.state)}" title="${esc(m.label)} · ${esc(m.state)}"><i></i>${esc(m.label.split(' · ')[0])}</span>`).join('') : t.stops.map(s => `<span class="st-${s.state}" title="${esc(s.name)} · ${s.state}"><i></i>${esc(s.name.split(/[,(]/)[0])}</span>`).join('');
   $('#istrip').innerHTML = `<div class="irow"><span><b>${Math.round(t.progress * 100)}%</b> traveled</span><span><b>${Math.round(t.remainingKm)} km</b> · ${dur(t.remainingSec)} left</span><span>ETA <b>${et(t.eta)}</b></span>
     <span class="fstat f-${f.status}" title="${esc(f.message || '')}${f.errors?.length ? ' ' + esc(f.errors.join('; ')) : ''}">${FIRMS_MSG[f.status] || esc(f.status)} · ${d.fires.length} in ${f.corridorKm} km corridor</span>
     ${open.length ? `<a class="wlink" href="#/warnings/${esc(open[0].id)}">${open.length} potential disruption${open.length > 1 ? 's' : ''} →</a>` : ''}</div><div class="istops">${stops}</div>`;
@@ -73,8 +79,9 @@ function gmapView(g, el, d) {
   function update(d) {
     layers.forEach(l => l.setMap(null)); layers = [];
     const add = l => (layers.push(l), l);
-    add(new g.Polyline({ map, path: d.route.remaining, strokeWeight: 3, ...dashed }));
-    add(new g.Polyline({ map, path: d.route.traveled, strokeColor: C.traveled, strokeWeight: 3.5, strokeOpacity: .95 }));
+    const geo = !!d.route.estimatedPath;
+    add(new g.Polyline({ map, path: d.route.remaining, geodesic: geo, strokeWeight: 3, ...dashed }));
+    add(new g.Polyline({ map, path: d.route.traveled, geodesic: geo, strokeColor: C.traveled, strokeWeight: 3.5, strokeOpacity: .95 }));
     d.events.filter(e => e.alt?.path).forEach(e => add(new g.Polyline({ map, path: e.alt.path, strokeColor: C.alt, strokeWeight: 2, strokeOpacity: .6 })));
     d.events.filter(e => ['medium', 'high'].includes(e.risk) && !e.outdated).forEach(e => add(new g.Polyline({ map, path: e.segment.path, strokeColor: C.risk, strokeWeight: 6, strokeOpacity: .85, zIndex: 5 })));
     const dot = (pos, fill, stroke, scale, title) => add(new g.Marker({ map, position: pos, title, icon: { path: g.SymbolPath.CIRCLE, scale, fillColor: fill, fillOpacity: 1, strokeColor: stroke, strokeWeight: 2 } }));
@@ -85,7 +92,14 @@ function gmapView(g, el, d) {
   }
   update(d); return { update };
 }
-function svgView(el, d) {
+function unwrap(d) { // keep longitudes continuous across the antimeridian for the flat SVG map
+  let prev = null; const fix = p => { let lng = p.lng; if (prev !== null) while (lng - prev > 180) lng -= 360; if (prev !== null) while (prev - lng > 180) lng += 360; prev = lng; return { ...p, lng }; };
+  const traveled = d.route.traveled.map(fix), remaining = d.route.remaining.map(fix), path = [...traveled, ...remaining];
+  const near = p => { const ref = path.reduce((a, q) => Math.abs(q.lat - p.lat) < Math.abs(a.lat - p.lat) ? q : a, path[0]); let lng = p.lng; while (lng - ref.lng > 180) lng -= 360; while (ref.lng - lng > 180) lng += 360; return { ...p, lng }; };
+  return { ...d, route: { ...d.route, traveled, remaining }, fires: d.fires.map(near), tracker: { ...d.tracker, position: near(d.tracker.position), stops: d.tracker.stops.map(near) }, events: d.events.map(e => ({ ...e, segment: { ...e.segment, path: e.segment.path.map(near) } })) };
+}
+function svgView(el, d0) {
+  const d = unwrap(d0);
   const all = [...d.route.traveled, ...d.route.remaining, ...d.fires];
   const lat0 = all.reduce((a, p) => a + p.lat, 0) / all.length, k = Math.cos(lat0 * Math.PI / 180);
   const xs = all.map(p => p.lng * k), ys = all.map(p => -p.lat), minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
@@ -93,7 +107,8 @@ function svgView(el, d) {
   const ox = (W - s * (maxX - minX)) / 2, oy = (H - s * (maxY - minY)) / 2;
   const P = p => [ox + (p.lng * k - minX) * s, oy + (-p.lat - minY) * s];
   const path = pts => pts.map((p, i) => (i ? 'L' : 'M') + P(p).map(v => v.toFixed(1)).join(' ')).join('');
-  function update(d) {
+  function update(dRaw) {
+    const d = unwrap(dRaw);
     const risk = d.events.filter(e => ['medium', 'high'].includes(e.risk) && !e.outdated);
     const [tx, ty] = P(d.tracker.position);
     el.innerHTML = `<svg class="isvg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Route map for ${esc(d.shipment.id)}">
@@ -104,7 +119,7 @@ function svgView(el, d) {
       ${d.tracker.stops.map(st => { const [x, y] = P(st); return `<g><circle cx="${x}" cy="${y}" r="${st.kind === 'origin' || st.kind === 'destination' ? 6 : 4.5}" fill="${st.state === 'completed' ? C.traveled : '#0b0b0f'}" stroke="${st.kind === 'border' ? C.alt : C.traveled}" stroke-width="2"><title>${esc(st.name)} · ${st.state}</title></circle><text x="${x + 9}" y="${y + 4}" class="slab">${esc(st.name.split(/[,(]/)[0])}</text></g>`; }).join('')}
       ${d.fires.map((fr, i) => { const [x, y] = P(fr); return `<path data-fire="${i}" d="M${x} ${y - 7} L${x + 5} ${y + 4} L${x - 5} ${y + 4}Z" fill="${fr.outdated ? '#6d6d78' : C.fire}" stroke="#07070a"><title>Fire detection · ${fr.distanceKm.toFixed(1)} km from route</title></path>`; }).join('')}
       <circle cx="${tx}" cy="${ty}" r="9" class="strk ${d.tracker.isLive ? '' : 'est'}"><title>${esc(d.tracker.label)}</title></circle><circle cx="${tx}" cy="${ty}" r="3.5" fill="${C.tracker}"/>
-    </svg><span class="mapchip">${d.route.distanceMeters ? Math.round(d.route.distanceMeters / 1000) + ' km Google route · ' : ''}schematic map</span>`;
+    </svg><span class="mapchip">${d.route.distanceMeters ? Math.round(d.route.distanceMeters / 1000) + ' km ' + (d.route.estimatedPath ? 'great-circle · ' : 'Google route · ') : ''}${d.route.estimatedPath ? 'estimated air/sea path' : 'schematic map'}</span>`;
     $$('[data-fire]', el).forEach(n => n.addEventListener('click', () => popFire(d.fires[+n.dataset.fire], d)));
   }
   update(d); return { update };

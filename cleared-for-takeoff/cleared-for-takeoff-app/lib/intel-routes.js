@@ -4,10 +4,12 @@ import path from 'node:path';
 import { FireMonitor } from './monitor.js';
 import { IntelStore } from './store.js';
 export function createIntel(root, env = process.env) {
-  const shipments = JSON.parse(readFileSync(path.join(root, 'src/mock/live-shipments.json'), 'utf8'));
+  const shipments = loadShipments(root);
   const monitor = new FireMonitor({ shipments, env, store: new IntelStore(path.join(root, '.data/fire-intel.json')) });
   let timer = null;
   function start() {
+    const has = k => (env[k] ? 'set' : 'not set');
+    console.log(`Env (from ${path.join(root, '.env.local')} + process env): GOOGLE_MAPS_API_KEY ${has('GOOGLE_MAPS_API_KEY')}, FIRMS_MAP_KEY ${has('FIRMS_MAP_KEY')}, PHOTON_API_KEY ${has('PHOTON_API_KEY')}`);
     const minutes = Math.max(5, Number(env.FIRMS_REFRESH_MINUTES || 15));
     if (!env.GOOGLE_MAPS_API_KEY || !env.FIRMS_MAP_KEY) { console.log('Fire monitor: background refresh off (needs GOOGLE_MAPS_API_KEY and FIRMS_MAP_KEY).'); return; }
     const tick = () => monitor.runAll().then(r => console.log(`Fire monitor: checked ${r.length} shipment(s) at ${new Date().toISOString()}`)).catch(e => console.warn('Fire monitor:', e.message));
@@ -19,7 +21,7 @@ export function createIntel(root, env = process.env) {
     const getOnly = () => { if (req.method !== 'GET') { send(res, 405, { error: 'Method not allowed.' }, { Allow: 'GET' }); return false; } return true; };
     try {
       if (p === '/api/maps-config') { if (getOnly()) send(res, 200, { browserKey: env.GOOGLE_MAPS_BROWSER_KEY || '' }); return true; }
-      if (p === '/api/live-shipments') { if (getOnly()) send(res, 200, shipments.map(s => ({ id: s.id, product: s.product, origin: s.origin, destination: s.destination, synthetic: !!s.synthetic }))); return true; }
+      if (p === '/api/live-shipments') { if (getOnly()) send(res, 200, shipments.map(s => ({ id: s.id, label: s.label || s.id, product: s.product, origin: s.origin, destination: s.destination, pathMode: s.pathMode || 'road', status: s.status || 'on_track', statusLabel: s.statusLabel || '', slackDays: s.slackDays ?? null, synthetic: !!s.synthetic }))); return true; }
       const m = p.match(/^\/api\/live-shipments\/([^/]+)\/intel$/);
       if (m) { if (getOnly()) send(res, 200, await monitor.run(decodeURIComponent(m[1]), { demo: url.searchParams.get('demo') === '1' })); return true; }
       if (p === '/api/fire-warnings') { if (getOnly()) send(res, 200, monitor.store.list()); return true; }
@@ -32,4 +34,20 @@ export function createIntel(root, env = process.env) {
     return false;
   }
   return { monitor, handle, start, stop: () => clearInterval(timer) };
+}
+
+/** RX road shipments plus every tracked mock shipment (estimated air/sea legs on a great-circle path). */
+export function loadShipments(root) {
+  const read = f => JSON.parse(readFileSync(path.join(root, 'src/mock', f), 'utf8'));
+  const live = read('live-shipments.json');
+  let ships = [], trk = [];
+  try { ships = read('shipments.json'); trk = read('tracking.json'); } catch {}
+  const tracked = trk.map(t => ({ ...ships.find(s => s.id === t.id), ...t })).filter(t => t.coords?.origin && t.coords?.destination).map(t => ({
+    id: t.id, label: t.countryName || t.id, study: t.study, product: t.kit, origin: t.origin, destination: t.destination, status: t.status, statusLabel: t.statusLabel, slackDays: t.slackDays,
+    pathMode: 'geodesic', coords: t.coords, progressOverride: t.progress, eta: t.eta ? new Date(t.eta.length === 10 ? `${t.eta}T17:00:00-05:00` : t.eta).toISOString() : null,
+    milestones: t.milestones || [], gps: null, synthetic: true,
+    stops: [{ name: t.origin, ...t.coords.origin, kind: 'origin' }, { name: t.destination, ...t.coords.destination, kind: 'destination' }],
+    contacts: [{ id: 'recipient', name: `${t.countryName || t.id} site contact`, role: 'recipient', useDefaultSpace: true }]
+  }));
+  return [...live, ...tracked];
 }
