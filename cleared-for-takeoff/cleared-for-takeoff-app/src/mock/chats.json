@@ -1,65 +1,52 @@
 [
  {
-  "id": "cht-001",
-  "name": "Yuki T.",
-  "role": "Tokyo depot",
-  "channel": "whatsapp",
-  "lastMessage": "We can relabel locally but it adds 9 days.",
-  "updatedAt": "2026-10-17T08:31:00-04:00",
+  "id": "max-maya",
+  "name": "Maya",
+  "role": "supply lead",
+  "initial": "MY",
   "unread": 2,
+  "updatedAt": "2026-10-17T09:04:00-04:00",
+  "lastMessage": "Pick a fix (reply 1, 2 or 3)",
   "links": [
    "wrn-001",
    "shp-001"
   ]
  },
  {
-  "id": "cht-002",
-  "name": "Amara K.",
-  "role": "Customs broker \u00b7 AR",
-  "channel": "slack",
-  "lastMessage": "Permit draft ready, needs your signature.",
-  "updatedAt": "2026-10-17T07:58:00-04:00",
+  "id": "max-priya",
+  "name": "Priya",
+  "role": "clinical ops",
+  "initial": "PR",
   "unread": 1,
+  "updatedAt": "2026-10-17T08:40:00-04:00",
+  "lastMessage": "Candidate rule · Needs review",
   "links": [
-   "wrn-002",
-   "shp-002"
+   "wrn-001"
   ]
  },
  {
-  "id": "cht-003",
-  "name": "Lars M.",
-  "role": "ORION-7 logistics",
-  "channel": "email",
-  "lastMessage": "China depot re-inspection booked for Nov 3.",
-  "updatedAt": "2026-10-16T18:12:00-04:00",
+  "id": "max-kenji",
+  "name": "Kenji",
+  "role": "Japan affiliate",
+  "initial": "KJ",
   "unread": 0,
+  "updatedAt": "2026-10-16T17:20:00-04:00",
+  "lastMessage": "Updated label proof is in the plan.",
+  "links": [
+   "shp-001"
+  ]
+ },
+ {
+  "id": "max-sam",
+  "name": "Sam",
+  "role": "on-call",
+  "initial": "SM",
+  "unread": 1,
+  "updatedAt": "2026-10-16T23:12:00-04:00",
+  "lastMessage": "Live call · China depot escalation",
   "links": [
    "wrn-003",
    "shp-003"
-  ]
- },
- {
-  "id": "cht-004",
-  "name": "QA desk",
-  "role": "Brazil hub",
-  "channel": "teams",
-  "lastMessage": "Excursion data uploaded. Reviewing now.",
-  "updatedAt": "2026-10-16T10:02:00-04:00",
-  "unread": 3,
-  "links": [
-   "wrn-004"
-  ]
- },
- {
-  "id": "cht-005",
-  "name": "Sofia R.",
-  "role": "HALO-3 supply",
-  "channel": "sms",
-  "lastMessage": "Frankfurt cleared, thanks!",
-  "updatedAt": "2026-10-14T12:40:00-04:00",
-  "unread": 0,
-  "links": [
-   "shp-004"
   ]
  }
 ]

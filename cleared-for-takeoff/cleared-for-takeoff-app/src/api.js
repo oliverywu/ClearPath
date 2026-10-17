@@ -26,10 +26,6 @@ export async function getWarning(id) {
 }
 /** GET /api/shipments → Shipment[] */
 export async function getShipments() { return USE_MOCK ? mock('shipments') : http('/shipments'); }
-/** POST /api/route-analysis → route summary plus GDACS events near that route */
-export async function analyzeShipmentRoute({ origin, destination, proximityKm }) {
-  return http('/route-analysis', { method: 'POST', body: JSON.stringify({ origin, destination, proximityKm }) });
-}
 /** GET /api/inventory → InventoryItem[] (recurring shipments) */
 export async function getInventory() { return USE_MOCK ? mock('inventory') : http('/inventory'); }
 /** GET /api/photon/chats → Chat[] */
@@ -42,11 +38,61 @@ export async function getChatMessages(chatId) {
   if (!USE_MOCK) return http(`/photon/chats/${encodeURIComponent(chatId)}/messages`);
   const all = await mock('messages'); return all[chatId] || [];
 }
-/** POST /api/photon/chats/:id/messages  body {text} → Message */
+/** POST /api/photon/chats/:id/messages  body {text} → { message: Message, replies: Message[] }
+ *  `replies` are Max's responses (may be empty if Max answers later; then poll getChatMessages). */
 export async function sendChatMessage(chatId, text) {
   if (!USE_MOCK) return http(`/photon/chats/${encodeURIComponent(chatId)}/messages`, { method: 'POST', body: JSON.stringify({ text }) });
   await sleep(); if (q.has('fail')) throw new Error('Simulated send error');
   const all = cache.messages || (cache.messages = await (await fetch(new URL('./mock/messages.json', import.meta.url))).json());
-  const m = { id: `${chatId}-m${Date.now()}`, from: 'me', text, sentAt: new Date().toLocaleTimeString('en-GB').slice(0, 5) };
-  (all[chatId] ||= []).push(m); return m;
+  const list = (all[chatId] ||= []);
+  const message = { id: `${chatId}-m${Date.now()}`, from: 'me', text, sentAt: new Date().toISOString() };
+  list.push(message);
+  const replies = scriptedReply(chatId, text).map((r, i) => ({ id: `${chatId}-r${Date.now()}${i}`, from: 'max', sentAt: new Date().toISOString(), caption: 'Synthetic demo reply', ...r }));
+  list.push(...replies);
+  return { message, replies };
+}
+function scriptedReply(chatId, text) {
+  const t = text.trim().toUpperCase();
+  const fixes = { '1': 'Relabel in Boston before departure (+2 days)', '2': 'Relabel at the Tokyo depot (+9 days)', '3': 'Split shipment: 12 kits now, 11 after relabel' };
+  if (fixes[t]) return [{ text: `Got it, option ${t}: ${fixes[t]}.` }, { card: { type: 'plan', title: 'Japan, updated plan', rows: [['Safe ship-by', t === '2' ? 'Nov 18' : 'Nov 11'], ['Likely ship-by', t === '2' ? 'Nov 21' : 'Nov 12'], ['Status', 'Needs approval']], tone: 'ok' }, links: [{ label: 'View the plan', href: '#/' }], quickReplies: ['APPROVE', 'Not yet'] }];
+  if (t === 'APPROVE') return [{ text: 'Approved and logged to the audit history. I’ll tell the Tokyo depot.' }];
+  if (t === 'REJECT') return [{ text: 'Rejected. I’ll keep the current plan and flag it for tomorrow’s review.' }];
+  if (/REROUTE/.test(t)) return [{ text: 'Drafted scenario S-115: reroute ORX-2 via Singapore, +5 days. Sent to Lars for review.' }];
+  return [{ text: 'Noted. I’ll factor that into the plan and get back to you.' }];
+}
+/** GET /api/calendar?month=YYYY-MM → { month, events: CalendarEvent[] } */
+export async function getCalendar(month) {
+  if (!USE_MOCK) return http(`/calendar?month=${encodeURIComponent(month)}`);
+  const all = await mock('calendar'); return all.find(m => m.month === month) || { month, events: [] };
+}
+/** GET /api/schedule/:date → DaySchedule { date, items: TimelineItem[] } */
+export async function getDaySchedule(date) {
+  if (!USE_MOCK) return http(`/schedule/${encodeURIComponent(date)}`);
+  const all = await mock('day-schedules'); return { date, items: all[date]?.items || [] };
+}
+/** GET /api/chalk/insights?date=YYYY-MM-DD → ChalkInsight { date, risk, summary, recommendations[] }
+ *  Chalk AI integration point: the backend calls Chalk AI and returns this shape. */
+export async function getChalkInsight(date) {
+  if (!USE_MOCK) return http(`/chalk/insights?date=${encodeURIComponent(date)}`);
+  const all = await mock('day-schedules'); const i = all[date]?.insight;
+  return i ? { date, ...i } : { date, risk: 'low', summary: 'No shipment milestones on this day.', recommendations: [] };
+}
+/** GET /api/tracking → TrackingSummary[] (one per active shipment; joins shipments by id) */
+export async function getTracking() {
+  if (!USE_MOCK) return http('/tracking');
+  const [ships, trk] = await Promise.all([mock('shipments'), mock('tracking')]);
+  return trk.map(t => ({ ...ships.find(s => s.id === t.id), ...t }));
+}
+/** GET /api/tracking/:id → TrackingDetail (TrackingSummary incl. milestones) */
+export async function getTrackingDetail(id) {
+  if (!USE_MOCK) return http(`/tracking/${encodeURIComponent(id)}`);
+  const t = (await getTracking()).find(x => x.id === id); if (!t) throw new Error(`Tracking ${id} not found`); return t;
+}
+// "Max" aliases (Max is the assistant behind the Photon messaging integration)
+export const getMaxChats = getPhotonChats;
+export const getMaxMessages = getChatMessages;
+export const sendMaxMessage = sendChatMessage;
+
+export async function analyzeShipmentRoute({ origin, destination, proximityKm }) {
+  return http('/route-analysis', { method: 'POST', body: JSON.stringify({ origin, destination, proximityKm }) });
 }

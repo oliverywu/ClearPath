@@ -27,7 +27,7 @@ export async function renderWarnings(root, id) {
     try { const w = await getWarning(wid);
       el.innerHTML = `<div class="k" style="color:${SEV[w.severity]}">${esc(w.severity)} · ${ago(w.createdAt)}</div><h3>${esc(w.countryName)} needs <em>${esc(w.requirement.toLowerCase())}.</em></h3>
       <p class="l">${esc(w.summary)}</p><dl><dt>Study</dt><dd>${esc(w.study)}</dd><dt>Shipments affected</dt><dd>${w.shipmentsAffected}</dd><dt>Status</dt><dd>${w.status.replace('_', ' ')}</dd><dt>Recommended</dt><dd>${esc(w.recommendedAction)}</dd><dt>Source</dt><dd>${esc(w.source)}</dd><dt>Linked shipments</dt><dd>${w.shipmentIds.map(s => `<span class="lchip">${s}</span>`).join(' ') || '—'}</dd></dl>
-      <a class="btn" href="#/chats">Discuss in Photon chats →</a> <a class="btn ghost" href="#/warnings">Close</a>`;
+      <a class="btn" href="#/max">Discuss with Max →</a> <a class="btn ghost" href="#/warnings">Close</a>`;
     } catch (e) { el.innerHTML = errorState(e, 'wretry'); $('#wretry').onclick = () => detail(wid); }
   }
 }

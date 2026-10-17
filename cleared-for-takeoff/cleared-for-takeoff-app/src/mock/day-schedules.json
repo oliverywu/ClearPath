@@ -1,0 +1,248 @@
+{
+ "2026-10-17": {
+  "items": [
+   {
+    "time": "06:10",
+    "type": "deadline",
+    "title": "Argentina permit: 6 days left",
+    "shipmentId": "shp-002",
+    "party": "Amara K. · customs broker",
+    "status": "open"
+   },
+   {
+    "time": "07:42",
+    "type": "alert",
+    "title": "Japan label field required (23 kits)",
+    "shipmentId": "shp-001",
+    "party": "Regulatory affairs",
+    "status": "open"
+   },
+   {
+    "time": "09:00",
+    "type": "packed",
+    "title": "HALO-3 kits packed · Dublin",
+    "shipmentId": "shp-004",
+    "party": "Dublin depot",
+    "status": "done"
+   },
+   {
+    "time": "11:30",
+    "type": "customs",
+    "title": "DE pre-clearance confirmed",
+    "shipmentId": "shp-004",
+    "party": "Customs",
+    "status": "done"
+   },
+   {
+    "time": "14:00",
+    "type": "in_transit",
+    "title": "KR comparator departs Copenhagen",
+    "shipmentId": "shp-005",
+    "party": "Carrier · reefer",
+    "status": "scheduled"
+   },
+   {
+    "time": "17:00",
+    "type": "review",
+    "title": "S-114 scenario review",
+    "shipmentId": "shp-001",
+    "party": "Maya · supply lead",
+    "status": "scheduled"
+   }
+  ],
+  "insight": {
+   "risk": "high",
+   "summary": "Two NOVA-24 lanes need decisions today. Japan's label change blocks 23 kits; Argentina's permit window is closing.",
+   "recommendations": [
+    "Approve S-114 (relabel in Boston, +2 days) before 17:00",
+    "Sign the Argentina permit draft so the broker can file today",
+    "No action needed on HALO-3 Germany — on track"
+   ]
+  }
+ },
+ "2026-10-16": {
+  "items": [
+   {
+    "time": "17:55",
+    "type": "alert",
+    "title": "Shanghai depot licence suspended",
+    "shipmentId": "shp-003",
+    "party": "Depot partner",
+    "status": "open"
+   },
+   {
+    "time": "18:12",
+    "type": "review",
+    "title": "Re-inspection booked Nov 3",
+    "shipmentId": "shp-003",
+    "party": "Lars M. · ORION-7",
+    "status": "done"
+   }
+  ],
+  "insight": {
+   "risk": "critical",
+   "summary": "ORION-7 China is blocked; 6 shipments cannot move until the depot is re-licensed.",
+   "recommendations": [
+    "Draft reroute via Singapore (+5 days)",
+    "Hold Basel departures for CN"
+   ]
+  }
+ },
+ "2026-10-23": {
+  "items": [
+   {
+    "time": "09:00",
+    "type": "deadline",
+    "title": "Argentina import permit expires",
+    "shipmentId": "shp-002",
+    "party": "Amara K. · customs broker",
+    "status": "open"
+   },
+   {
+    "time": "12:00",
+    "type": "customs",
+    "title": "Renewal stamp expected",
+    "shipmentId": "shp-002",
+    "party": "ANMAT (sample)",
+    "status": "pending"
+   }
+  ],
+  "insight": {
+   "risk": "high",
+   "summary": "If the renewal isn't stamped by 09:00, the Dec 1 delivery slips past target.",
+   "recommendations": [
+    "Escalate to the local depositary on Oct 21 if no stamp",
+    "Keep 6 days of slack in reserve"
+   ]
+  }
+ },
+ "2026-10-30": {
+  "items": [
+   {
+    "time": "10:00",
+    "type": "packed",
+    "title": "Japan kits relabelled · Boston",
+    "shipmentId": "shp-001",
+    "party": "Boston hub",
+    "status": "scheduled"
+   },
+   {
+    "time": "16:00",
+    "type": "deadline",
+    "title": "Relabel QA sign-off",
+    "shipmentId": "shp-001",
+    "party": "QA",
+    "status": "scheduled"
+   }
+  ],
+  "insight": {
+   "risk": "medium",
+   "summary": "Relabel completes on schedule if S-114 is approved by Oct 18.",
+   "recommendations": [
+    "Book QA slot now",
+    "Confirm label-JP-v2 proof with Kenji"
+   ]
+  }
+ },
+ "2026-11-02": {
+  "items": [
+   {
+    "time": "08:00",
+    "type": "packed",
+    "title": "ORX-2 vials packed · Basel",
+    "shipmentId": "shp-003",
+    "party": "Basel depot",
+    "status": "scheduled"
+   },
+   {
+    "time": "13:00",
+    "type": "in_transit",
+    "title": "Departure to Singapore hub",
+    "shipmentId": "shp-003",
+    "party": "Carrier · 2–8 °C",
+    "status": "scheduled"
+   }
+  ],
+  "insight": {
+   "risk": "medium",
+   "summary": "Departure depends on the Singapore reroute being approved.",
+   "recommendations": [
+    "Approve S-115 by Oct 28",
+    "Pre-book a 2–8 °C reefer"
+   ]
+  }
+ },
+ "2026-11-09": {
+  "items": [
+   {
+    "time": "09:00",
+    "type": "deadline",
+    "title": "Japan safe ship-by",
+    "shipmentId": "shp-001",
+    "party": "Maya · supply lead",
+    "status": "scheduled"
+   },
+   {
+    "time": "15:00",
+    "type": "in_transit",
+    "title": "Boston → Tokyo departure",
+    "shipmentId": "shp-001",
+    "party": "Carrier",
+    "status": "scheduled"
+   }
+  ],
+  "insight": {
+   "risk": "medium",
+   "summary": "Last safe day to ship NOVA-24 kits to Japan without missing the target.",
+   "recommendations": [
+    "Lock the flight booking by Nov 5"
+   ]
+  }
+ },
+ "2026-11-24": {
+  "items": [
+   {
+    "time": "07:00",
+    "type": "customs",
+    "title": "Frankfurt customs",
+    "shipmentId": "shp-004",
+    "party": "Customs",
+    "status": "scheduled"
+   },
+   {
+    "time": "15:00",
+    "type": "delivered",
+    "title": "HALO-3 delivered to depot",
+    "shipmentId": "shp-004",
+    "party": "Frankfurt depot",
+    "status": "scheduled"
+   }
+  ],
+  "insight": {
+   "risk": "low",
+   "summary": "On track, 7 days of slack.",
+   "recommendations": [
+    "No action needed"
+   ]
+  }
+ },
+ "2026-11-28": {
+  "items": [
+   {
+    "time": "11:00",
+    "type": "delivered",
+    "title": "NOVA-24 Tokyo target delivery",
+    "shipmentId": "shp-001",
+    "party": "Tokyo depot",
+    "status": "scheduled"
+   }
+  ],
+  "insight": {
+   "risk": "medium",
+   "summary": "Target holds if S-114 is approved; otherwise projected Dec 7.",
+   "recommendations": [
+    "Approve S-114"
+   ]
+  }
+ }
+}
