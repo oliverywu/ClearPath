@@ -98,7 +98,11 @@ function initInventory() {
     [['date', 'Next date'], ['risk', 'Risk']].map(([k, l]) => `<button class="chip ${k === 'date' ? 'on' : ''}" data-so="${k}">Sort · ${l}</button>`).join('');
   const grid = $('#grid');
   let invMessage = 'No recurring shipments.';
-  load(grid, async () => { const st = await getInventoryStatus(); if (!st.configured) { invMessage = st.message; $('#invbar').style.display = 'none'; } return st.items; }, list => {
+  load(grid, async () => { const st = await getInventoryStatus();
+    $('#invdesc').textContent = st.message;
+    if (!st.configured) { invMessage = st.message; $('#invbar').style.display = 'none'; }
+    return st.items;
+  }, list => {
     items = list;
     grid.innerHTML = list.map((t, i) => { const max = Math.max(t.onHand, t.reorderLevel) * 1.2 || 1, d0 = new Date(t.nextShipDate + 'T12:00');
       const next3 = [1, 2, 3].map(k => fmtDate(new Date(+d0 + k * t.cadenceWeeks * 7 * 864e5).toISOString()));
@@ -107,7 +111,7 @@ function initInventory() {
       <h4>${esc(t.countryName)}</h4><div class="sub">${esc(t.kit)} · every ${t.cadenceWeeks} wks</div>
       <div class="nx"><span>Next ship</span>${t.status === 'blocked' ? 'On hold' : fmtDate(t.nextShipDate)}</div>
       <div class="stock"><i style="width:${t.onHand / max * 100}%;background:${t.onHand < t.reorderLevel ? 'var(--warn)' : 'var(--ok)'}"></i><b style="left:${t.reorderLevel / max * 100}%"></b></div>
-      <div class="units">${t.onHand} on hand · reorder at ${t.reorderLevel}</div>
+      <div class="units">${t.onHand} on hand · reorder at ${t.reorderLevel} · ${esc(t.dataProvenance || 'sample')}</div>
       <div class="more"><div><small>Last 8 runs</small><div class="runs">${t.runs.map(r => `<i class="${r}"></i>`).join('')}</div><div class="units">${t.runs.filter(r => r === 'on_time').length}/8 on time · ${esc(t.storage)}</div></div>
       <div><small>Next 3 dates</small><ul>${next3.map(d => `<li>${d}</li>`).join('')}</ul></div></div></div>`; }).join('');
     tiles = $$('.tile', grid);

@@ -26,11 +26,11 @@ export async function getWarning(id) {
 }
 /** GET /api/shipments → Shipment[] */
 export async function getShipments() { return USE_MOCK ? mock('shipments') : http('/shipments'); }
-/** GET /api/inventory → { configured, items: InventoryItem[], message, provenance }
- *  The integrated backend has no inventory source, so it returns configured:false with an
- *  explanation instead of passing shipment schedules off as stock. */
+/** GET /api/inventory → { configured, live, items, message, provenance, sourceSystem }.
+ *  Sample inventory is intentionally configured for scenario testing; it does not imply
+ *  that a live warehouse, ERP, or IRT connection exists. */
 export async function getInventoryStatus() {
-  if (USE_MOCK) return { configured: true, items: await mock('inventory'), message: '', provenance: 'sample' };
+  if (USE_MOCK) return { configured: true, live: false, items: await mock('inventory'), message: 'Sample recurring inventory; no live inventory system is connected.', provenance: 'sample', sourceSystem: null };
   return http('/inventory');
 }
 export async function getInventory() { return (await getInventoryStatus()).items; }

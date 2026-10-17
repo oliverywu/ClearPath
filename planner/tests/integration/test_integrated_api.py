@@ -352,6 +352,8 @@ class ProvenanceTests(IntegratedCase):
             self.assertTrue(row['statusLabel'].startswith('Planned'))
         inventory = self.get('/api/inventory')
         self.assertEqual((inventory['configured'], len(inventory['items']), inventory['provenance']), (True, 32, 'sample'))
+        self.assertEqual((inventory['live'], inventory['sourceSystem']), (False, None))
+        self.assertTrue(all(row['dataProvenance'] == 'sample' for row in inventory['items']))
         insight = self.get('/api/chalk/insights?date=2026-11-17')
         self.assertEqual(insight['source']['provider'], 'local')
         self.assertIn('fallback', insight['source']['label'].lower())

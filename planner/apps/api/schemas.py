@@ -127,8 +127,9 @@ TRACKING = {
                    'note': STR, 'milestones': {'type': 'array', 'items': TRACKING_MILESTONE}, 'telemetry': STR},
 }
 
-INVENTORY = {'type': 'object', 'required': ['configured', 'items', 'message', 'provenance'],
-             'properties': {'configured': BOOL, 'items': {'type': 'array'}, 'message': STR, 'provenance': STR}}
+INVENTORY = {'type': 'object', 'required': ['configured', 'live', 'items', 'message', 'provenance', 'sourceSystem'],
+             'properties': {'configured': BOOL, 'live': BOOL, 'items': {'type': 'array'}, 'message': STR,
+                            'provenance': STR, 'sourceSystem': STR_OR_NULL}}
 
 PROPOSAL = {
     'type': 'object',

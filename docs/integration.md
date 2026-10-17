@@ -37,7 +37,7 @@ planner's own web UI (`planner/apps/web`) are kept as standalone tools with thei
 | `GET /api/warnings/:id` | – | `Warning` + `evidence[]`, `options[]`, `currentPlan`, `audit[]` | same + audit | `Frontend.warning(detail)` | done |
 | `GET /api/warnings/:id/options` | – | `Option[]` (remediation options with before/after) | `Governance.option_views` | `Frontend.option` | done |
 | `GET /api/shipments` | – | `Shipment[]` | current plan (`settings.approved_scenario_id`) | `Frontend.shipment` | done |
-| `GET /api/inventory` | – | `{configured:true, items[], message, provenance:"sample"}` | integrated frontend inventory seed | passthrough | done; explicitly sample, not live telemetry |
+| `GET /api/inventory` | – | `{configured:true, live:false, items[], message, provenance:"sample", sourceSystem:null}` | integrated frontend inventory seed | passthrough | done; intentionally sample, with no external connection planned |
 | `GET /api/photon/chats` | – | `Chat[]` most recent first | `chats` + `chat_messages` tables | `Frontend.chats` | done |
 | `GET /api/photon/chats/:id/messages` | – | `Message[]` oldest first | `chat_messages` | stored in frontend shape | done |
 | `POST /api/photon/chats/:id/messages` | `{text, clientMessageId}` | `{message, replies[], replayed}` | Anna's `planner_conversation` → governance | `MessagingLink.receive` | done (scripted replies removed from real path) |
@@ -157,13 +157,12 @@ results), planner `test_chalk_outlook.py`, and the insights contract/provenance 
 
 ## Data provenance
 
-* All trial, rule, route and event data in the demo dataset (`planner/data/demo/trial_logistics.json`)
-  is **synthetic** except Chihiro's public logistics benchmarks (World Bank LPI 2023 customs dwell,
-  OurAirports gateways) and the few official/needs-review rules. Responses carry `provenance`
-  (`synthetic`, `modeled`, `needs_review`, `live`) and `evidenceStatus`; nothing synthetic is labeled live.
-* **Inventory: labeled sample data.** The frontend's 32 recurring-inventory seed rows are part of
-  the canonical fixture and served by `/api/inventory` with `provenance: "sample"`. They provide
-  the designed inventory experience without being represented as live stock or telemetry.
+* Regulatory records distinguish official primary-source facts from modeled operational assumptions.
+  Shipment rows distinguish Anna's four sample records from the 20 planner-demo rows. Route timing remains
+  modeled from public benchmarks and planning assumptions. Nothing sample or modeled is labeled live.
+* **Inventory: intentionally final sample data.** The frontend's 32 recurring-inventory seed rows are part
+  of the canonical fixture and served with `provenance: "sample"`, `live: false`, and `sourceSystem: null`.
+  This prototype will not connect an external inventory system.
 * **Tracking: modeled.** Position/progress is derived from current-plan milestones vs the planning
   date (`telemetry: "none"`, `temperatureC: null`, `statusLabel` starts with "Planned").
 * "Today" in the UI is the dataset's planning date (`as_of`, 2026-10-19), from `/api/context`.
@@ -186,6 +185,6 @@ results), planner `test_chalk_outlook.py`, and the insights contract/provenance 
 ## Intentionally deferred
 
 * Authentication / real user identity and per-role UI.
-* A modeled inventory dataset and live carrier telemetry.
+* Live carrier telemetry.
 * Wiring planner admin imports (rules/datasets) into governed proposals.
 * Retiring Anna's standalone FastAPI dashboard and the planner's legacy web UI.

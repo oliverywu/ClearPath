@@ -430,9 +430,11 @@ class Frontend:
                 items = self.dataset().get('inventory', [])
                 if items:
                     return S.INVENTORY, {'configured': True, 'items': items,
+                                         'live': self.dataset().get('inventory_provenance') == 'live',
                                          'provenance': self.dataset().get('inventory_provenance', 'sample'),
+                                         'sourceSystem': self.dataset().get('inventory_source_system'),
                                          'message': 'Sample recurring inventory supplied with the integrated dataset; no live inventory system is connected.'}
-                return S.INVENTORY, {'configured': False, 'items': [], 'provenance': 'not_configured',
+                return S.INVENTORY, {'configured': False, 'live': False, 'items': [], 'provenance': 'not_configured', 'sourceSystem': None,
                                      'message': 'Inventory data is not configured. No inventory system is connected, and shipment schedules are not shown as stock.'}
             if path == '/api/photon/chats':
                 return S.list_of(S.CHAT), self.chats()
