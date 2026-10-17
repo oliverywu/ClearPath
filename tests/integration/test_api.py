@@ -299,6 +299,26 @@ class ServiceTests(unittest.TestCase):
         self.assertFalse(checked['changed'])
         self.assertEqual(checked['review_status'],'needs_review')
 
+    def test_recalculate_freshness_check_detects_changes_and_skips_synthetic_sources(self):
+        source = self.post('/api/sources',{'title':'Official change test','url':'https://official.example/change','adapter':'generic'})
+        self.post('/api/sources/snapshot',{'source_id':source['id'],'content':'Old official text'})
+        with patch('packages.ingestion.adapters.GenericPageAdapter.fetch',return_value='New official text') as fetch:
+            result = self.post('/api/sources/check-all')
+        self.assertGreater(result['checked'],0)
+        self.assertEqual(result['changed'],1)
+        self.assertEqual(result['failed'],0)
+        self.assertTrue(all('cleared-synthetic' not in call.args[0] for call in fetch.call_args_list))
+        refreshed = next(s for s in self.service.repo.sources() if s['id']==source['id'])
+        self.assertTrue(refreshed['last_check_changed'])
+        self.assertIsNone(refreshed['last_check_error'])
+
+    def test_recalculate_freshness_check_reports_unreachable_sources(self):
+        self.post('/api/sources',{'title':'Unreachable test','url':'https://official.example/unreachable','adapter':'generic'})
+        with patch('packages.ingestion.adapters.GenericPageAdapter.fetch',side_effect=TimeoutError('timed out')):
+            result = self.post('/api/sources/check-all')
+        self.assertGreater(result['failed'],0)
+        self.assertEqual(result['failed'],result['checked'])
+
     def test_ai_research_extracts_exact_quote_needs_review_candidates(self):
         source = self.post('/api/sources',{'title':'Official regulation','url':'https://official.example/rule','adapter':'generic','jurisdiction':'DE'})
         text = 'Sponsors must include the protocol number on the outer label.'

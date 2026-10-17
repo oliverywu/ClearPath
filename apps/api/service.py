@@ -79,9 +79,7 @@ class Service:
                 item['keys'].add(record['requirement_key'])
             item['count'] += 1
         for url, item in grouped.items():
-            # Keep illustrative/demo citations visible in the UI, but never try to fetch them.
-            if not url.startswith('https://') or 'synthetic' in item['tiers']:
-                continue
+            # Keep illustrative/demo citations visible in the registry; check_sources filters them out.
             digest = hashlib.sha256(url.encode('utf-8')).hexdigest()[:16]
             prior = next((s for s in self.repo.sources() if s.get('id') == f'dataset-source-{digest}'), {})
             self.repo.save_source({

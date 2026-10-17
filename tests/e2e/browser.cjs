@@ -47,7 +47,7 @@ async function main() {
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(base);
     await page.locator('.country-tile').first().waitFor();
-    assert.match(await page.locator('#generate-plan').innerText(), /Recalculate supply plan/i);
+    assert.match(await page.locator('#generate-plan').innerText(), /Check sources & recalculate/i);
     assert.match(await page.locator('#reset-demo').innerText(), /Restore demo starting point/i);
     assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).fontSize), '15px');
     assert.equal(await page.locator('.country-tile').count(), boot.jurisdictions.length);
@@ -55,6 +55,35 @@ async function main() {
     assert.ok(await page.locator('.calendar-event').count() > 0, 'Dashboard calendar should contain scenario milestones');
     fs.mkdirSync(path.join(root, 'test-results'), {recursive:true});
     await page.screenshot({path:path.join(root,'test-results/control-tower.png'),fullPage:true});
+    let sourceCheckMode = 'clean';
+    await page.route('**/api/sources/check-all', route => {
+      const payload = sourceCheckMode === 'clean'
+        ? {checked:1,changed:0,failed:0,results:[{source_id:'official-1',title:'Official rule'}]}
+        : sourceCheckMode === 'changed'
+          ? {checked:1,changed:1,failed:0,results:[{source_id:'official-1',title:'Official rule',changed:true}]}
+          : {checked:1,changed:0,failed:1,results:[{source_id:'official-1',title:'Official rule',error:'timed out'}]};
+      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(payload)});
+    });
+    await page.locator('#generate-plan').click();
+    await page.locator('.page-heading h1').filter({hasText:'Plans & decisions'}).waitFor();
+    assert.match(await page.locator('#notice').innerText(), /All registered sources were checked and no changes were detected/i);
+    await page.locator('[data-view="overview"]').click();
+    sourceCheckMode = 'changed';
+    const scenariosBeforeSourceChange = (await api('/api/bootstrap')).scenarios.length;
+    await page.locator('#generate-plan').click();
+    await page.locator('#ai-analyze-change').waitFor();
+    assert.match(await page.locator('#notice').innerText(), /source change was detected[\s\S]*No proposal was created/i);
+    assert.equal((await api('/api/bootstrap')).scenarios.length, scenariosBeforeSourceChange, 'A detected source change must pause proposal creation');
+    await page.locator('[data-view="overview"]').click();
+    sourceCheckMode = 'failed';
+    await page.locator('#generate-plan').click();
+    await page.locator('#continue-saved-evidence').waitFor();
+    assert.match(await page.locator('#notice').innerText(), /could not be checked[\s\S]*no proposal was created/i);
+    await page.locator('#continue-saved-evidence').click();
+    await page.locator('.page-heading h1').filter({hasText:'Plans & decisions'}).waitFor();
+    assert.match(await page.locator('#notice').innerText(), /without checking source links/i);
+    await page.unroute('**/api/sources/check-all');
+    await page.locator('[data-view="overview"]').click();
     await page.locator('[data-country="DE"]').click();
     await page.locator('.country-context-card').waitFor();
     assert.match(await page.locator('.country-context-card').innerText(), /Germany[\s\S]*Rules active as of[\s\S]*Projected delivery[\s\S]*Target delivery/i);
