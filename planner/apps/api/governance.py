@@ -45,7 +45,7 @@ def event_options(event):
 def evidence_status(record):
     """Map planner/regulatory review states onto the four evidence lifecycle values."""
     status = record.get('review_status')
-    if record.get('synthetic') or status == 'synthetic' or record.get('source_tier') == 'synthetic':
+    if record.get('synthetic') or status == 'synthetic' or record.get('source_tier') in ('modeled', 'synthetic'):
         return 'synthetic'
     if status in ('verified', 'confirmed'):
         return 'verified'

@@ -409,8 +409,8 @@ class Service:
         return result
 
     def check_source(self, source):
-        if source.get('source_tier') == 'synthetic' or 'synthetic' in (source.get('source_tiers') or []):
-            raise APIError('Synthetic demo citations are not live sources and cannot be checked',422)
+        if source.get('source_tier') in {'modeled', 'synthetic'} or {'modeled', 'synthetic'} & set(source.get('source_tiers') or []):
+            raise APIError('Modeled and synthetic citations are not live sources and cannot be checked',422)
         try:
             result = self.snapshot({'source_id':source['id'],'url':source['url'],'adapter':source.get('adapter','generic'),'jurisdiction':source.get('jurisdiction')})
         except Exception as exc:
@@ -424,8 +424,8 @@ class Service:
     def check_sources(self):
         results = []
         for source in self.repo.sources():
-            if (source.get('enabled') is False or source.get('source_tier') == 'synthetic'
-                    or 'synthetic' in (source.get('source_tiers') or [])
+            if (source.get('enabled') is False or source.get('source_tier') in {'modeled', 'synthetic'}
+                    or {'modeled', 'synthetic'} & set(source.get('source_tiers') or [])
                     or not str(source.get('url','')).startswith('https://')):
                 continue
             try:

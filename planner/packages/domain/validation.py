@@ -5,7 +5,7 @@ import math
 
 OPERATORS = {"equals", "contains_all", "contains", "excludes", "=", ">=", "<=", "in"}
 STATUSES = {"verified", "needs_review", "synthetic", "retired"}
-SOURCE_TIERS = {"official", "authoritative_secondary", "synthetic"}
+SOURCE_TIERS = {"official", "authoritative_secondary", "modeled", "synthetic"}
 
 
 def valid_date(value):
@@ -33,8 +33,8 @@ def validate_rule(record):
         errors.append("Unknown review_status")
     if not isinstance(record.get("source_tier"), str) or record.get("source_tier") not in SOURCE_TIERS:
         errors.append("Unknown source_tier")
-    if record.get("review_status") == "verified" and record.get("source_tier") == "synthetic":
-        errors.append("Verified records cannot use synthetic sources")
+    if record.get("review_status") == "verified" and record.get("source_tier") in {"modeled", "synthetic"}:
+        errors.append("Verified records cannot use modeled or synthetic sources")
     if not valid_date(record.get("effective_from")):
         errors.append("effective_from must be an ISO date")
     if record.get("effective_to"):
