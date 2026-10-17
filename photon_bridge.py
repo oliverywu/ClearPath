@@ -126,6 +126,37 @@ def _reply_identity(message: Any) -> Optional[str]:
     return None
 
 
+def send_text_message(
+    client: Photon,
+    project_id: str,
+    space_id: str,
+    sender_id: str,
+    text: str,
+    idempotency_key: Optional[str] = None,
+) -> Any:
+    """Send a plain-text message into an existing Photon space.
+
+    Thin wrapper around the exact SendMessageInput construction poll_once
+    already used for replies, pulled out so other modules (e.g.
+    notification_manager) can send outbound Photon messages without
+    duplicating it.
+    """
+    headers = {"idempotency-key": idempotency_key} if idempotency_key else {}
+    return client.projects.send_message(
+        SendMessageInput.model_validate(
+            {
+                "path": {"id": project_id},
+                "headers": headers,
+                "body": {
+                    "spaceId": space_id,
+                    "senderId": sender_id,
+                    "content": {"type": "text", "format": "plain", "text": text},
+                },
+            }
+        )
+    )
+
+
 def poll_once(
     client: Photon,
     project_id: str,
@@ -187,23 +218,17 @@ def poll_once(
             continue  # leave unprocessed -- retried on next poll
 
         try:
-            client.projects.send_message(
-                SendMessageInput.model_validate(
-                    {
-                        "path": {"id": project_id},
-                        "headers": {"idempotency-key": f"reply:{message.id}"},
-                        "body": {
-                            # Not all space kinds support threaded replies
-                            # (iMessage's shared-line "direct" space rejects
-                            # parentMessageId with "Replies are not
-                            # supported for this Space" -- confirmed live).
-                            # It's optional in the schema, so omit it.
-                            "spaceId": _unwrap(message.space).id,
-                            "senderId": sender_id,
-                            "content": {"type": "text", "format": "plain", "text": answer},
-                        },
-                    }
-                )
+            # Not all space kinds support threaded replies (iMessage's
+            # shared-line "direct" space rejects parentMessageId with
+            # "Replies are not supported for this Space" -- confirmed live).
+            # It's optional in the schema, so omit it.
+            send_text_message(
+                client,
+                project_id,
+                space_id=_unwrap(message.space).id,
+                sender_id=sender_id,
+                text=answer,
+                idempotency_key=f"reply:{message.id}",
             )
         except Exception as exc:
             print(f"[photon_bridge] send_message failed for {message.id}: {exc}", file=sys.stderr)
