@@ -41,8 +41,10 @@ class FreshClone(unittest.TestCase):
                     self.assertIn(b'Cleared for Takeoff', response.read())
             finally:
                 output = stop_app(process)
-            self.assertIn('Website: http://localhost', ''.join(lines))
-            self.assertIn('All processes stopped', output)
+            full = ''.join(lines) + output
+            self.assertIn('Website: http://localhost', full)
+            self.assertIn('API:     http://localhost', full)
+            self.assertIn('All processes stopped', full)
 
 
 def start_app_in(root, tmp, web_port, api_port):

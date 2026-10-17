@@ -53,6 +53,9 @@ def start_app(tmp, web_port, api_port):
         line = process.stdout.readline()
         lines.append(line)
         if 'is running' in line:
+            # Read the rest of the startup banner (URLs) before handing the process back.
+            while 'Press Ctrl+C' not in lines[-1] and process.poll() is None:
+                lines.append(process.stdout.readline())
             return process, lines
         if process.poll() is not None:
             break
