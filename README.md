@@ -57,7 +57,7 @@ The implementation covers AI-assisted candidate extraction and semantic source-c
 
 ```mermaid
 flowchart TD
-    R["1 · Requirements & evidence<br/>Confirm dated rules, exact citations and review status"] --> P["2 · Recalculate supply plan<br/>Create an immutable proposal from active inputs"]
+    R["1 · Requirements & evidence<br/>Confirm dated rules, exact citations and review status"] --> P["2 · Check sources & recalculate<br/>Check registered links; create a proposal if evidence is current"]
     P --> C["3 · See what changed<br/>Compare dates, routes, labels, cost and risk with the current plan"]
     C --> D{"4 · Named human decision"}
     D -->|Use as current plan| A["Current working plan<br/>drives dashboard and calendar"]
@@ -73,7 +73,7 @@ The loop repeats whenever requirements, routes, or operating conditions change. 
 | --- | --- | --- |
 | Inspect a country rule and its citation | **Requirements & evidence** | Evidence is visible; viewing it changes nothing |
 | Add or refresh regulatory material | **Data & sources** | A review-gated candidate or source snapshot |
-| Recalculate from current inputs | **Control tower → Recalculate supply plan** | A proposed plan, never an automatic replacement |
+| Check registered sources and recalculate | **Control tower → Check sources & recalculate** | Checks registered links; stops for review if a source changed or could not be checked |
 | Understand a proposal | **Plans & decisions → See what changed** | Before/after dates, routes, labels, risk and cost |
 | Test a regulatory or logistics event | **Plans & decisions → Potential disruptions → Calculate impact** | Another proposed plan |
 | Adopt or decline a proposal | **Plans & decisions → Use as current plan / Keep current plan** | A named, audited human decision |
@@ -123,7 +123,7 @@ Selecting a country opens its requirements and delivery progress. The progress t
 
 The backup event increases Canada's permit lead time. All event names, affected jurisdictions, delays and repairs come from data records.
 
-Use **Restore demo starting point** on the Control tower, or stop the app and run `.\start.ps1 -Reset`. Restore reloads the packaged synthetic inputs and creates a fresh current plan while retaining historical plan/audit snapshots. **Recalculate supply plan** creates a proposal from the active inputs and never replaces the current plan without a named decision. For the alternative fixture: `python start.py --db .local/replacement.sqlite3 --fixture data/demo/replacement.json`. Add `--reset` to explicitly replace an existing demo database.
+Use **Restore demo starting point** on the Control tower, or stop the app and run `.\start.ps1 -Reset`. Restore reloads the packaged synthetic inputs and creates a fresh current plan while retaining historical plan/audit snapshots. **Check sources & recalculate** checks registered sources first, then creates a proposal only if none changed or failed; a named decision is still required to replace the current plan. For the alternative fixture: `python start.py --db .local/replacement.sqlite3 --fixture data/demo/replacement.json`. Add `--reset` to explicitly replace an existing demo database.
 
 ## Teammate research and replacement data
 
@@ -145,7 +145,7 @@ The interface distinguishes **verified**, **needs review**, **authoritative seco
 
 The packaged Japan view also includes six atomic Article 16 candidates linked directly to the current official MHLW Japanese text: mandatory label fields, prohibited claims, the foreign-sponsor/in-country-caretaker condition, emergency unblinding, transport/storage packaging integrity, and investigational-product records/procedures. They appear first with an **Official** evidence link and **Needs review** badge. They intentionally do not replace the active synthetic planning assumptions until a qualified reviewer confirms the translation, scope, and effective-date applicability. Article 16 does not establish the fixture's numeric temperature band, review/permit lead times, packaging duration, or expiry display format.
 
-The **Source registry** is backed by SQLite, not a hand-maintained text link list. Dataset activation indexes every distinct rule and event citation automatically, including its jurisdictions, evidence tiers, review states, requirement keys, and citation count. Manually registered official HTTPS pages live in the same registry. Generic-page, eCFR, and EUR-Lex adapters support **Check now**, which stores a content hash and creates a diff/change event when content changes. Network access is only used when a teammate clicks the control. Extracted candidates remain `needs_review`; a text diff does not establish a verified legal change. Manual pasted snapshots remain available for pages that block automated collection.
+The **Source registry** is backed by SQLite, not a hand-maintained text link list. Dataset activation indexes distinct rule and event citations with their jurisdictions, evidence tiers, review states, requirement keys, and citation counts. **Check sources & recalculate** first fetches every registered, enabled, non-synthetic HTTPS source. If a source changed, it stops and opens **Data & sources**; no proposal is created until the evidence is reviewed. If a source cannot be checked, it pauses and offers an explicit option to continue using saved evidence. A clean check creates a proposal from the saved evidence and opens **Plans & decisions**. Synthetic demo citations are shown as evidence, not live feeds. Network checks are user-triggered rather than continuous, and some government sites block automated collection. Use Data & sources to register exact legal-text pages or paste current snapshots. A changed page creates a review-gated snapshot/event; use the AI change analyst to inspect the diff, then extract/import and have a qualified human verify any rule before it affects planning. A text diff alone does not establish a verified legal change.
 
 Requirement-table headers are interactive. Select **Requirement**, **Rule type**, **Effective**, **Date scope**, **Evidence**, or **Review** to sort; select the same header again to reverse direction. Long normalized values wrap within their row, and the table uses fixed responsive columns so the desktop view does not require horizontal scrolling.
 

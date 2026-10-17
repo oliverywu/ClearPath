@@ -79,13 +79,19 @@ class Service:
                 item['keys'].add(record['requirement_key'])
             item['count'] += 1
         for url, item in grouped.items():
+            # Keep illustrative/demo citations visible in the UI, but never try to fetch them.
+            if not url.startswith('https://') or 'synthetic' in item['tiers']:
+                continue
             digest = hashlib.sha256(url.encode('utf-8')).hexdigest()[:16]
+            prior = next((s for s in self.repo.sources() if s.get('id') == f'dataset-source-{digest}'), {})
             self.repo.save_source({
                 'id':f'dataset-source-{digest}', 'title':sorted(item['titles'])[0], 'url':url,
                 'adapter':'generic', 'jurisdiction':', '.join(sorted(x for x in item['jurisdictions'] if x)),
                 'source_tiers':sorted(item['tiers']), 'review_statuses':sorted(item['statuses']),
                 'requirement_keys':sorted(item['keys']), 'record_count':item['count'],
-                'managed_by':'dataset', 'enabled':True
+                'managed_by':'dataset', 'enabled':True,
+                'last_checked_at':prior.get('last_checked_at'), 'last_content_hash':prior.get('last_content_hash'),
+                'last_check_changed':prior.get('last_check_changed'), 'last_check_error':prior.get('last_check_error')
             })
 
     def generate(self, dataset, parent=None, event=None, repair=None):
@@ -330,7 +336,28 @@ class Service:
         return result
 
     def check_source(self, source):
-        return self.snapshot({'source_id':source['id'],'url':source['url'],'adapter':source.get('adapter','generic'),'jurisdiction':source.get('jurisdiction')})
+        if source.get('source_tier') == 'synthetic' or 'synthetic' in (source.get('source_tiers') or []):
+            raise APIError('Synthetic demo citations are not live sources and cannot be checked',422)
+        result = self.snapshot({'source_id':source['id'],'url':source['url'],'adapter':source.get('adapter','generic'),'jurisdiction':source.get('jurisdiction')})
+        source.update({'last_checked_at':now(),'last_content_hash':result['content_hash'],'last_check_changed':result['changed'],'last_check_error':None})
+        self.repo.save_source(source)
+        return result
+
+    def check_sources(self):
+        results = []
+        for source in self.repo.sources():
+            if (source.get('enabled') is False or source.get('source_tier') == 'synthetic'
+                    or 'synthetic' in (source.get('source_tiers') or [])
+                    or not str(source.get('url','')).startswith('https://')):
+                continue
+            try:
+                result = self.check_source(source)
+                results.append({'source_id':source['id'],'title':source.get('title',source['id']),'changed':result['changed'],'content_hash':result['content_hash']})
+            except Exception as exc:
+                source.update({'last_checked_at':now(),'last_check_error':str(exc)})
+                self.repo.save_source(source)
+                results.append({'source_id':source['id'],'title':source.get('title',source['id']),'error':str(exc)})
+        return {'results':results,'checked':len(results),'changed':sum(1 for r in results if r.get('changed')),'failed':sum(1 for r in results if r.get('error'))}
 
     def research_extract(self, body):
         dataset = self.repo.dataset()
@@ -519,6 +546,8 @@ class Service:
                 if parts[3]=='calendar.ics':
                     return ('text/calendar; charset=utf-8',ICSCalendarProvider().export(plan))
         if method == 'POST':
+            if path == '/api/sources/check-all':
+                return self.check_sources()
             if path == '/api/demo/reset':
                 if 'dataset' in body:
                     return self.reset(body['dataset'])

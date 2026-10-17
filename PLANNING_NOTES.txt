@@ -20,7 +20,7 @@ Photon is the coordination surface. It should deliver important scenario alerts 
 
 OPERATING LOOP
 
-Requirements → Recalculate supply plan → See what changed → named human chooses Use as current plan or Keep current plan → a regulatory/logistics disruption occurs → Calculate impact → See what changed → named human decides again.
+Requirements → Check sources & recalculate → See what changed → named human chooses Use as current plan or Keep current plan → a regulatory/logistics disruption occurs → Calculate impact → See what changed → named human decides again.
 
 Every calculation produces an immutable proposal. Only a named Use as current plan decision changes the current working plan; the same comparison and decision gate repeats after every disruption.
 
@@ -30,6 +30,7 @@ WEBSITE WAYFINDING
 - Requirements & evidence: inspect dated country rules, exact source excerpts and links, evidence tier, and review status.
 - Plans & decisions: compare the proposal with the current plan, calculate a disruption's impact, then record a named decision.
 - Data & sources: import evidence, inspect the citation/source registry, and manage source snapshots.
+- Source freshness: **Check sources & recalculate** and individual **Check now** buttons fetch every registered, enabled, non-synthetic HTTPS source on demand. A detected change stops proposal creation; a failed fetch pauses and offers an explicit saved-evidence override. Blocked pages need manual snapshots. This is user-triggered, not continuous monitoring.
 - Planner assistant: ask for a grounded explanation or try a non-persistent what-if question.
 - Audit history: inspect recorded evidence and plan decisions.
 
@@ -84,7 +85,7 @@ DEFER UNTIL THE CORE DEMO IS COMPLETE
 
 - PostgreSQL migration and multi-user hosting.
 - Production authentication and role-based authorization.
-- Broad live monitoring of every country regulator.
+- Scheduled monitoring of registered official sources (not every regulator): requires an always-on worker, source-specific retry/rate limits, failure reporting, change notifications, and the existing human-review gate. The current laptop workflow checks sources only when the user requests recalculation or clicks **Check now**.
 - A predictive risk model without historical shipment outcomes and calibration data.
 - Replacing deterministic planning calculations with an LLM.
 
