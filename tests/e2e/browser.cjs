@@ -63,6 +63,12 @@ async function main() {
     await page.locator('#req-country').selectOption('JP');
     await page.locator('#requirements-list .callout').waitFor();
     assert.match(await page.locator('#requirements-list .callout').innerText(), /6 official-source candidates need review/i);
+    assert.equal(await page.locator('.requirements-table-wrap').evaluate(el => el.scrollWidth <= el.clientWidth + 1), true, 'Requirements table should fit without horizontal scrolling');
+    await page.locator('[data-req-sort="type"]').click();
+    assert.match(await page.locator('[data-req-sort="type"]').innerText(), /Rule type\s*[▲▼]/i);
+    await page.locator('[data-req-sort="date"]').click();
+    assert.match(await page.locator('[data-req-sort="date"]').innerText(), /Effective\s*[▲▼]/i);
+    await page.locator('[data-req-sort="review"]').click();
     await page.locator('.rule-select').first().click();
     assert.match(await page.locator('#evidence-content').innerText(), /Needs Review Official[\s\S]*MHLW/i);
     await page.locator('[data-view="scenarios"]').click();

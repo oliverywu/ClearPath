@@ -59,10 +59,34 @@ class Service:
         return self.bootstrap()
 
     def sync_sources(self, dataset):
-        for source in dataset.get('source_documents',[]):
+        for source in dataset.get('source_documents', dataset.get('sources', [])):
             url = source.get('canonical_url') or source.get('url')
             if url:
-                self.repo.save_source({'id':source['id'],'title':source.get('title',source['id']),'url':url,'adapter':source.get('adapter','generic'),'jurisdiction':source.get('jurisdiction'),'enabled':source.get('enabled',True)})
+                self.repo.save_source({'id':source['id'],'title':source.get('title',source['id']),'url':url,'adapter':source.get('adapter','generic'),'jurisdiction':source.get('jurisdiction') or source.get('jurisdiction_id'),'source_tier':source.get('source_tier'),'enabled':source.get('enabled',True)})
+        # Every cited rule/event URL is also indexed in SQLite. This makes the registry
+        # the queryable source-of-truth instead of requiring a hand-maintained link file.
+        grouped = {}
+        for record in [*dataset.get('rules', []), *dataset.get('events', [])]:
+            url = record.get('source_url')
+            if not url:
+                continue
+            item = grouped.setdefault(url, {'titles':set(),'jurisdictions':set(),'tiers':set(),'statuses':set(),'keys':set(),'count':0})
+            item['titles'].add(record.get('source_title') or record.get('title') or url)
+            item['jurisdictions'].add(record.get('jurisdiction'))
+            item['tiers'].add(record.get('source_tier') or ('synthetic' if record.get('synthetic') else 'unknown'))
+            item['statuses'].add(record.get('review_status','unknown'))
+            if record.get('requirement_key'):
+                item['keys'].add(record['requirement_key'])
+            item['count'] += 1
+        for url, item in grouped.items():
+            digest = hashlib.sha256(url.encode('utf-8')).hexdigest()[:16]
+            self.repo.save_source({
+                'id':f'dataset-source-{digest}', 'title':sorted(item['titles'])[0], 'url':url,
+                'adapter':'generic', 'jurisdiction':', '.join(sorted(x for x in item['jurisdictions'] if x)),
+                'source_tiers':sorted(item['tiers']), 'review_statuses':sorted(item['statuses']),
+                'requirement_keys':sorted(item['keys']), 'record_count':item['count'],
+                'managed_by':'dataset', 'enabled':True
+            })
 
     def generate(self, dataset, parent=None, event=None, repair=None):
         dataset = copy.deepcopy(dataset)

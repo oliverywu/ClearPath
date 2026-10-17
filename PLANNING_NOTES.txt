@@ -36,6 +36,8 @@ IMPLEMENTED FOUNDATION
 - Changed-only scenario review by default, with the complete plan available through an explicit control.
 - Credential-ready Google Calendar and Microsoft Graph milestone synchronization for approved scenarios.
 - Dashboard alerts, country progress, calendar display, and approved ICS export.
+- SQLite-backed canonical source registry that automatically indexes every dataset rule/event citation; documentation does not duplicate the live link inventory.
+- Responsive, no-horizontal-scroll requirements table with wrapped values and sortable requirement, type, date, scope, evidence, and review columns.
 - One-command local startup, API/integration/unit tests, and browser acceptance coverage.
 
 

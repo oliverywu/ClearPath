@@ -285,6 +285,13 @@ class ServiceTests(unittest.TestCase):
         self.assertTrue(duplicate['summary']['conflicts'])
 
     def test_source_registry_and_check(self):
+        registry = self.service.handle('GET','/api/sources')['sources']
+        cited_urls = {r['source_url'] for r in self.service.repo.dataset()['rules']}
+        managed_urls = {s['url'] for s in registry if s.get('managed_by') == 'dataset'}
+        self.assertTrue(cited_urls.issubset(managed_urls))
+        japan = next(s for s in registry if s.get('url','').startswith('https://www.mhlw.go.jp/web/t_doc?'))
+        self.assertEqual('official', japan['source_tiers'][0])
+        self.assertIn('label.mandatory_fields', japan['requirement_keys'])
         source = self.post('/api/sources',{'title':'Official page','url':'https://official.example/rule','adapter':'generic'})
         self.assertIn(source['id'],[s['id'] for s in self.service.handle('GET','/api/sources')['sources']])
         with patch('packages.ingestion.adapters.GenericPageAdapter.fetch',return_value='Official evidence'):
