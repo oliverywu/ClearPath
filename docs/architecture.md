@@ -8,9 +8,11 @@ Cleared for Takeoff runs entirely on a laptop. `start.py` starts a Python API on
 
 `packages/ingestion` owns source fetching, snapshots, content hashes, metadata extraction and candidate-rule normalization. Source content is evidence, never executable instructions. A source diff does not automatically declare a legal change verified. Human-reviewed atomic rules enter through preview and commit.
 
+The planned AI research layer belongs between source collection and human evidence review. It may extract structured candidate rules, compare source versions, translate passages, classify likely material changes and prepare proposed change events. Every AI-derived record must retain its exact supporting excerpt and remain `needs_review`. AI output cannot write directly to the accepted rule set or bypass deterministic validation.
+
 `packages/feature_provider` provides a common application contract for deterministic local and Chalk features. Provider failures retain local results and disclose the fallback. Rules, dates, group membership and approval decisions remain deterministic even when a remote provider is configured. `chalk/` defines the deployment-side feature namespace contract.
 
-The assistant reads scenario objects and their source references. It explains stored values and refuses legal conclusions and plan-changing actions. It does not invoke an LLM to decide regulatory facts or logistics outcomes. Answers are usable without any model credentials.
+The assistant reads scenario objects and their source references. It explains stored values and refuses legal conclusions and plan-changing actions. A planned allowlisted what-if tool may translate supported questions into temporary scenario inputs, but the deterministic planner will still calculate the result and the assistant will remain unable to persist or approve it. Answers are usable without any model credentials.
 
 Calendar export is an explicit action available for approved scenarios. Stable milestone UIDs make repeated export predictable. The `CalendarProvider` protocol defines future synchronization. Calendar and notification failures do not affect a decision or stored plan. Photon remains a disabled notification boundary until its service contract is available.
 

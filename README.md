@@ -2,6 +2,49 @@
 
 Local clinical-supply decision support: dated regulatory evidence, compatible label groups, dependency schedules, change scenarios, human approval and audit history. The packaged trial and requirements are **synthetic demonstrations**, not verified regulations or legal advice.
 
+The product deliberately combines two kinds of intelligence. Deterministic code owns calculations that must be reproducible. AI is reserved for uncertain, language-heavy work such as interpreting source documents, identifying meaningful changes, and explaining scenarios. A human remains responsible for evidence verification and plan approval.
+
+## Product decision levels
+
+```mermaid
+flowchart TB
+    L1["Level 1: Evidence and inputs<br/>Regulations, routes, product data, disruptions"]
+    L2["Level 2: AI research and analysis<br/>Extract, compare, translate, classify, explain<br/>Partially implemented"]
+    L3["Level 3: Deterministic planning<br/>Rule selection, label grouping, dates, slack, risk, repairs<br/>Implemented"]
+    L4["Level 4: Human governance<br/>Verify evidence, review trade-offs, approve or reject<br/>Implemented"]
+    L5["Level 5: Coordination<br/>Dashboard, calendar, Photon alerts and follow-up<br/>Photon remaining"]
+
+    L1 --> L2 --> L3 --> L4 --> L5
+```
+
+AI may propose structured candidates and scenario questions, but it may not verify a regulation, perform the authoritative schedule calculation, or approve a plan. This boundary keeps the system useful when model access is unavailable and makes every operational result reproducible.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A["Official regulatory sources"] --> I["Source ingestion and snapshots"]
+    B["Weather and logistics reports"] --> I
+    C["Trial and product data"] --> V["Schema validation"]
+
+    I --> R["AI Research Copilot<br/>planned"]
+    R -->|candidate rules and change events| V
+    I -->|manual structured import| V
+    V --> H["Human evidence review"]
+    H --> S["Versioned SQLite store"]
+
+    S --> P["Deterministic planner"]
+    P --> F["Local or Chalk feature provider"]
+    F --> Q["Immutable proposed scenario"]
+    Q --> D["Dashboard comparison"]
+    Q --> X["Grounded planner assistant"]
+    D --> G["Human approval or rejection"]
+    G --> K["Approved calendar and audit history"]
+    Q --> N["Photon notification and follow-up<br/>planned"]
+```
+
+The current implementation is complete from validated structured inputs through planning, comparison, approval, audit, and calendar export. AI-assisted research/change analysis and live Photon delivery are the main remaining hackathon features. Detailed product decisions and the prioritized work list are in [`PLANNING_NOTES.txt`](PLANNING_NOTES.txt).
+
 ## Start
 
 Prerequisite: **Python 3.11+**. No runtime package installation, Docker, cloud service, model key, Chalk or Photon credentials are needed. The Windows launcher also detects Codex's bundled Python.
@@ -67,7 +110,7 @@ The interface distinguishes **verified**, **needs review**, **authoritative seco
 
 The **Source registry** records official HTTPS pages and supports generic-page, eCFR, and EUR-Lex adapters. **Check now** collects the page, stores a content hash, and creates a diff/change event when content changes. Network access is only used when a teammate clicks the control. Extracted candidates remain `needs_review`; a text diff does not establish a verified legal change. Manual pasted snapshots remain available for pages that block automated collection.
 
-## Optional OpenAI planner assistant
+## Planner assistant and AI boundary
 
 The planner assistant works offline by default. Its deterministic answers cite the selected immutable scenario and source records. Ask with a full country name (`Why is Argentina at risk?`) or an uppercase two-letter code (`Why is DE at risk?`). Full names take priority, so ordinary words such as “at” are never interpreted as country codes. Answers lead with the direct cause, dates, slack, and scenario impact; repeated causal text is removed. Negative slack is expressed as business days late rather than a negative number. To enable a model-written answer, copy `.env.example` to `.env` and set:
 
@@ -79,11 +122,24 @@ OPENAI_MODEL=gpt-5.4-mini
 
 The integration uses the OpenAI Responses API with one allowlisted, read-only planning-context tool. It cannot approve, reject, or modify plans. Citations still come from stored evidence, API failures fall back visibly to the local assistant, and responses are sent with storage disabled. Never commit `.env` or an API key.
 
+The current model integration improves explanation, not the underlying calculation. The next AI work should add a research copilot, semantic change analysis, and constrained conversational what-if tools. Those features must produce reviewable candidates or temporary simulations; deterministic code and human approval remain authoritative.
+
 ## Teammate handoff checklist
 
-**The complete demo runs without ChatGPT, OpenAI, Chalk, Photon, Google, or Microsoft credentials.** Planning, risk calculation, scenarios, approvals, audit history, the dashboard calendar, `.ics` export, and the offline planner assistant are deterministic local features. External services are optional enhancements.
+**The current deterministic demo runs without ChatGPT, OpenAI, Chalk, Photon, Google, or Microsoft credentials.** Planning, risk calculation, scenarios, approvals, audit history, the dashboard calendar, `.ics` export, and the offline planner assistant remain available locally. OpenAI research analysis and Photon are required for the intended final hackathon story but may fail safely without disabling the planning workflow.
 
 Every imported rule should begin as `needs_review`. A qualified reviewer must inspect evidence in the UI. Dataset and rule commits generate proposals; a separate named plan approval is still required.
+
+### Required hackathon completion work
+
+- [ ] **AI Research Copilot:** accept a registered regulator page or pasted source text and extract candidate atomic requirements into the existing schema. Each candidate must include an exact supporting quotation, jurisdiction, effective interval, requirement key, value, confidence, and ambiguity note. AI output must remain `needs_review`; schema validation and a named human review are required before planning can use it.
+- [ ] **AI Change Analyst:** compare a new source snapshot with its predecessor, summarize the meaningful semantic change, identify likely requirement keys and affected jurisdictions, and prepare a proposed change event. Preserve the raw diff and citations. The AI may propose materiality, but a reviewer must confirm the normalized change before the deterministic impact calculation runs.
+- [ ] **Conversational what-if tool:** allow questions such as “What if Japan receives a separate label?” or “What if Germany uses the Amsterdam route?” The assistant should translate the request into an allowlisted temporary scenario input, call the deterministic planner, and explain the returned comparison. It must never approve, persist, or silently apply the result.
+- [ ] **Verified evidence slice:** replace a focused subset of synthetic rules with official or authoritative records for at least the United States, EU/Germany, Canada, and Japan. Prefer a small number of deeply sourced, human-reviewed requirements over superficial coverage. Retain synthetic records for the wider 24-country demonstration and label them clearly.
+- [ ] **Live Photon integration:** implement authenticated `NotificationProvider.send`, deliver a scenario alert with its cause and deep link, and support the intended Photon follow-up interaction. A failed delivery must remain visible in diagnostics and must never affect scenario state. Photon is part of the primary hackathon story, not an optional production enhancement.
+- [ ] **AI evaluation set:** create a small gold dataset of regulatory passages, source changes, and planner questions. Measure requirement-key extraction, effective-date accuracy, quotation/citation accuracy, material-change classification, grounded-answer quality, and correct abstention. Include adversarial examples where the model should say that evidence is insufficient.
+- [ ] **Changed-only scenario view:** make the comparison screen default to affected countries, milestones, label groups, and routes, with unchanged shipments collapsed behind an explicit control. Keep the full plan available for audit, while ensuring the main disruption story can be understood in under three minutes.
+- [ ] **Live provider smoke tests:** run one real OpenAI research/assistant flow and one real Photon notification before the demo. If the project is submitted for a Chalk category, also deploy the resolvers and verify one live query against the local parity result. Keep secrets out of Git and preserve local fallbacks.
 
 ### Required before using real trial data
 
@@ -94,12 +150,10 @@ Every imported rule should begin as `needs_review`. A qualified reviewer must in
 - [ ] The team reviews generated proposals in **Scenarios** and records a named approval or rejection with a decision note. Confirm that the dashboard calendar and country progress dates match the approved plan.
 - [ ] Before a demo or handoff, run `python -m unittest discover -v`. For full UI verification, also run `npm install`, `npx playwright install chromium`, and `npm run test:browser`.
 
-### Optional integrations — do only if the team wants them
+### Optional infrastructure after the hackathon workflow is complete
 
-- [ ] **OpenAI:** add `ASSISTANT_PROVIDER`, `OPENAI_API_KEY`, and `OPENAI_MODEL` to a local `.env` if model-written assistant prose is wanted. The offline assistant already works without it.
 - [ ] **Chalk:** deploy the matching feature resolvers, confirm remote/local parity, then add Chalk credentials if hosted feature computation is wanted. Local calculations already work.
 - [ ] **Google Calendar / Outlook:** the app already opens individual milestones in either service and exports the complete approved timeline as `.ics`. Implement OAuth account synchronization only if automatic background updates to a shared calendar are required.
-- [ ] **Photon:** obtain the confirmed Photon API contract and credentials, implement `NotificationProvider.send`, and test delivery if external alerts are required. Dashboard alerts already work locally.
 - [ ] **Hosting:** choose a deployment host and production data/security approach only if teammates need the app while the host laptop is off. The current app intentionally runs on one laptop with SQLite and local reviewer attribution.
 
 Never share or commit `.env`, API keys, client secrets, or the local `.local/cleared.sqlite3` database.
@@ -159,4 +213,4 @@ The standard-library API, SQLite and buildless browser app keep offline startup 
 
 This is a single-user local tool. Reviewer names are attribution, not production authentication. Holiday calendars, route estimates and evidence quality depend on imported records. The assistant remains usable without a model-service dependency. Source checks are user-triggered and only run while the application and laptop are on.
 
-Photon is the unfinished external messaging integration because its contract and credentials were not provided. Live Chalk and direct calendar-account synchronization need external setup; complete local features and ICS export work now. See [architecture](docs/architecture.md), [provenance](docs/data_provenance.md), and [demo script](docs/demo_script.md).
+AI-assisted research/change analysis and Photon are the main unfinished hackathon features. Live Chalk and direct calendar-account synchronization need external setup; complete local planning, governance, and ICS export work now. See [planning notes](PLANNING_NOTES.txt), [architecture](docs/architecture.md), [provenance](docs/data_provenance.md), [demo script](docs/demo_script.md), and the original [challenge brief](CHALLENGE_BRIEF.txt).
