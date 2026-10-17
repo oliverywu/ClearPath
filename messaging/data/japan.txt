@@ -1,0 +1,97 @@
+COUNTRY: Japan
+REGULATION: Japanese Good Clinical Practice (GCP) Ordinance
+OFFICIAL TITLE: 医薬品の臨床試験の実施の基準に関する省令
+RELEVANT ARTICLES: Article 16 and Article 17
+SOURCE: https://laws.e-gov.go.jp/law/409M50000100028
+VERSION CLAIMED BY SUPPLIED DOCUMENT: April 30, 2026
+SOURCE TYPE: Working English translation of Japanese legislation
+VERIFICATION STATUS: Translation and effective date require verification against the official Japanese text
+
+REGULATORY TEXT:
+Article 16 — Management of Investigational Drugs or Drugs Used in Clinical Trials
+Paragraph 1 — Mandatory Labeling Requirements
+The clinical trial sponsor shall indicate the following information in Japanese on the container or packaging of an investigational drug.
+However, when conducting an expanded access clinical trial, only the information specified in Items (i) and (ii) shall be required.
+(i) A statement indicating that the drug is intended for clinical trial use.
+(ii) The name and address of the clinical trial sponsor. If the sponsor does not have an address in Japan, the label shall indicate the sponsor's name, the country in which the sponsor is located, and the name and address of the in-country clinical trial representative in Japan.
+(iii) The chemical name or identification code of the investigational drug.
+(iv) The manufacturing number or manufacturing identification code.
+(v) The storage conditions, validity period, and other relevant information, where such conditions or periods need to be established.
+Paragraph 2 — Information Prohibited from Labeling
+The clinical trial sponsor shall not include the following information in documents accompanying the investigational drug, on the investigational drug itself, or on its container or packaging, including inner packaging:
+(i) The proposed commercial name of the drug.
+(ii) The proposed indications or therapeutic effects.
+(iii) The proposed dosage and administration.
+Exception: These restrictions shall not apply when conducting a clinical trial using investigational drugs for which trial participants, principal investigators and other investigators, or clinical trial collaborators are not prevented from identifying the investigational drug and comparator drug, or when conducting an expanded access clinical trial.
+Paragraph 3 — Emergency Identification in Blinded Clinical Trials
+When an investigational drug has been supplied to a clinical trial institution under conditions in which trial participants, investigators, and clinical trial collaborators cannot distinguish the investigational drug from the comparator drug, the sponsor shall establish necessary measures to ensure that investigators can immediately identify the investigational drug and comparator drug in an emergency.
+Paragraph 4 — Packaging During Transportation and Storage
+The clinical trial sponsor shall package investigational drugs appropriately before supplying them to clinical trial institutions in order to prevent contamination or deterioration during transportation and storage.
+Paragraph 5 — Manufacturing, Distribution, and Disposal Records
+The clinical trial sponsor shall prepare the following records concerning investigational drugs or drugs used in clinical trials:
+(i) Records relating to the manufacture of investigational drugs, including manufacturing dates, manufacturing methods, manufacturing quantities, and quality testing records, such as stability testing.
+(ii) Records of the quantities and dates of distribution or retrieval of drugs used in clinical trials for each clinical trial institution.
+(iii) Records concerning the disposal of drugs used in clinical trials.
+Paragraph 6 — Drug Management Procedures
+The clinical trial sponsor shall, without delay after the execution of the clinical trial agreement, prepare written procedures for managing drugs used in clinical trials at the clinical trial institution and provide those procedures to the institution.
+Paragraph 7 — Drug Handling Instructions
+Where necessary, the clinical trial sponsor shall prepare documents explaining how to dissolve the investigational drug and other procedures for its handling.
+These documents shall be provided to investigators, clinical trial collaborators, and the investigational drug manager specified in Article 39.
+Paragraph 8 — Application of Electronic Document Procedures
+The provisions of Article 10, Paragraphs 2 through 5, shall apply mutatis mutandis to the provision of the procedures specified in Paragraph 6.
+In such cases, references to a "person intending to request a clinical trial" shall be read as references to the "clinical trial sponsor."
+Paragraph 9 — Application of Electronic Document Procedures to Handling Instructions
+The provisions of Article 10, Paragraphs 2 through 5, shall apply mutatis mutandis to the provision of the documents specified in Paragraph 7.
+In such cases, references to a "person intending to request a clinical trial" shall be read as references to the "clinical trial sponsor," and references to the "head of the clinical trial institution" shall be read as references to "investigators, clinical trial collaborators, and the investigational drug manager specified in Article 39."
+
+Article 17 — Supply of Investigational Drugs
+Paragraph 1
+The clinical trial sponsor shall, under its own responsibility, supply investigational drugs to clinical trial institutions that have been manufactured at facilities equipped with the structures and equipment necessary to ensure drug quality and that employ appropriate manufacturing management and quality control methods.
+However, when conducting an expanded access clinical trial, the sponsor may permit the clinical trial institution to select a drug for investigational use from its existing pharmaceutical inventory, or the sponsor may select such a drug itself.
+Paragraph 2
+In the circumstances described in the proviso to Paragraph 1, the clinical trial sponsor shall ensure that the information specified in Article 16, Paragraph 1, Items (i) and (ii), is indicated in Japanese on the container or packaging of the investigational drug at a location employing appropriate manufacturing management and quality control methods.
+Paragraph 3
+In the circumstances described in the proviso to Paragraph 1, the investigational drug manager specified in Article 39 shall appropriately manage the investigational drug separately from other pharmaceutical products.
+
+Article 18 — Preparation of Documents for Delegation
+When a clinical trial sponsor delegates coordination duties specified in Article 2, Paragraph 20, to a coordinating investigator or coordinating committee, the sponsor shall prepare a document specifying the scope of duties, procedures, and other necessary matters.
+
+Article 19 — Establishment of an Efficacy and Safety Evaluation Committee
+Paragraph 1
+A clinical trial sponsor may establish an efficacy and safety evaluation committee to deliberate on whether a clinical trial should continue or whether the clinical trial protocol should be amended.
+Paragraph 2
+The clinical trial sponsor shall prepare written procedures governing the deliberations of the efficacy and safety evaluation committee and shall ensure that deliberations are conducted in accordance with those procedures.
+Paragraph 3
+When the deliberations specified in the preceding paragraph are conducted, the clinical trial sponsor shall prepare and retain records of those deliberations.
+
+Article 20 — Information on Adverse Reactions and Other Safety Matters
+Paragraph 1
+The clinical trial sponsor shall collect and evaluate information concerning the quality, efficacy, and safety of drugs used in clinical trials, as well as other information necessary for the proper conduct of the clinical trial, and shall provide such information to the head of the clinical trial institution.
+Paragraph 2
+When the clinical trial sponsor becomes aware of matters specified in Article 80-2, Paragraph 6, of the Act concerning a drug used in a clinical trial, the sponsor shall notify the principal investigator and the head of the clinical trial institution of a list of relevant cases and other information for each investigational drug.
+Such notification shall be provided annually, calculated from the date on which the clinical trial plan for the investigational drug was first submitted or another applicable starting date, and within three months after the end of each annual period.
+Paragraph 3
+When the clinical trial sponsor becomes aware of matters specified in the preceding paragraph that could not have been predicted from the Investigator's Brochure for the investigational drug or from scientific knowledge concerning other drugs used in the clinical trial, the sponsor shall immediately notify the principal investigator and the head of the clinical trial institution.
+Paragraph 4
+When the clinical trial sponsor becomes aware of important information concerning the quality, efficacy, or safety of drugs used in the clinical trial, or other information essential for the proper conduct of the trial, the sponsor shall amend the clinical trial protocol and the Investigator's Brochure as necessary.
+When amending the clinical trial protocol, the sponsor shall obtain the consent of the principal investigator.
+
+Article 21 — Implementation of Monitoring
+Paragraph 1
+The clinical trial sponsor shall prepare written monitoring procedures and conduct monitoring in accordance with those procedures.
+Paragraph 2
+Monitoring shall be conducted on-site at the clinical trial institution.
+However, this requirement shall not apply where sufficient monitoring can be performed through other methods.
+
+Article 22 — Responsibilities of Monitors
+Paragraph 1
+When a person responsible for monitoring (hereinafter referred to as a "monitor") confirms that a clinical trial conducted at a clinical trial institution is not being performed in accordance with this Ordinance or the clinical trial protocol, the monitor shall immediately inform the principal investigator at that institution.
+Paragraph 2
+Whenever a monitor conducts on-site monitoring at a clinical trial institution or communicates with the institution in connection with monitoring, the monitor shall submit a monitoring report to the clinical trial sponsor containing the following information:
+(i) Date of monitoring.
+(ii) Clinical trial institution monitored.
+(iii) Name of the monitor.
+(iv) Names of investigators and other personnel interviewed or consulted during monitoring.
+(v) Summary of monitoring findings.
+(vi) Matters reported to the principal investigator under Paragraph 1.
+(vii) Corrective measures that should be taken regarding the matters specified in Item (vi), and the monitor's opinions concerning those measures.

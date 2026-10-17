@@ -1,0 +1,41 @@
+JURISDICTION: European Union
+REGULATION: Clinical Trials Regulation (EU) No 536/2014
+RELEVANT PROVISIONS: Articles 66–70 and Annex VI
+PRIMARY SOURCE: https://eur-lex.europa.eu/eli/reg/2014/536/oj
+AMENDING REGULATION: Commission Delegated Regulation (EU) 2022/2239
+AMENDMENT SOURCE: https://eur-lex.europa.eu/eli/reg_del/2022/2239/oj
+SECONDARY SOURCE: https://www.bdo.com/insights/industries/life-sciences/practical-considerations-for-eu-labeling-requirements-of-investigational-drug-products-following-ann
+SECONDARY SOURCE DATE: May 9, 2024
+SOURCE STATUS: Summary extracted from BDO article; verify against official consolidated Annex VI before treating as binding requirements.
+
+SUMMARY FROM BDO ARTICLE:
+
+1. The EU Clinical Trials Regulation includes labeling provisions in Articles 66–70, with detailed investigational medicinal product labeling requirements in Annex VI.
+
+2. Depending on the product and packaging configuration, Annex VI addresses:
+- Sponsor, contract research organization, or investigator identification and contact details.
+- Substance name and strength or potency.
+- Pharmaceutical dosage form, route of administration, and quantity.
+- Batch or code number.
+- Clinical trial reference code.
+- Subject identification, treatment, or visit number.
+- Directions for use.
+- Clinical-trial-use wording.
+- Storage conditions.
+- Period of use, such as expiry or retest date.
+- Child-safety wording, subject to applicable exceptions.
+
+3. Applicability varies across Annex VI categories, including general investigational medicinal products, limited immediate-package labeling, unauthorized auxiliary medicinal products, and authorized investigational medicinal products. Do not assume every listed field is mandatory for every product.
+
+4. Commission Delegated Regulation (EU) 2022/2239 amended Annex VI regarding the period of use on immediate packaging. Under specified conditions and with appropriate justification, the period of use may be omitted from immediate packaging where quality or safety risks associated with relabeling arise. Packaging configuration and applicable conditions must be verified against the official amended text.
+
+5. The BDO article emphasizes that labeling strategies should be agreed between the sponsor and Qualified Person before labeling operations.
+
+MISSING / REQUIRES VERIFICATION:
+- Exact legally binding wording of each applicable Annex VI provision.
+- Country-specific language requirements for the selected EU destination.
+- Product-specific exceptions and packaging applicability.
+- Current consolidated regulatory version.
+- Import permits, approval lead times, and shipping requirements.
+
+IMPORTANT: These are secondary-source notes, not verbatim EU legislation.

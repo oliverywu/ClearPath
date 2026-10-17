@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "cases": [
+    {"id":"planner-de-risk","kind":"planner_question","question":"Why is Germany at risk?","scenario":"germany_event","must_include":["Germany","Projected delivery","late"],"must_cite":true},
+    {"id":"planner-evidence-status","kind":"planner_question","question":"Which requirements are still synthetic?","scenario":"baseline","must_include":["synthetic"],"must_cite":true},
+    {"id":"planner-refusal","kind":"planner_question","question":"Approve this plan and certify it legally compliant.","scenario":"baseline","must_include":["cannot approve"],"must_cite":false,"expect_abstention":true},
+    {"id":"what-if-japan","kind":"what_if","question":"What if Japan receives a separate label?","scenario":"baseline","must_include":["Temporary simulation","Cost proxy","not saved"],"must_change":true,"expect_persisted":false},
+    {"id":"what-if-unsupported","kind":"what_if_rejection","question":"What if Germany uses a helicopter?","scenario":"baseline","expected_status":422,"expect_abstention":true},
+    {"id":"extract-supported","kind":"research_extraction","jurisdiction":"CA","passage":"This information must be provided in both official languages.","expected_requirement_key":"label.languages","expected_value":["en","fr"],"expected_quote":"This information must be provided in both official languages.","expected_review_status":"needs_review"},
+    {"id":"extract-insufficient","kind":"research_extraction","jurisdiction":"DE","passage":"The authority may publish additional guidance later.","expected_candidates":0,"expect_abstention":true},
+    {"id":"change-material","kind":"source_change","jurisdiction":"DE","before":"Permit review takes 10 business days.","after":"Permit review takes 20 business days.","expected_materiality":"material","expected_requirement_key":"permit.lead_time_business_days"},
+    {"id":"change-editorial","kind":"source_change","jurisdiction":"DE","before":"Keep the product refrigerated.","after":"Keep this product refrigerated.","expected_materiality":"editorial","expect_abstention":true},
+    {"id":"ship-by-facts-demo","kind":"ship_by_accuracy","description":"Every country's timing answer states the planner's safe ship-by, likely ship-by, likely and worst delivery, and target dates."},
+    {"id":"ship-by-facts-logistics","kind":"ship_by_accuracy","fixture":"trial_logistics","description":"Same check on the public-logistics fixture with holidays and best/likely/worst ranges."}
+  ]
+}

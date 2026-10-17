@@ -1,0 +1,165 @@
+{
+ "max-maya": [
+  {
+   "from": "max",
+   "sentAt": "2026-10-17T09:02:00-04:00",
+   "text": "Morning Maya. Japan has a new label requirement and it touches 23 NOVA-24 kits.",
+   "caption": "Synthetic demo event",
+   "id": "max-maya-m1"
+  },
+  {
+   "from": "max",
+   "sentAt": "2026-10-17T09:02:20-04:00",
+   "card": {
+    "type": "plan",
+    "title": "Japan, current plan",
+    "rows": [
+     [
+      "Safe ship-by",
+      "Nov 9"
+     ],
+     [
+      "Likely ship-by",
+      "Nov 17"
+     ],
+     [
+      "Kits affected",
+      "23"
+     ]
+    ],
+    "tone": "warn"
+   },
+   "links": [
+    {
+     "label": "Details",
+     "href": "#/warnings/wrn-001"
+    }
+   ],
+   "id": "max-maya-m2"
+  },
+  {
+   "from": "max",
+   "sentAt": "2026-10-17T09:04:00-04:00",
+   "card": {
+    "type": "options",
+    "title": "Pick a fix (reply 1, 2 or 3)",
+    "options": [
+     "Relabel in Boston before departure · +2 days",
+     "Relabel at the Tokyo depot · +9 days",
+     "Split: 12 kits now, 11 after relabel"
+    ]
+   },
+   "quickReplies": [
+    "1",
+    "2",
+    "3"
+   ],
+   "id": "max-maya-m3"
+  }
+ ],
+ "max-priya": [
+  {
+   "from": "max",
+   "sentAt": "2026-10-17T08:38:00-04:00",
+   "text": "Hi Priya, I drafted a candidate rule from today's regulator notice.",
+   "id": "max-priya-m1"
+  },
+  {
+   "from": "max",
+   "sentAt": "2026-10-17T08:40:00-04:00",
+   "card": {
+    "type": "rule",
+    "chip": "Needs review",
+    "title": "Japan · investigational kit labels",
+    "body": "Add mandatory field “Storage after first opening”. Applies to label group label-JP-v1."
+   },
+   "caption": "Synthetic demo event",
+   "links": [
+    {
+     "label": "Details",
+     "href": "#/warnings/wrn-001"
+    }
+   ],
+   "quickReplies": [
+    "APPROVE",
+    "REJECT"
+   ],
+   "id": "max-priya-m2"
+  }
+ ],
+ "max-kenji": [
+  {
+   "from": "me",
+   "sentAt": "2026-10-16T17:02:00-04:00",
+   "text": "Kenji, can the affiliate sign off the new JP label proof today?",
+   "id": "max-kenji-m1"
+  },
+  {
+   "from": "max",
+   "sentAt": "2026-10-16T17:05:00-04:00",
+   "text": "Kenji confirmed: translation reviewed, proof v2 approved by the affiliate.",
+   "id": "max-kenji-m2"
+  },
+  {
+   "from": "max",
+   "sentAt": "2026-10-16T17:20:00-04:00",
+   "text": "Updated label proof is in the plan.",
+   "links": [
+    {
+     "label": "View the plan",
+     "href": "#/"
+    }
+   ],
+   "id": "max-kenji-m3"
+  }
+ ],
+ "max-sam": [
+  {
+   "from": "max",
+   "sentAt": "2026-10-16T23:10:00-04:00",
+   "text": "Escalation: Shanghai depot licence suspended. 6 ORION-7 shipments blocked.",
+   "caption": "Synthetic demo event",
+   "id": "max-sam-m1"
+  },
+  {
+   "from": "max",
+   "sentAt": "2026-10-16T23:12:00-04:00",
+   "card": {
+    "type": "call",
+    "title": "Live call with Sam",
+    "body": "Max is on the line with the on-call lead.",
+    "transcript": [
+     [
+      "Max",
+      "Sam, the Shanghai depot licence was suspended at 22:55."
+     ],
+     [
+      "Sam",
+      "How many shipments?"
+     ],
+     [
+      "Max",
+      "Six ORION-7 shipments, all 2–8 °C. Earliest leaves Basel on Nov 2."
+     ],
+     [
+      "Sam",
+      "Option to reroute?"
+     ],
+     [
+      "Max",
+      "Singapore hub, plus five days, one extra cold-chain leg. I can draft the scenario."
+     ],
+     [
+      "Sam",
+      "Do it, and loop in Lars."
+     ]
+    ]
+   },
+   "quickReplies": [
+    "Draft the reroute",
+    "Call me back"
+   ],
+   "id": "max-sam-m2"
+  }
+ ]
+}

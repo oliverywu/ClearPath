@@ -1,0 +1,132 @@
+[
+ {
+  "id": "wrn-001",
+  "country": "JP",
+  "countryName": "Japan",
+  "requirement": "Additional label field",
+  "summary": "\u201cStorage after first opening\u201d is now mandatory on investigational kit labels.",
+  "study": "NOVA-24",
+  "shipmentsAffected": 23,
+  "severity": "high",
+  "createdAt": "2026-10-17T07:42:00-04:00",
+  "status": "open",
+  "recommendedAction": "Relabel at Boston before departure (+2 days)",
+  "source": "Regulator notice (sample)",
+  "shipmentIds": [
+   "shp-001"
+  ]
+ },
+ {
+  "id": "wrn-002",
+  "country": "AR",
+  "countryName": "Argentina",
+  "requirement": "Import permit renewal",
+  "summary": "Import permit expires in 6 days; renewal not yet stamped.",
+  "study": "NOVA-24",
+  "shipmentsAffected": 11,
+  "severity": "high",
+  "createdAt": "2026-10-17T06:10:00-04:00",
+  "status": "open",
+  "recommendedAction": "Broker re-file; escalate to local depositary",
+  "source": "Customs broker",
+  "shipmentIds": [
+   "shp-002"
+  ]
+ },
+ {
+  "id": "wrn-003",
+  "country": "CN",
+  "countryName": "China",
+  "requirement": "Depot licence",
+  "summary": "Shanghai depot GSP licence suspended pending re-inspection.",
+  "study": "ORION-7",
+  "shipmentsAffected": 6,
+  "severity": "critical",
+  "createdAt": "2026-10-16T17:55:00-04:00",
+  "status": "open",
+  "recommendedAction": "Reroute via Singapore (+5 days)",
+  "source": "Depot partner",
+  "shipmentIds": [
+   "shp-003"
+  ]
+ },
+ {
+  "id": "wrn-004",
+  "country": "BR",
+  "countryName": "Brazil",
+  "requirement": "Cold-chain validation",
+  "summary": "9.1\u00b0C excursion for 42 min on ORX-2 shipment; QA validation required.",
+  "study": "ORION-7",
+  "shipmentsAffected": 4,
+  "severity": "medium",
+  "createdAt": "2026-10-16T09:20:00-04:00",
+  "status": "in_review",
+  "recommendedAction": "QA release decision",
+  "source": "Carrier telemetry",
+  "shipmentIds": []
+ },
+ {
+  "id": "wrn-005",
+  "country": "KR",
+  "countryName": "South Korea",
+  "requirement": "Reefer booking",
+  "summary": "Comparator reefer capacity tight for December lane.",
+  "study": "NOVA-24",
+  "shipmentsAffected": 3,
+  "severity": "low",
+  "createdAt": "2026-10-15T14:03:00-04:00",
+  "status": "open",
+  "recommendedAction": "Book backup carrier",
+  "source": "Carrier",
+  "shipmentIds": [
+   "shp-005"
+  ]
+ },
+ {
+  "id": "wrn-006",
+  "country": "DE",
+  "countryName": "Germany",
+  "requirement": "Customs pre-clearance",
+  "summary": "Pre-clearance documents accepted.",
+  "study": "HALO-3",
+  "shipmentsAffected": 8,
+  "severity": "low",
+  "createdAt": "2026-10-14T11:00:00-04:00",
+  "status": "resolved",
+  "recommendedAction": "None",
+  "source": "Customs",
+  "shipmentIds": [
+   "shp-004"
+  ]
+ },
+ {
+  "id": "wrn-007",
+  "country": "MX",
+  "countryName": "Mexico",
+  "requirement": "Spanish label variant",
+  "summary": "Local label variant awaiting translation sign-off.",
+  "study": "HALO-3",
+  "shipmentsAffected": 5,
+  "severity": "medium",
+  "createdAt": "2026-10-13T16:30:00-04:00",
+  "status": "in_review",
+  "recommendedAction": "Approve translation",
+  "source": "Regulatory affairs",
+  "shipmentIds": []
+ },
+ {
+  "id": "wrn-008",
+  "country": "IN",
+  "countryName": "India",
+  "requirement": "Import licence",
+  "summary": "No shipment planned; licence application not started.",
+  "study": "ORION-7",
+  "shipmentsAffected": 0,
+  "severity": "low",
+  "createdAt": "2026-10-12T10:15:00-04:00",
+  "status": "resolved",
+  "recommendedAction": "None",
+  "source": "Planning",
+  "shipmentIds": []
+ }
+]

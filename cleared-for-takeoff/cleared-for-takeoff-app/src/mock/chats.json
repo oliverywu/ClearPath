@@ -1,0 +1,52 @@
+[
+ {
+  "id": "max-maya",
+  "name": "Maya",
+  "role": "supply lead",
+  "initial": "MY",
+  "unread": 2,
+  "updatedAt": "2026-10-17T09:04:00-04:00",
+  "lastMessage": "Pick a fix (reply 1, 2 or 3)",
+  "links": [
+   "wrn-001",
+   "shp-001"
+  ]
+ },
+ {
+  "id": "max-priya",
+  "name": "Priya",
+  "role": "clinical ops",
+  "initial": "PR",
+  "unread": 1,
+  "updatedAt": "2026-10-17T08:40:00-04:00",
+  "lastMessage": "Candidate rule · Needs review",
+  "links": [
+   "wrn-001"
+  ]
+ },
+ {
+  "id": "max-kenji",
+  "name": "Kenji",
+  "role": "Japan affiliate",
+  "initial": "KJ",
+  "unread": 0,
+  "updatedAt": "2026-10-16T17:20:00-04:00",
+  "lastMessage": "Updated label proof is in the plan.",
+  "links": [
+   "shp-001"
+  ]
+ },
+ {
+  "id": "max-sam",
+  "name": "Sam",
+  "role": "on-call",
+  "initial": "SM",
+  "unread": 1,
+  "updatedAt": "2026-10-16T23:12:00-04:00",
+  "lastMessage": "Live call · China depot escalation",
+  "links": [
+   "wrn-003",
+   "shp-003"
+  ]
+ }
+]

@@ -1,0 +1,94 @@
+﻿CLEARED FOR TAKEOFF
+Getting study drug into a patient's hands in 30 countries means 30 sets of import rules, label requirements, and approval lead times. Build the planner that knows each country's rules before the shipment gets stuck at customs.
+________________
+
+
+1. Country-specific rules for importing and labeling trial drugs are scattered and change often, so shipments get delayed and patients miss doses
+Investigational drugs for a global trial are made in one place and shipped to depots and sites around the world. Every country has its own rules:
+* import licenses or permits;
+* which documents must accompany a shipment;
+* labeling requirements (language, content);
+* temperature and handling;
+* how long regulatory approval for importing takes.
+In the U.S., the label rules are short: the package must say "Caution: New Drug—Limited by Federal (or United States) law to investigational use" (21 CFR 312.6). In the EU, Annex VI of the Clinical Trials Regulation lists detailed label contents (overview, BDO), and many other countries add their own rules.
+Supply teams track this in spreadsheets and expert memory. A missed requirement can hold a shipment at customs for weeks while patients wait.
+2. Proactive planning maps each country's requirements and lead times into the supply plan before drug is packaged
+* Requirements: import permits, required documents (e.g., certificates, the IMPD, or Investigational Medicinal Product Dossier, in the EU), label languages and content, temperature rules.
+* Lead times: how long each approval or permit takes, which affects when to label and ship.
+* Labels: which countries can share a multi-language booklet label, and which need their own.
+* Change: rules change, so the planner must track sources and dates.
+3. The question: can a planner turn scattered country rules into a supply plan that never stalls at a border?
+Can a country-requirements planner organize import, labeling, and approval rules by country, flag conflicts and lead-time risks, and feed them into packaging and shipping plans?
+Sub-questions (you don't need all of them):
+* How do you capture and structure country rules with sources and effective dates?
+* Which countries can share labels, and which need their own?
+* How do you turn approval lead times into ship-by dates?
+* How do you notice when a rule changes?
+4. Key terms: Investigational medicinal product (IMP), Import permit, IMPD, Booklet label, and Lead time
+Term
+	Meaning
+	Investigational medicinal product (IMP)
+	The drug being tested in a trial
+	Import permit
+	Permission to bring a product into a country
+	IMPD
+	Investigational Medicinal Product Dossier: quality and manufacturing data for an IMP (EU)
+	Booklet label
+	A multi-page label carrying several languages
+	Lead time
+	Time required for an approval or process
+	Depot
+	Regional warehouse for trial supplies
+	Customs hold
+	A shipment stopped at a border pending documents
+	5. Today: spreadsheets of country rules maintained by a few experts, checked by email with local affiliates
+Supply and regulatory teams keep country requirement trackers, email local colleagues to confirm, and plan labels and shipments around them. When rules change or a document is missing, shipments wait.
+6. Free sources: U.S. and EU rules, public regulator pages, and real trial country footprints
+Source
+	What it gives you
+	21 CFR 312.6 (eCFR)
+	U.S. investigational drug labeling rule
+	EU Clinical Trials Regulation · Annex VI labeling overview (BDO)
+	EU labeling requirements
+	ClinicalTrials.gov API · AACT database (CTTI)
+	Which countries real trials run in, for realistic footprints
+	Search tip: each country's medicines regulator website (e.g., "import permit clinical trial" plus the country name)
+	Country-specific import rules, as primary sources
+	7. Simulate the private parts: a 20–30 country trial, a requirements table, and a shipment plan
+* Requirements table: for 20–30 countries, build a structured table (some from real public sources, some clearly marked fictional) of permits, documents, label content, languages, and lead times, with source and date for each.
+* A trial footprint: a fictional trial with sites in those countries and an enrollment plan.
+* Planted problems: a country whose permit takes longer than planned, a label language missing, and a rule that changes mid-trial.
+8. Ambition ladder: structure the rules → plan labels → compute ship-by dates → catch rule changes
+What your submission should be able to show and defend. How you get there is up to you.
+1. Structure the rules. Build a searchable, sourced, dated country requirements model.
+2. Plan labels. Group countries into shared or separate label designs, with reasons.
+3. Ship-by dates. Turn lead times into a timeline of when to file, label, and ship, and flag countries at risk.
+4. Catch changes. When a rule changes, show which shipments, labels, and countries are affected.
+9. Judged on three things: usefulness, readiness, and design
+Criterion
+	What judges look for
+	Usefulness
+	Would a supply team avoid customs delays and missed doses by planning country requirements up front?
+	Readiness
+	Works on a realistic footprint, every rule sourced and dated, planted problems caught, runs from a clean clone.
+	Design
+	A clear requirements model, honest handling of uncertainty in rules, and a planning view supply teams would use.
+	10. Every rule sourced and dated; regulatory experts confirm
+Use public data and synthetic stand-ins only, with no real patient information. Cite every source. Your tool assists qualified people; it doesn't make regulated decisions on its own. Clearly separate verified public rules from simulated ones. This is not regulatory or legal advice.
+________________
+
+
+11. Learn more: start here, rules, and data
+Start here
+* NIH: Clinical Research Trials and You
+* 21 CFR 312.6
+Rules
+* EU Clinical Trials Regulation
+* EU Annex VI labeling overview (BDO)
+Data
+* ClinicalTrials.gov API
+* AACT database (CTTI)
+________________
+
+
+bsky_clinical_supply_control_tower_impd_&_country_requirements_(clinical_ops)

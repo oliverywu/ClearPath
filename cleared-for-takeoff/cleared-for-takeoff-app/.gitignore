@@ -1,0 +1,4 @@
+.env.local
+.env
+src/config.local.js
+shots/

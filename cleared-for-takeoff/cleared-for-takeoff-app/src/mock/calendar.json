@@ -1,0 +1,87 @@
+[
+ {
+  "month": "2026-10",
+  "events": [
+   {
+    "date": "2026-10-02",
+    "level": "minor",
+    "label": "Plan v3 locked"
+   },
+   {
+    "date": "2026-10-09",
+    "level": "minor",
+    "label": "Germany depot restock"
+   },
+   {
+    "date": "2026-10-14",
+    "level": "minor",
+    "label": "Customs pre-clearance \u00b7 DE"
+   },
+   {
+    "date": "2026-10-16",
+    "level": "major",
+    "label": "China depot licence suspended"
+   },
+   {
+    "date": "2026-10-17",
+    "level": "major",
+    "label": "Japan label change \u00b7 Argentina permit"
+   },
+   {
+    "date": "2026-10-20",
+    "level": "minor",
+    "label": "Korea reefer booking"
+   },
+   {
+    "date": "2026-10-23",
+    "level": "major",
+    "label": "Argentina import permit expires"
+   },
+   {
+    "date": "2026-10-27",
+    "level": "minor",
+    "label": "Brazil QA review"
+   },
+   {
+    "date": "2026-10-30",
+    "level": "major",
+    "label": "Japan relabel deadline (Boston)"
+   }
+  ]
+ },
+ {
+  "month": "2026-11",
+  "events": [
+   {
+    "date": "2026-11-02",
+    "level": "major",
+    "label": "ORION-7 Basel departure"
+   },
+   {
+    "date": "2026-11-03",
+    "level": "minor",
+    "label": "Shanghai re-inspection"
+   },
+   {
+    "date": "2026-11-09",
+    "level": "major",
+    "label": "Japan safe ship-by"
+   },
+   {
+    "date": "2026-11-17",
+    "level": "minor",
+    "label": "Japan likely ship-by"
+   },
+   {
+    "date": "2026-11-24",
+    "level": "major",
+    "label": "HALO-3 Frankfurt delivery"
+   },
+   {
+    "date": "2026-11-28",
+    "level": "major",
+    "label": "NOVA-24 Tokyo target delivery"
+   }
+  ]
+ }
+]

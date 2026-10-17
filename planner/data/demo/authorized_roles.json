@@ -1,0 +1,20 @@
+{
+  "pho_usr_maya": {
+    "name": "Maya",
+    "role": "supply_lead",
+    "display_role": "supply lead",
+    "chat_id": "max-maya",
+    "can_approve": true,
+    "note": "SIMULATED demo identity -- supply lead, authorized to approve plan changes. Source: messaging/data/authorized_roles.json (Anna).",
+    "initial": "MY"
+  },
+  "pho_usr_kenji": {
+    "name": "Kenji",
+    "role": "affiliate",
+    "display_role": "Japan affiliate",
+    "chat_id": "max-kenji",
+    "can_approve": false,
+    "note": "SIMULATED demo identity -- Japan affiliate, can ask questions but cannot approve plan changes. Source: messaging/data/authorized_roles.json (Anna).",
+    "initial": "KJ"
+  }
+}

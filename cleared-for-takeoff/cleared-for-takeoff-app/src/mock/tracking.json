@@ -1,0 +1,297 @@
+[
+ {
+  "id": "shp-001",
+  "synthetic": true,
+  "progress": 0.62,
+  "stage": "customs",
+  "statusLabel": "Customs · Narita",
+  "currentLocation": "Narita (NRT) customs",
+  "coords": {
+   "origin": {
+    "lat": 42.36,
+    "lng": -71.01
+   },
+   "current": {
+    "lat": 35.77,
+    "lng": 140.39
+   },
+   "destination": {
+    "lat": 35.77,
+    "lng": 140.39
+   }
+  },
+  "eta": "2026-12-07",
+  "temperatureC": 18.4,
+  "tempRange": "15–25 °C",
+  "updatedAt": "2026-10-17T13:42:00-04:00",
+  "note": "Held for label field review (S-114).",
+  "milestones": [
+   {
+    "key": "packed",
+    "label": "Packed · Boston hub",
+    "at": "2026-10-12T09:10:00-04:00",
+    "state": "completed"
+   },
+   {
+    "key": "departed",
+    "label": "Departed BOS",
+    "at": "2026-10-13T22:40:00-04:00",
+    "state": "completed"
+   },
+   {
+    "key": "customs",
+    "label": "Customs · Narita",
+    "at": "2026-10-15T07:05:00-04:00",
+    "state": "current"
+   },
+   {
+    "key": "out_for_delivery",
+    "label": "Out for delivery · Tokyo depot",
+    "at": null,
+    "state": "upcoming"
+   },
+   {
+    "key": "delivered",
+    "label": "Delivered",
+    "at": null,
+    "state": "upcoming"
+   }
+  ]
+ },
+ {
+  "id": "shp-002",
+  "synthetic": true,
+  "progress": 0.38,
+  "stage": "in_transit",
+  "statusLabel": "In transit · over Atlantic",
+  "currentLocation": "In flight · BOS → GRU → EZE",
+  "coords": {
+   "origin": {
+    "lat": 42.36,
+    "lng": -71.01
+   },
+   "current": {
+    "lat": 8.4,
+    "lng": -52.6
+   },
+   "destination": {
+    "lat": -34.82,
+    "lng": -58.54
+   }
+  },
+  "eta": "2026-12-01",
+  "temperatureC": 21.0,
+  "tempRange": "15–25 °C",
+  "updatedAt": "2026-10-17T13:42:00-04:00",
+  "note": "Permit renewal must be stamped before customs.",
+  "milestones": [
+   {
+    "key": "packed",
+    "label": "Packed · Boston hub",
+    "at": "2026-10-14T10:00:00-04:00",
+    "state": "completed"
+   },
+   {
+    "key": "departed",
+    "label": "Departed BOS",
+    "at": "2026-10-16T19:20:00-04:00",
+    "state": "current"
+   },
+   {
+    "key": "customs",
+    "label": "Customs · Ezeiza",
+    "at": null,
+    "state": "upcoming"
+   },
+   {
+    "key": "out_for_delivery",
+    "label": "Out for delivery · Buenos Aires",
+    "at": null,
+    "state": "upcoming"
+   },
+   {
+    "key": "delivered",
+    "label": "Delivered",
+    "at": null,
+    "state": "upcoming"
+   }
+  ]
+ },
+ {
+  "id": "shp-003",
+  "synthetic": true,
+  "progress": 0.12,
+  "stage": "held",
+  "statusLabel": "Held · Basel depot",
+  "currentLocation": "Basel depot (CH)",
+  "coords": {
+   "origin": {
+    "lat": 47.6,
+    "lng": 7.53
+   },
+   "current": {
+    "lat": 47.6,
+    "lng": 7.53
+   },
+   "destination": {
+    "lat": 31.14,
+    "lng": 121.8
+   }
+  },
+  "eta": null,
+  "temperatureC": 5.2,
+  "tempRange": "2–8 °C",
+  "updatedAt": "2026-10-17T13:42:00-04:00",
+  "note": "Shanghai depot licence suspended; reroute via Singapore proposed (S-115).",
+  "milestones": [
+   {
+    "key": "packed",
+    "label": "Packed · Basel",
+    "at": "2026-10-15T08:30:00-04:00",
+    "state": "current"
+   },
+   {
+    "key": "departed",
+    "label": "Departure on hold",
+    "at": null,
+    "state": "upcoming"
+   },
+   {
+    "key": "customs",
+    "label": "Customs · Shanghai",
+    "at": null,
+    "state": "upcoming"
+   },
+   {
+    "key": "out_for_delivery",
+    "label": "Out for delivery",
+    "at": null,
+    "state": "upcoming"
+   },
+   {
+    "key": "delivered",
+    "label": "Delivered",
+    "at": null,
+    "state": "upcoming"
+   }
+  ]
+ },
+ {
+  "id": "shp-004",
+  "synthetic": true,
+  "progress": 0.86,
+  "stage": "out_for_delivery",
+  "statusLabel": "Out for delivery · Frankfurt",
+  "currentLocation": "Frankfurt (FRA) → depot",
+  "coords": {
+   "origin": {
+    "lat": 53.42,
+    "lng": -6.27
+   },
+   "current": {
+    "lat": 50.08,
+    "lng": 8.3
+   },
+   "destination": {
+    "lat": 50.04,
+    "lng": 8.56
+   }
+  },
+  "eta": "2026-11-24",
+  "temperatureC": 22.6,
+  "tempRange": "15–30 °C",
+  "updatedAt": "2026-10-17T13:42:00-04:00",
+  "note": "On track.",
+  "milestones": [
+   {
+    "key": "packed",
+    "label": "Packed · Dublin",
+    "at": "2026-10-17T09:00:00-04:00",
+    "state": "completed"
+   },
+   {
+    "key": "departed",
+    "label": "Departed DUB",
+    "at": "2026-10-17T13:00:00-04:00",
+    "state": "completed"
+   },
+   {
+    "key": "customs",
+    "label": "Pre-cleared · FRA",
+    "at": "2026-10-17T11:30:00-04:00",
+    "state": "completed"
+   },
+   {
+    "key": "out_for_delivery",
+    "label": "Out for delivery · Frankfurt depot",
+    "at": "2026-10-17T15:10:00-04:00",
+    "state": "current"
+   },
+   {
+    "key": "delivered",
+    "label": "Delivered",
+    "at": null,
+    "state": "upcoming"
+   }
+  ]
+ },
+ {
+  "id": "shp-005",
+  "synthetic": true,
+  "progress": 0.24,
+  "stage": "in_transit",
+  "statusLabel": "In transit · reefer",
+  "currentLocation": "Copenhagen (CPH) → Incheon",
+  "coords": {
+   "origin": {
+    "lat": 55.62,
+    "lng": 12.65
+   },
+   "current": {
+    "lat": 60.9,
+    "lng": 45.2
+   },
+   "destination": {
+    "lat": 37.46,
+    "lng": 126.44
+   }
+  },
+  "eta": "2026-12-06",
+  "temperatureC": 4.8,
+  "tempRange": "2–8 °C",
+  "updatedAt": "2026-10-17T13:42:00-04:00",
+  "note": "Reefer battery good for 96 h.",
+  "milestones": [
+   {
+    "key": "packed",
+    "label": "Packed · Copenhagen",
+    "at": "2026-10-16T12:00:00-04:00",
+    "state": "completed"
+   },
+   {
+    "key": "departed",
+    "label": "Departed CPH",
+    "at": "2026-10-17T14:00:00-04:00",
+    "state": "current"
+   },
+   {
+    "key": "customs",
+    "label": "Customs · Incheon",
+    "at": null,
+    "state": "upcoming"
+   },
+   {
+    "key": "out_for_delivery",
+    "label": "Out for delivery · Seoul",
+    "at": null,
+    "state": "upcoming"
+   },
+   {
+    "key": "delivered",
+    "label": "Delivered",
+    "at": null,
+    "state": "upcoming"
+   }
+  ]
+ }
+]
