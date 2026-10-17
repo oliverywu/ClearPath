@@ -26,8 +26,21 @@ export async function renderWarnings(root, id) {
     el.innerHTML = loading('Loading warning');
     try { const w = await getWarning(wid);
       el.innerHTML = `<div class="k" style="color:${SEV[w.severity]}">${esc(w.severity)} · ${ago(w.createdAt)}</div><h3>${esc(w.countryName)} needs <em>${esc(w.requirement.toLowerCase())}.</em></h3>
-      <p class="l">${esc(w.summary)}</p><dl><dt>Study</dt><dd>${esc(w.study)}</dd><dt>Shipments affected</dt><dd>${w.shipmentsAffected}</dd><dt>Status</dt><dd>${w.status.replace('_', ' ')}</dd><dt>Recommended</dt><dd>${esc(w.recommendedAction)}</dd><dt>Source</dt><dd>${esc(w.source)}</dd><dt>Linked shipments</dt><dd>${w.shipmentIds.map(s => `<span class="lchip">${s}</span>`).join(' ') || '—'}</dd></dl>
-      <a class="btn" href="#/max">Discuss with Max →</a> <a class="btn ghost" href="#/warnings">Close</a>`;
+      <p class="l">${esc(w.summary)}</p><dl><dt>Study</dt><dd>${esc(w.study)}</dd><dt>Shipments affected</dt><dd>${w.shipmentsAffected}</dd><dt>Status</dt><dd>${w.status.replace('_', ' ')}</dd><dt>Recommended</dt><dd>${esc(w.recommendedAction)}</dd><dt>Source</dt><dd>${esc(w.source)}</dd><dt>Linked shipments</dt><dd>${w.shipmentIds.map(s => `<span class="lchip">${s}</span>`).join(' ') || '—'}</dd>${w.kind === 'fire' ? fireRows(w) : ''}</dl>
+      <a class="btn" href="${w.kind === 'fire' ? '#/max/max-alerts' : '#/max'}">Discuss with Max →</a> <a class="btn ghost" href="#/warnings">Close</a>`;
     } catch (e) { el.innerHTML = errorState(e, 'wretry'); $('#wretry').onclick = () => detail(wid); }
   }
+}
+
+const etf = iso => iso ? new Date(iso).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET' : '—';
+// Extra rows for NASA FIRMS route warnings (same dl layout as other warnings).
+function fireRows(w) {
+  const f = w.fire;
+  return `<dt>Disaster</dt><dd>Wildfire · satellite heat detection (NASA FIRMS)</dd><dt>Location</dt><dd>${esc(f.place || '—')}</dd><dt>Coordinates</dt><dd>${f.lat.toFixed(4)}, ${f.lng.toFixed(4)}</dd>
+  <dt>Distance from route</dt><dd>${f.distanceKm.toFixed(1)} km</dd><dt>Affected segment</dt><dd>${esc(f.segment)} (km ${f.segmentKm.map(Math.round).join('–')})</dd>
+  <dt>Observed</dt><dd>${etf(f.observedAt)} · ${esc(f.confidence)} confidence${f.maxFrpMW != null ? ` · ${f.maxFrpMW} MW FRP` : ''} · ${f.detections} detection(s)${f.satellites?.length ? ` · ${esc(f.satellites.join(', '))}` : ''}</dd>
+  <dt>Risk</dt><dd>${esc(w.risk)} · ${w.confirmation === 'confirmed' ? 'confirmed' : 'potential, not confirmed (no road-closure data)'}</dd>
+  <dt>Delivery impact</dt><dd>${esc(w.impact)}${f.alternative?.reason ? ` ${esc(f.alternative.reason)}` : ''}</dd>
+  <dt>ETA</dt><dd>${f.revisedEta ? `${etf(w.eta)} → ${etf(f.revisedEta)} if rerouted` : `${etf(w.eta)} · delay unconfirmed`}</dd>
+  <dt>Photon</dt><dd>${(w.notifications || []).map(n => `${esc(n.status)} · ${esc(n.recipient)}${n.reason ? ` · ${esc(n.reason)}` : ''}`).join('<br>') || '—'}</dd>`;
 }

@@ -1,5 +1,6 @@
 import { $, $$, esc, STATUS, fmtDate, load, burst } from '../ui.js';
 import { loadGoogleMaps, buildMap } from '../map.js';
+import { attachLiveShipments } from '../intel.js';
 import { getShipments, getInventory, getWarnings, getCalendar, getDaySchedule, getChalkInsight, getTracking, getTrackingDetail } from '../api.js';
 const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 export function initLanding(ptr) {
@@ -145,6 +146,7 @@ function mountMap(list) {
     m = buildMap(g, $('#map'), list, color, pick);
     $('#tlist').innerHTML = list.map(s => `<button class="ti2" role="listitem" data-id="${esc(s.id)}" style="--c:${STATUS[s.status][1]}"><i></i><span><b>${esc(s.countryName)}</b><small>${esc(s.statusLabel)}</small></span><em>${s.slackDays}d</em></button>`).join('');
     $$('#tlist .ti2').forEach(b => b.onclick = () => pick(b.dataset.id));
+    attachLiveShipments();
     new IntersectionObserver((es, o) => es.forEach(e => { if (e.isIntersecting) { m.draw(); o.disconnect(); } }), { threshold: .25 }).observe($('#gmap'));
   }).catch(err => err.message === 'NO_KEY' ? embedMap(list, fallback) : fallback(`Map unavailable (${err.message}) — showing route arcs.`));
 }
@@ -158,5 +160,6 @@ function embedMap(list, fallback) {
   $('#tlist').innerHTML = list.map(s => `<button class="ti2" role="listitem" data-id="${esc(s.id)}" style="--c:${STATUS[s.status][1]}"><i></i><span><b>${esc(s.countryName)}</b><small>${esc(s.statusLabel)}</small></span><em>${s.slackDays}d</em></button>`).join('');
   $$('#tlist .ti2').forEach(b => b.onclick = () => { const s = list.find(x => x.id === b.dataset.id);
     $$('#tlist .ti2').forEach(x => x.classList.toggle('sel', x === b)); f.src = embedSrc(s.coords.current, 5); openTracking(s.id); });
+  attachLiveShipments();
   if (!navigator.onLine) fallback('Map unavailable (offline) — showing route arcs.');
 }

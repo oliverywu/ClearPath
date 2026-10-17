@@ -1,0 +1,25 @@
+[
+  {
+    "id": "RX-1042",
+    "product": "Pharmaceutical · temperature-controlled (2–8 °C)",
+    "study": "RX cold chain",
+    "origin": "Edison, NJ, USA",
+    "destination": "Toronto, ON, Canada",
+    "originAddress": "Edison, NJ, USA",
+    "destinationAddress": "Toronto, ON, Canada",
+    "schedule": { "mode": "relative", "departedHoursAgo": 3, "bufferMinutes": 45 },
+    "gps": null,
+    "stops": [
+      { "name": "Edison, NJ", "lat": 40.5187, "lng": -74.4121, "kind": "origin" },
+      { "name": "Scranton, PA", "lat": 41.4090, "lng": -75.6624, "kind": "checkpoint", "via": true },
+      { "name": "Binghamton, NY", "lat": 42.0987, "lng": -75.9180, "kind": "checkpoint", "via": true },
+      { "name": "Peace Bridge border (Buffalo, NY → Fort Erie, ON)", "lat": 42.9064, "lng": -78.9046, "kind": "border", "via": true },
+      { "name": "Toronto, ON", "lat": 43.6532, "lng": -79.3832, "kind": "destination" }
+    ],
+    "contacts": [
+      { "id": "recipient", "name": "Toronto receiving pharmacy", "role": "recipient", "useDefaultSpace": true }
+    ],
+    "synthetic": true,
+    "note": "Example shipment. No live GPS feed is connected; position is estimated."
+  }
+]

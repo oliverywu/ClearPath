@@ -2,6 +2,7 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createIntel } from './lib/intel-routes.js';
 import { createScheduleItem, listCalendarEvents, listScheduleDay, removeScheduleItem, updateScheduleItem } from './src/schedule-db.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -19,6 +20,7 @@ const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || '';
 const GDACS_EVENTS_URL = process.env.GDACS_EVENTS_URL || 'https://www.gdacs.org/gdacsapi/api/Events/geteventlist/EVENTS4APP';
 const MAX_EVENT_AGE_DAYS = Number(process.env.DISASTER_MAX_AGE_DAYS || 30);
 const MAX_BODY_BYTES = 16_384;
+const intel = createIntel(ROOT, process.env);
 let eventCache;
 let eventCacheAt = 0;
 
@@ -183,7 +185,9 @@ const server = http.createServer(async (req, res) => {
     try { return send(res, 200, await analyzeRoute(await readJson(req))); }
     catch (error) { return send(res, error.status || 502, { error: error.message || 'Route analysis failed.' }); }
   }
+  if (await intel.handle(req, res, url, send)) return;
   if (!['GET', 'HEAD'].includes(req.method)) return send(res, 405, { error: 'Method not allowed.' }, { Allow: 'GET, HEAD' });
   return serveStatic(req, res, url.pathname);
 });
 server.listen(PORT, () => console.log(`Cleared for Takeoff listening on http://localhost:${PORT}`));
+server.on('listening', () => intel.start());

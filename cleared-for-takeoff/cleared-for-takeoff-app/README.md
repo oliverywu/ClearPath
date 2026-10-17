@@ -138,3 +138,11 @@ Enums: `status` (shipments/inventory) = `on_track | at_risk | blocked | no_shipm
 { "id":"cht-001-m1","from":"them","text":"…","sentAt":"08:02" }
 ```
 `from` is `me` or `them`. `sentAt` is a display string today; an ISO timestamp is fine if you format it in `views/chats.js`.
+
+## Live shipment intelligence (NASA FIRMS + Photon)
+`RX-1042` (Edison, NJ → Toronto, ON via the Peace Bridge) appears at the top of the tracking list next to the map. Clicking it opens the route view: traveled (solid), remaining (dashed), stops, a tracker marker, NASA FIRMS fire detections (orange), at-risk stretches (red), and any Google alternative route (blue).
+- **Position:** there is no live GPS feed, so the marker is labeled *Estimated position* (interpolated from departure and ETA). *Demo mode* simulates movement and is labeled as such. A fresh `gps` fix in `src/mock/live-shipments.json` switches it to *GPS position*.
+- **Fires:** `lib/firms.js` calls the official FIRMS Area API (`VIIRS_SNPP_NRT`, `VIIRS_NOAA20_NRT`, `MODIS_NRT`) for the route's bounding box and caches results for 15 minutes. The 2020 Disasters Portal MapServer is a historical California archive and is not used.
+- **Risk:** detections within `FIRE_CORRIDOR_KM` are graded by distance, confidence and FRP. Medium/high risks become Warnings, always marked *potential* (FIRMS can't confirm road closures). Google `computeAlternativeRoutes` is compared; a revised ETA is shown only when an alternative avoids the area.
+- **Photon:** alerts go to `POST https://api.photon.codes/v1/projects/{PHOTON_PROJECT_ID}/messages`. They show as *submitted* only after Photon accepts them; otherwise they show as *drafted* or *failed* in Max → Shipment alerts and on the warning. Alerts are deduplicated per shipment + event + risk.
+- **Tests:** `npm test` (node:test with fixtures in `test/fixtures`).

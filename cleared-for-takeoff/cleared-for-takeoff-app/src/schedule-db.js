@@ -1,4 +1,6 @@
-import { Database } from 'node:sqlite';
+// Node 22–24 export DatabaseSync; newer releases also export Database (same sync API).
+import * as sqlite from 'node:sqlite';
+const Database = sqlite.Database || sqlite.DatabaseSync;
 import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

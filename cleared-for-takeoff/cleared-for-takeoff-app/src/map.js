@@ -2,6 +2,8 @@
 import { GOOGLE_MAPS_API_KEY, LOAD_LOCAL_CONFIG } from './config.js';
 async function resolveKey() {
   if (LOAD_LOCAL_CONFIG) { try { const m = await import('./config.local.js'); if (m.GOOGLE_MAPS_API_KEY) return m.GOOGLE_MAPS_API_KEY; } catch {} }
+  // Optional browser (referrer-restricted) key served by the backend from GOOGLE_MAPS_BROWSER_KEY.
+  try { const r = await fetch('/api/maps-config'); if (r.ok) { const { browserKey } = await r.json(); if (browserKey) return browserKey; } } catch {}
   return GOOGLE_MAPS_API_KEY;
 }
 let loading;
