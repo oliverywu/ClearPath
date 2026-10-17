@@ -9,7 +9,7 @@ from copy import deepcopy
 from pathlib import Path
 
 from build_fixtures import integrate_anna_shipments, integrate_regulators, replace_synthetic_label_rules
-from regulatory_catalog import apply_evidence, consolidate_japan_rules
+from regulatory_catalog import apply_eu_rules, apply_evidence, consolidate_japan_rules
 
 
 HERE = Path(__file__).resolve().parent
@@ -27,6 +27,7 @@ def merge(path, evidence_rules=()):
     integrate_regulators(payload)
     replace_synthetic_label_rules(payload)
     apply_evidence(payload)
+    apply_eu_rules(payload)
     consolidate_japan_rules(payload)
     # The frontend inventory seed is now canonical API data. It is still sample
     # operational data and must not be presented as live inventory telemetry.

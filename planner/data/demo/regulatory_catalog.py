@@ -45,6 +45,30 @@ PRIORITY_EVIDENCE = {
     },
 }
 
+EU_COUNTRIES = ("AT", "BE", "DE", "DK", "ES", "FI", "FR", "IE", "IT", "NL")
+EU_MANDATORY_FIELDS = ["main_contact", "substance_and_strength", "dosage_form", "route", "quantity", "batch_number", "trial_reference", "subject_or_treatment_number", "directions_for_use", "clinical_trial_use", "storage", "expiry", "keep_out_of_reach_of_children"]
+EU_APPLICATION_DOCUMENTS = ["clinical_trial_application_dossier", "protocol", "investigator_brochure", "investigational_medicinal_product_dossier", "informed_consent_materials"]
+EU_EVIDENCE = {}
+for _country in EU_COUNTRIES:
+    EU_EVIDENCE[(_country, "label.mandatory_fields")] = {
+        "value": EU_MANDATORY_FIELDS,
+        "source_url": "https://eur-lex.europa.eu/eli/reg/2014/536/oj",
+        "source_title": "Regulation (EU) No 536/2014, Articles 66–70 and Annex VI",
+        "source_excerpt": "Annex VI specifies particulars for investigational medicinal product and auxiliary medicinal product labelling.",
+    }
+    EU_EVIDENCE[(_country, "documents.required")] = {
+        "value": EU_APPLICATION_DOCUMENTS,
+        "source_url": "https://eur-lex.europa.eu/eli/reg/2014/536/oj",
+        "source_title": "Regulation (EU) No 536/2014, Annex I — Application dossier",
+        "source_excerpt": "Annex I specifies the application dossier and supporting documents for a clinical trial application in the Union.",
+    }
+    EU_EVIDENCE[(_country, "label.language_determination")] = {
+        "value": "member_state_determined_or_broadly_understood_language",
+        "source_url": "https://eur-lex.europa.eu/eli/reg/2014/536/oj",
+        "source_title": "Regulation (EU) No 536/2014, Article 69 — Language",
+        "source_excerpt": "The Member State concerned determines the label language and may permit a language broadly understood by the medical profession.",
+    }
+
 
 def apply_evidence(payload, evidence=PRIORITY_EVIDENCE):
     """Replace active synthetic atoms with normalized facts from primary sources."""
@@ -52,9 +76,16 @@ def apply_evidence(payload, evidence=PRIORITY_EVIDENCE):
         candidates = [rule for rule in payload["rules"] if rule["jurisdiction"] == country and rule["requirement_key"] == key
                       and rule.get("effective_from", payload["as_of"]) <= payload["as_of"]
                       and (not rule.get("effective_to") or rule["effective_to"] > payload["as_of"])]
-        target = next((rule for rule in candidates if rule.get("review_status") == "synthetic"), None)
+        target = next((rule for rule in candidates if rule.get("source_tier") == "official"), None)
+        target = target or next((rule for rule in candidates if rule.get("review_status") == "synthetic"), None)
         if not target:
-            continue
+            target = {
+                "id": f"official-{country}-{key}-v1", "jurisdiction": country,
+                "rule_type": "label" if key.startswith("label.") else "required_document",
+                "requirement_key": key, "operator": "contains_all" if isinstance(source["value"], list) else "equals",
+                "effective_from": "2026-01-01", "effective_to": None, "supersedes_id": None,
+            }
+            payload["rules"].append(target)
         target.update(source, source_tier="official", review_status="verified", confidence=0.95,
                       retrieved_at=payload["as_of"] + "T00:00:00Z", last_verified_at=payload["as_of"],
                       source_document_id=f"official-{country.lower()}-primary",
@@ -72,6 +103,32 @@ def apply_evidence(payload, evidence=PRIORITY_EVIDENCE):
                 "snapshot_path": None, "source_tier": "official", "enabled": True,
                 "content": "Curated primary-source record; see the atomic rule excerpts and canonical URL.",
             })
+    unique = {}
+    for rule in payload["rules"]:
+        unique[rule["id"]] = rule
+    rules = list(unique.values())
+    for country, key in evidence:
+        matching = [rule for rule in rules if rule["jurisdiction"] == country and rule["requirement_key"] == key
+                    and rule.get("source_tier") == "official" and rule.get("review_status") == "verified"
+                    and rule.get("effective_from", payload["as_of"]) <= payload["as_of"]
+                    and (not rule.get("effective_to") or rule["effective_to"] > payload["as_of"])]
+        if len(matching) > 1:
+            keep = next((rule for rule in matching if not rule["id"].startswith("official-")), matching[0])
+            rules = [rule for rule in rules if rule is keep or rule not in matching]
+    payload["rules"] = rules
+
+
+def apply_eu_rules(payload):
+    """Apply common EU CTR facts without inventing national label-language policy."""
+    apply_evidence(payload, EU_EVIDENCE)
+    planning_languages = {"AT": ["de"], "BE": ["nl", "fr", "de"], "DE": ["de"], "DK": ["da"],
+                          "ES": ["es"], "FI": ["fi", "sv"], "FR": ["fr"], "IE": ["en", "ga"],
+                          "IT": ["it"], "NL": ["nl"]}
+    for jurisdiction in payload.get("jurisdictions", []):
+        code = jurisdiction["iso_code"]
+        if code in planning_languages:
+            jurisdiction["planning_language_assumption"] = planning_languages[code]
+            jurisdiction["planning_language_status"] = "needs_member_state_confirmation"
 
 
 def consolidate_japan_rules(payload):
