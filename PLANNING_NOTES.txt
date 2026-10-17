@@ -89,5 +89,6 @@ This mapping was discovered and source-checked during implementation; it was not
 - EU/Germany — Regulation (EU) No 536/2014, Annex VI: https://eur-lex.europa.eu/legal-content/EN-DE/TXT/?uri=CELEX%3A32014R0536
 - Canada — Health Canada GUI-0100, Labelling and records: https://www.canada.ca/en/health-canada/services/drugs-health-products/compliance-enforcement/good-clinical-practices/guidance-documents/guidance-drugs-clinical-trials-human-subjects-gui-0100/labelling-records.html
 - Japan — MHLW English translation of the Ministerial Ordinance on GCP for Drugs: https://www.mhlw.go.jp/file/04-Houdouhappyou-11123000-Iyakushokuhinkyoku-Shinsakanrika/0000190647.pdf
+- Japan Article 16 expansion — current official MHLW Japanese consolidated text: https://www.mhlw.go.jp/web/t_doc?dataId=81997396&dataType=0&pageNo=1 (six atomic candidates are linked per rule and remain `needs_review` pending qualified translation, scope, and effective-date review)
 
 The source excerpt and normalized requirement are stored in data/demo/trial.json. This is a focused demonstration slice, not a substitute for qualified regulatory review.

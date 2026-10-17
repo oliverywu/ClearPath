@@ -8,6 +8,8 @@ Cleared for Takeoff runs entirely on a laptop. `start.py` starts a Python API on
 
 `packages/ingestion` owns source fetching, snapshots, content hashes, metadata extraction and candidate-rule normalization. Source content is evidence, never executable instructions. A source diff does not automatically declare a legal change verified. Human-reviewed atomic rules enter through preview and commit.
 
+The Requirements screen shows every dated record, including review-gated candidates. Official-source candidates awaiting review are sorted first and called out explicitly; their exact excerpt and authority link are inspectable, while the planner continues to select only verified or explicitly synthetic inputs. This prevents newly collected legal text from silently changing an approved calculation.
+
 `packages/research` implements the optional AI research layer between source collection and human evidence review. It uses the OpenAI Responses API with strict JSON Schema output and storage disabled. Requirement extraction is normalized with registered source metadata, checked for a verbatim quotation in the saved snapshot, validated against the domain schema, and forced to `needs_review`. Invalid or unsupported candidates are returned as errors and cannot enter an import preview.
 
 Semantic change analysis compares the newest two immutable snapshots for one jurisdiction. The saved analysis includes the raw unified diff, exact before/after citations, proposed materiality, affected jurisdictions, likely requirement keys, ambiguity note, and normalized event. It remains a preview until a named reviewer records a confirmation note. Only the confirmed event can enter the deterministic planner. Provider failures create neither rules nor events.

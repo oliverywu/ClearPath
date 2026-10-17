@@ -126,6 +126,21 @@ class ServiceTests(unittest.TestCase):
         baseline = self.service.requirements(event['jurisdiction'],self.base['as_of'],self.base['id'])['requirements']
         self.assertFalse(any(r.get('scenario_assumption') for r in baseline))
 
+    def test_japan_article_16_candidates_are_linked_and_review_gated(self):
+        requirements = self.service.requirements('JP', self.base['as_of'])['requirements']
+        candidates = [r for r in requirements if r['id'].startswith('candidate-JP-')]
+        self.assertEqual(6, len(candidates))
+        self.assertTrue(all(r['source_tier'] == 'official' for r in candidates))
+        self.assertTrue(all(r['review_status'] == 'needs_review' for r in candidates))
+        self.assertTrue(all(r['source_url'].startswith('https://www.mhlw.go.jp/web/t_doc?') for r in candidates))
+        self.assertTrue(all(r['source_excerpt'] for r in candidates))
+        self.assertTrue(all(not r['active'] for r in candidates))
+        keys = {r['requirement_key'] for r in candidates}
+        self.assertEqual({
+            'label.mandatory_fields', 'label.prohibited_fields', 'label.sponsor_constraint',
+            'label.blinding_constraint', 'packaging.integrity_constraint', 'documents.required'
+        }, keys)
+
     def test_calendar_gate_and_crlf(self):
         proposal = self.analyze()
         with self.assertRaises(APIError):

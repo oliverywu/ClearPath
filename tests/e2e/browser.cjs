@@ -56,10 +56,15 @@ async function main() {
     await page.locator('.country-context-card').waitFor();
     assert.match(await page.locator('.country-context-card').innerText(), /Germany[\s\S]*Rules active as of[\s\S]*Projected delivery[\s\S]*Target delivery/i);
     await page.locator('.rule-select').first().waitFor();
-    await page.locator('.rule-select').first().click();
+    await page.locator('tr').filter({hasText:'Synthetic'}).locator('.rule-select').first().click();
     assert.match(await page.locator('#evidence-content').innerText(), /Synthetic/i);
     await page.locator('.delivery-progress').waitFor();
     assert.match(await page.locator('#timeline-panel').innerText(), /Delay exposure|business days slack/i);
+    await page.locator('#req-country').selectOption('JP');
+    await page.locator('#requirements-list .callout').waitFor();
+    assert.match(await page.locator('#requirements-list .callout').innerText(), /6 official-source candidates need review/i);
+    await page.locator('.rule-select').first().click();
+    assert.match(await page.locator('#evidence-content').innerText(), /Needs Review Official[\s\S]*MHLW/i);
     await page.locator('[data-view="scenarios"]').click();
     const jp = boot.events.find(e => e.jurisdiction === 'JP');
     await page.locator(`[data-analyze="${jp.id}"]`).click();
