@@ -1,7 +1,9 @@
-from chalk.features import online
+from chalk.features import Features, online
 from features import Shipment, CountryPlan, Route
 from datetime import date, timedelta
 import json
+
+import logistics_formulas
 
 
 @online
@@ -53,3 +55,39 @@ def score(slack: Shipment.slack_days, blocked: Shipment.constraint_blocked, synt
 @online
 def band(slack: Shipment.slack_days, blocked: Shipment.constraint_blocked, threshold: Shipment.low_slack_days) -> Shipment.risk_band:
     return 'blocked' if blocked or slack<0 else 'at_risk' if slack<=threshold else 'on_track'
+
+
+# --- Shipment outlook (Chalk idea 1) -------------------------------------
+# The same formulas as packages/feature_provider/logistics.py (byte-identical copy in
+# logistics_formulas.py), so the app can check every value Chalk returns.
+@online
+def shipment_outlook(
+    dispatch: Shipment.dispatch_date,
+    target: Shipment.target_delivery,
+    legs: Shipment.leg_ranges_json,
+    delay: Shipment.disruption_delay_days,
+    holidays: Shipment.holidays_json,
+) -> Features[
+    Shipment.delivery_best_at,
+    Shipment.delivery_likely_at,
+    Shipment.delivery_worst_at,
+    Shipment.ship_by_likely,
+    Shipment.ship_by_safe,
+    Shipment.worst_case_slack_days,
+]:
+    return Shipment(**logistics_formulas.outlook(dispatch, target, legs, delay, holidays))
+
+
+@online
+def shipment_agent_answer(
+    country: Shipment.country_name,
+    planning: Shipment.planning_date,
+    dispatch: Shipment.dispatch_date,
+    target: Shipment.target_delivery,
+    gateway: Shipment.gateway_airport,
+    source: Shipment.customs_source,
+    legs: Shipment.leg_ranges_json,
+    delay: Shipment.disruption_delay_days,
+    holidays: Shipment.holidays_json,
+) -> Shipment.agent_answer:
+    return logistics_formulas.agent_answer(country, planning, dispatch, target, gateway, source, legs, delay, holidays)

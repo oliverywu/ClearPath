@@ -37,6 +37,15 @@ def answer_question(question, scenario, dataset, comparison=None):
     citations = [{'title':r.get('source_title',r['requirement_key']),'url':r['source_url'],'excerpt':r['source_excerpt'],'status':r['review_status'],'requirement_key':r['requirement_key'],'effective_from':r['effective_from']} for r in rules if r.get('source_url') and r.get('source_excerpt')]
     unique = {(r['url'],r['excerpt']):r for r in citations}
     lines = []
+    if re.search(r'\b(ship|ship-by|dispatch|deadline|when)\b', low):
+        # Timing questions are answered only with the outlook features (Chalk query or
+        # local fallback), so every date the agent states matches the planner.
+        facts = [s for s in selected if s.get('features',{}).get('agent_answer')]
+        for shipment in facts:
+            source = 'Chalk feature query' if shipment['features'].get('outlook_source') == 'chalk' else 'local planner calculation'
+            lines.append(f"{shipment['features']['agent_answer']} (Source: {source}.)")
+        if facts:
+            selected = [s for s in selected if s not in facts]
     for shipment in selected:
         risk = shipment['risk_band'].replace('_',' ')
         slack_days = shipment['slack_days']

@@ -60,6 +60,16 @@ def delivery_range(route, transit_delay, dispatch_date, target, holidays=()):
             "worst_case_slack_days": business_diff(delivery["worst"], target, holidays)}
 
 
+def customs_source(route):
+    """Plain-language provenance of a route's customs days, for agent answers."""
+    quality = (route.get("data_quality") or {}).get("customs_days")
+    if quality == "public_benchmark":
+        return "World Bank LPI 2023"
+    if quality == "not_applicable":
+        return "domestic shipment"
+    return "demo estimate"
+
+
 def select_rules(dataset, as_of=None):
     """Select approved evidence or explicitly simulated evidence; never unreviewed rules."""
     when = as_of or dataset["as_of"]
@@ -321,7 +331,12 @@ def generate_plan(dataset, *, parent=None, event=None, repair=None):
                     "required_language_count": len(values.get("label.languages", [])), "rework_days": rework,
                     "temperature_compatible": temperature_ok, "demand_quantity": cp["quantity"], "hard_block": hard_block,
                     "synthetic_count": synthetic_count, "risk_model": model, "low_slack_days": config["low_slack_days"],
-                    "calendar_holidays": holidays, "source": "local_deterministic"}
+                    "calendar_holidays": holidays, "source": "local_deterministic",
+                    # Inputs for the shipment outlook (Chalk query or local fallback).
+                    "country_name": countries[code]["name"], "planning_date": milestones[0]["projected_date"],
+                    "dispatch_date": dispatch_date, "gateway_airport": route.get("gateway_airport", ""),
+                    "customs_source": customs_source(route),
+                    "leg_ranges_json": json.dumps([leg_range(route, f) for f in ("transit_days", "customs_days", "depot_days", "last_mile_days")])}
         shipment = {"id": "shipment-" + cp["id"], "country_code": code, "country_name": countries[code]["name"],
                     "target_delivery": cp["target_delivery"], "projected_delivery": projected, "slack_days": slack,
                     "risk_band": risk_band, "risk_score": risk_score, "route_id": route["id"], "route_name": route["name"],

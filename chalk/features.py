@@ -23,6 +23,20 @@ class Shipment:
     slack_days: float
     risk_score: float
     risk_band: str
+    # Shipment outlook: inputs from the planner, outputs the messaging agent may state.
+    country_name: str
+    planning_date: str
+    dispatch_date: str
+    gateway_airport: str
+    customs_source: str
+    leg_ranges_json: str
+    delivery_best_at: str
+    delivery_likely_at: str
+    delivery_worst_at: str
+    ship_by_likely: str
+    ship_by_safe: str
+    worst_case_slack_days: float
+    agent_answer: str
 
 
 @features
