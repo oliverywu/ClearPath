@@ -77,11 +77,11 @@ Both services bind to loopback. Keep the terminal running; Ctrl+C stops both. No
 
 1. Open **Control tower**: 24 countries, Boston origin, a fictional blinded oral-tablet product, sites, depots, enrollment and demand. The baseline is feasible. The data supplies a frozen planning date for repeatability.
 2. Open Germany in the country grid. Select a requirement for its exact source excerpt, effective interval and review state. Inspect the milestone timeline.
-3. In **Scenarios**, analyze the Japanese mandatory-label-field event. Inspect the shared label and delayed review, packaging and dispatch. Create the recommended separate-label repair and review its cost/schedule trade-offs.
-4. **Approve** with your reviewer name and decision note. Only this human decision updates the current approved plan.
-5. Analyze the Boston–Frankfurt weather event. Compare its delayed customs/depot/site dates with the configured Amsterdam alternative. Creating an alternative remains a proposal until approved.
+3. In **Plans & decisions**, choose **Calculate impact** for the Japanese mandatory-label-field disruption. Inspect the shared label and delayed review, packaging and dispatch. Choose **Preview this response** for the recommended separate-label option and review its cost/schedule trade-offs.
+4. Choose **Use as current plan** with your name and decision note. Only this human decision updates the current plan.
+5. Calculate the Boston–Frankfurt weather disruption. Use **See what changed** to compare its delayed customs/depot/site dates with the configured Amsterdam alternative. The alternative remains proposed until selected as the current plan.
 6. In **Planner assistant**, select the proposal and ask why the destination is at risk. Answers use stored calculations and evidence.
-7. View **Audit history**, then download **Approved calendar (.ics)** in Scenarios.
+7. View **Audit history**, then download **Approved calendar (.ics)** in **Plans & decisions**.
 
 The **Control tower** includes a monthly supply calendar populated from the selected scenario's projected milestones. Select the latest event proposal to see its changed dates before approval. Select any calendar item to add that milestone directly to Google Calendar or Outlook. The full `.ics` export contains every milestone and is available for approved scenarios, so it can be imported into either calendar service.
 
@@ -89,7 +89,7 @@ Selecting a country opens its requirements and delivery progress. The progress t
 
 The backup event increases Canada's permit lead time. All event names, affected jurisdictions, delays and repairs come from data records.
 
-Reset with the Control tower button, or stop the app and run `.\start.ps1 -Reset`. Reset activates a fresh synthetic baseline while retaining historical scenario/audit snapshots. For the alternative fixture: `python start.py --db .local/replacement.sqlite3 --fixture data/demo/replacement.json`. Add `--reset` to explicitly replace an existing demo database.
+Use **Restore demo starting point** on the Control tower, or stop the app and run `.\start.ps1 -Reset`. Restore reloads the packaged synthetic inputs and creates a fresh current plan while retaining historical plan/audit snapshots. **Recalculate supply plan** creates a proposal from the active inputs and never replaces the current plan without a named decision. For the alternative fixture: `python start.py --db .local/replacement.sqlite3 --fixture data/demo/replacement.json`. Add `--reset` to explicitly replace an existing demo database.
 
 ## Teammate research and replacement data
 
@@ -155,7 +155,7 @@ Every imported rule should begin as `needs_review`. A qualified reviewer must in
 - [ ] A qualified reviewer imports the research, resolves duplicate conflicts, and records **Verify**, **Keep in review**, or **Retire** for every rule used operationally.
 - [ ] The supply-planning owner replaces demo product, demand, quantities, sites, depots, routes, ready dates, delivery targets, holidays, and risk settings in one complete dataset JSON.
 - [ ] The team validates the full dataset in **Data & research**, commits it with reviewer attribution, and checks every country for missing or blocked inputs.
-- [ ] The team reviews generated proposals in **Scenarios** and records a named approval or rejection with a decision note. Confirm that the dashboard calendar and country progress dates match the approved plan.
+- [ ] The team reviews generated proposals in **Plans & decisions** and records either **Use as current plan** or **Keep current plan** with a named decision note. Confirm that the dashboard calendar and country progress dates match the current plan.
 - [ ] Before a demo or handoff, run `python -m unittest discover -v`. For full UI verification, also run `npm install`, `npx playwright install chromium`, and `npm run test:browser`.
 
 ### Optional infrastructure after the hackathon workflow is complete

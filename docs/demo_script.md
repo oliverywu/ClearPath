@@ -10,4 +10,4 @@ Start with `./start.ps1` on Windows or `python start.py`; open `http://localhost
 6. **Governance:** inspect the audit trail and export the approved calendar. Repeated exports of a scenario retain event IDs.
 7. **Replacement:** preview and commit `data/demo/replacement.json` in Data & research. Its different product, countries, languages, dates, routes and changes work without source edits.
 
-Canada's permit-delay event is the backup demonstration. Reset demo data restores the packaged footprint. No external API, Chalk, Photon, Docker or cloud hosting is necessary.
+Canada's permit-delay event is the backup demonstration. **Restore demo starting point** reloads the packaged footprint while retaining plan and audit history. No external API, Chalk, Photon, Docker or cloud hosting is necessary.

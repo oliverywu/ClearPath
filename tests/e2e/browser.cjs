@@ -47,6 +47,9 @@ async function main() {
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(base);
     await page.locator('.country-tile').first().waitFor();
+    assert.match(await page.locator('#generate-plan').innerText(), /Recalculate supply plan/i);
+    assert.match(await page.locator('#reset-demo').innerText(), /Restore demo starting point/i);
+    assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).fontSize), '15px');
     assert.equal(await page.locator('.country-tile').count(), boot.jurisdictions.length);
     await page.locator('.calendar-card').waitFor();
     assert.ok(await page.locator('.calendar-event').count() > 0, 'Dashboard calendar should contain scenario milestones');
@@ -72,7 +75,9 @@ async function main() {
     await page.locator('.rule-select').first().click();
     assert.match(await page.locator('#evidence-content').innerText(), /Needs Review Official[\s\S]*MHLW/i);
     await page.locator('[data-view="scenarios"]').click();
+    assert.equal(await page.locator('.page-heading h1').innerText(), 'Plans & decisions');
     const jp = boot.events.find(e => e.jurisdiction === 'JP');
+    assert.match(await page.locator(`[data-analyze="${jp.id}"]`).innerText(), /Calculate impact/i);
     await page.locator(`[data-analyze="${jp.id}"]`).click();
     await page.locator('[data-repair]').first().waitFor();
     await page.screenshot({path:path.join(root,'test-results/japanese-change.png'),fullPage:true});

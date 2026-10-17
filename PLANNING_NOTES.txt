@@ -38,6 +38,7 @@ IMPLEMENTED FOUNDATION
 - Dashboard alerts, country progress, calendar display, and approved ICS export.
 - SQLite-backed canonical source registry that automatically indexes every dataset rule/event citation; documentation does not duplicate the live link inventory.
 - Responsive, no-horizontal-scroll requirements table with wrapped values and sortable requirement, type, date, scope, evidence, and review columns.
+- Plain-language operational UI: Plans & decisions, Calculate impact, See what changed, Preview this response, Use as current plan, and Keep current plan; larger text, stronger contrast, visible focus states, and clearer action hierarchy.
 - One-command local startup, API/integration/unit tests, and browser acceptance coverage.
 
 
