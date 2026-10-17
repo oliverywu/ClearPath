@@ -126,7 +126,7 @@ async function main() {
     await page.screenshot({path:path.join(root,'test-results/mobile.png'),fullPage:true});
     const overflow = await page.evaluate(()=>document.documentElement.scrollWidth > window.innerWidth + 2);
     assert.equal(overflow, false, 'Mobile layout overflows viewport');
-    assert.deepEqual(errors, [], 'Browser uncaught errors');
+    assert.deepEqual(errors, [], `Browser uncaught errors: ${errors.join(' | ')}`);
     console.log('PASS browser: control tower, evidence, Japan change/repair/approval, ICS, Germany disruption, assistant, audit, invalid import, replacement dataset, mobile, zero page errors.');
   } finally {
     if (browser) await browser.close();

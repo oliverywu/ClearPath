@@ -45,6 +45,7 @@ class Repository:
         CREATE TABLE IF NOT EXISTS previews(id TEXT PRIMARY KEY, kind TEXT NOT NULL, payload TEXT NOT NULL, dataset_id TEXT NOT NULL, consumed INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS events(id TEXT PRIMARY KEY, payload TEXT NOT NULL, created_at TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS snapshots(id TEXT PRIMARY KEY, source_id TEXT NOT NULL, content_hash TEXT NOT NULL, content TEXT NOT NULL, created_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS source_registry(id TEXT PRIMARY KEY, payload TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS acknowledgements(alert_id TEXT PRIMARY KEY, actor TEXT NOT NULL, created_at TEXT NOT NULL);
         CREATE TRIGGER IF NOT EXISTS immutable_scenarios_update BEFORE UPDATE ON scenarios BEGIN SELECT RAISE(ABORT,'Scenarios are immutable'); END;
         CREATE TRIGGER IF NOT EXISTS immutable_scenarios_delete BEFORE DELETE ON scenarios BEGIN SELECT RAISE(ABORT,'Scenarios are immutable'); END;
@@ -132,6 +133,14 @@ class Repository:
     def save_event(self, event):
         self.db.execute('INSERT INTO events VALUES(?,?,?)', (event['id'], encode(event),now()))
         self.audit('change_event.ingested',event['id'],payload=event)
+
+    def save_source(self, source):
+        stamp = now()
+        self.db.execute('INSERT INTO source_registry VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload, updated_at=excluded.updated_at',
+                        (source['id'],encode(source),stamp,stamp))
+
+    def sources(self):
+        return [json.loads(r[0]) for r in self.db.execute('SELECT payload FROM source_registry ORDER BY rowid')]
 
     def close(self):
         self.db.close()

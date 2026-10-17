@@ -10,7 +10,7 @@ from packages.domain.validation import validate_dataset, validate_rule
 from packages.planner.engine import generate_plan, compare_plans, select_rules, CALCULATION_VERSION
 from packages.feature_provider import configured_provider
 from packages.ingestion.adapters import GenericPageAdapter, ECFRAdapter, EURLexAdapter, parse_records, field_diff, CachedGeographyProvider
-from packages.assistant import answer_question
+from packages.assistant import configured_assistant
 from packages.calendar import ICSCalendarProvider
 from packages.notifications import configured_notifications
 from .repository import Repository, identifier, encode, now
@@ -29,6 +29,7 @@ class Service:
         self.repo = Repository(db_path)
         self.provider = configured_provider()
         self.notifications = configured_notifications()
+        self.assistant = configured_assistant()
         if self.repo.dataset() is None:
             path = Path(fixture) if fixture else ROOT / 'data/demo/trial.json'
             self.reset(json.loads(path.read_text(encoding='utf-8')))
@@ -42,6 +43,7 @@ class Service:
         self.validate(dataset)
         with self.repo.transaction():
             self.repo.save_dataset(dataset)
+            self.sync_sources(dataset)
             self.repo.set_setting('approved_scenario_id',None)
             # Reset activates a fresh fixture but does not erase historical plans or audit.
             self.repo.db.execute('DELETE FROM events')
@@ -52,6 +54,12 @@ class Service:
             plan = self.generate(dataset)
             self.repo.decide(plan['id'],'approved','demo seed','Explicit synthetic demo baseline initialization; not a human regulatory approval.')
         return self.bootstrap()
+
+    def sync_sources(self, dataset):
+        for source in dataset.get('source_documents',[]):
+            url = source.get('canonical_url') or source.get('url')
+            if url:
+                self.repo.save_source({'id':source['id'],'title':source.get('title',source['id']),'url':url,'adapter':source.get('adapter','generic'),'jurisdiction':source.get('jurisdiction'),'enabled':source.get('enabled',True)})
 
     def generate(self, dataset, parent=None, event=None, repair=None):
         dataset = copy.deepcopy(dataset)
@@ -97,7 +105,7 @@ class Service:
         dataset = self.repo.dataset()
         approved = self.repo.setting('approved_scenario_id')
         plan = self.repo.plan(approved) if approved else None
-        return {'trial':dataset['trial'],'dataset_summary':{'id':dataset['id'],'as_of':dataset['as_of'],'countries':len(dataset['jurisdictions']),'rules':len(dataset['rules']),'routes':len(dataset['routes']),'synthetic_rules':sum(r['review_status']=='synthetic' for r in dataset['rules'])},'approved_scenario':plan,'scenarios':self.summaries(),'events':self.repo.events(),'alerts':self.alerts(),'provider':plan.get('provider') if plan else {'active':self.provider.name},'jurisdictions':dataset['jurisdictions']}
+        return {'trial':dataset['trial'],'dataset_summary':{'id':dataset['id'],'as_of':dataset['as_of'],'countries':len(dataset['jurisdictions']),'rules':len(dataset['rules']),'routes':len(dataset['routes']),'synthetic_rules':sum(r['review_status']=='synthetic' for r in dataset['rules'])},'approved_scenario':plan,'scenarios':self.summaries(),'events':self.repo.events(),'alerts':self.alerts(),'provider':plan.get('provider') if plan else {'active':self.provider.name},'assistant_provider':self.assistant.name,'jurisdictions':dataset['jurisdictions']}
 
     def preview(self, body, kind):
         dataset = self.repo.dataset()
@@ -119,7 +127,10 @@ class Service:
                 record.setdefault('id',identifier('rule'))
             candidate, diff = self.merge_rules(dataset,records)
             errors = validate_dataset(candidate)
-            data = {'records':records,'diff':diff,'errors':errors,'valid':not errors}
+            keys = [(r.get('jurisdiction'),r.get('requirement_key'),r.get('effective_from')) for r in records]
+            conflicts = sorted({str(key) for key in keys if keys.count(key)>1})
+            summary = {'records':len(records),'jurisdictions':len({r.get('jurisdiction') for r in records}),'adds':sum(d['operation']=='add' for d in diff),'supersedes':sum(d['operation']=='supersede' for d in diff),'needs_review':sum(r.get('review_status')=='needs_review' for r in records),'conflicts':conflicts}
+            data = {'records':records,'diff':diff,'summary':summary,'errors':errors + ([{'path':'records','message':'Duplicate jurisdiction, requirement key, and effective date','conflicts':conflicts}] if conflicts else []),'valid':not errors and not conflicts}
         key = identifier('preview')
         self.repo.db.execute('INSERT INTO previews VALUES(?,?,?,?,0,?)',(key,kind,encode(data),self.repo.setting('dataset_id'),now()))
         self.repo.audit('import.preview',key,payload={'kind':kind,'valid':data['valid']})
@@ -164,6 +175,7 @@ class Service:
         dataset = data['dataset'] if kind == 'dataset' else self.merge_rules(self.repo.dataset(),data['records'])[0]
         self.validate(dataset)
         self.repo.save_dataset(dataset)
+        self.sync_sources(dataset)
         self.repo.db.execute('UPDATE previews SET consumed=1 WHERE id=?',(key,))
         self.repo.audit('import.committed',key,reviewer,{'kind':kind,'records':len(data.get('records',dataset['rules']))})
         if kind == 'dataset':
@@ -231,6 +243,9 @@ class Service:
         self.repo.audit('source.snapshot',source_id,payload={k:v for k,v in result.items() if k != 'diff'})
         return result
 
+    def check_source(self, source):
+        return self.snapshot({'source_id':source['id'],'url':source['url'],'adapter':source.get('adapter','generic'),'jurisdiction':source.get('jurisdiction')})
+
     def dispatch(self, method, path, query, body):
         parts = path.strip('/').split('/')
         dataset = self.repo.dataset()
@@ -249,6 +264,15 @@ class Service:
                 return {'events':[{**dict(r),'payload':json.loads(r['payload'])} for r in self.repo.db.execute('SELECT * FROM audit ORDER BY rowid DESC')]}
             if path == '/api/geography':
                 return {'countries':CachedGeographyProvider(dataset).countries()}
+            if path == '/api/sources':
+                return {'sources':self.repo.sources()}
+            if path.startswith('/api/templates/'):
+                name = path.rsplit('/',1)[-1]
+                allowed = {'research.csv':'research-template.csv','research-rule.schema.json':'research-rule.schema.json','dataset.schema.json':'dataset.schema.json'}
+                if name not in allowed:
+                    raise KeyError('Template not found')
+                target = ROOT / 'data/schemas' / allowed[name]
+                return (('text/csv' if name.endswith('.csv') else 'application/schema+json') + '; charset=utf-8',target.read_text(encoding='utf-8'))
             if len(parts)==3 and parts[1]=='change-events':
                 return self.repo.event(parts[2])
             if len(parts)==3 and parts[1]=='trials':
@@ -298,6 +322,18 @@ class Service:
                 return self.commit(body,'rules' if parts[1]=='rules' else 'dataset')
             if path == '/api/sources/snapshot':
                 return self.snapshot(body)
+            if path == '/api/sources':
+                source = {k:body.get(k) for k in ('id','title','url','adapter','jurisdiction','enabled')}
+                source['id'], source['title'], source['url'] = str(source.get('id') or identifier('source')).strip(),str(source.get('title') or '').strip(),str(source.get('url') or '').strip()
+                source['adapter'] = source.get('adapter') or 'generic'; source['enabled'] = source.get('enabled') is not False
+                if not source['title'] or not source['url'].startswith('https://') or source['adapter'] not in ('generic','ecfr','eurlex'):
+                    raise APIError('Source title, HTTPS URL, and supported adapter required')
+                self.repo.save_source(source); self.repo.audit('source.registered',source['id'],payload=source)
+                return source
+            if len(parts)==4 and parts[1]=='sources' and parts[3]=='check':
+                source = next((s for s in self.repo.sources() if s['id']==parts[2]),None)
+                if not source: raise KeyError('Source not found')
+                return self.check_source(source)
             if len(parts)==4 and parts[1]=='rules' and parts[3]=='review':
                 reviewer, note = str(body.get('reviewer','')).strip(),str(body.get('note','')).strip()
                 status = body.get('status')
@@ -394,7 +430,7 @@ class Service:
                 if body.get('trial_id') and body['trial_id'] != plan['trial_id']:
                     raise APIError('Trial and scenario do not match')
                 comparison = compare_plans(self.repo.plan(plan['parent_scenario_id']),plan) if plan.get('parent_scenario_id') else None
-                return answer_question(body['question'],plan,self.repo.plan_dataset(key),comparison)
+                return self.assistant.answer(body['question'],plan,self.repo.plan_dataset(key),comparison)
             if len(parts)==4 and parts[1]=='scenarios' and parts[3]=='calendar-sync':
                 plan = self.repo.plan(parts[2])
                 ICSCalendarProvider().export(plan)

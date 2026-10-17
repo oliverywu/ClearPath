@@ -6,6 +6,13 @@ Local clinical-supply decision support: dated regulatory evidence, compatible la
 
 Prerequisite: **Python 3.11+**. No runtime package installation, Docker, cloud service, model key, Chalk or Photon credentials are needed. The Windows launcher also detects Codex's bundled Python.
 
+Clone the team branch on any laptop, then enter the repository:
+
+```powershell
+git clone --branch cleared-for-takeoff https://github.com/oliverywu/hackharvard.git
+cd hackharvard
+```
+
 From the repository root in PowerShell:
 
 ```powershell
@@ -38,7 +45,7 @@ Reset with the Control tower button, or stop the app and run `.\start.ps1 -Reset
 
 ## Teammate research and replacement data
 
-Use **Data & research**. Atomic research imports take a JSON array; full dataset imports take a JSON object. Both require **Validate & preview** before **Commit** with reviewer attribution. Errors, record diffs and stale-preview checks protect the active inputs. The API also accepts CSV text for atomic rules; the browser uploader uses JSON.
+Use **Data & research**. Atomic research imports accept one or more JSON or CSV files and combine records across countries into one reviewable preview. The preview reports record, country, addition, supersession, needs-review, and duplicate-conflict counts. Full dataset imports take one complete JSON object because a dataset is an atomic workspace containing all countries and trial inputs. Both paths require **Validate & preview** before **Commit** with reviewer attribution. Downloadable templates are available in the screen and under `data/schemas/`.
 
 See `data/schemas/` and complete working examples `data/demo/trial.json` and `data/demo/replacement.json`. `GET /api/dataset` exports the active dataset as a template. Replace the JSON records or import them; no application changes or fixture-builder execution are required.
 
@@ -52,9 +59,33 @@ See `data/schemas/` and complete working examples `data/demo/trial.json` and `da
 
 Complete datasets contain `id`, `as_of`, `trial` (including `product`), `config`, `jurisdictions`, `country_plans`, `rules`, `routes`, and `events`. Country plans hold site/depot, enrollment, demand/quantity, ready date, delivery target and holidays. Routes hold legs, transit/customs/depot/last-mile durations, temperature band, cost and source. Configuration controls booklet capacity and risk/readiness weights. Events describe normalized changes and repair choices.
 
-The interface distinguishes **verified**, **needs review**, **authoritative secondary** and **synthetic**. New research should remain `needs_review` until qualified human review; synthetic sources cannot be marked verified. A rule's review endpoint is `POST /api/rules/{id}/review` with `reviewer`, `note`, and `status`. Accepted versions regenerate proposed plans. Existing approved snapshots retain their original inputs.
+The interface distinguishes **verified**, **needs review**, **authoritative secondary** and **synthetic**. New research should remain `needs_review` until qualified human review; synthetic sources cannot be marked verified. Select a requirement in **Requirements**, enter a reviewer name and note, then verify, retain for review, or retire it. The decision creates a new immutable rule version and regenerates a proposed plan. Existing approved snapshots retain their original inputs.
 
-The **Source snapshots** panel captures source text and detects changes through content hashes and diffs. Generic-page, eCFR and EUR-Lex adapters separate collection from approval. Extracted candidates remain `needs_review`; a text diff does not establish a verified legal change.
+The **Source registry** records official HTTPS pages and supports generic-page, eCFR, and EUR-Lex adapters. **Check now** collects the page, stores a content hash, and creates a diff/change event when content changes. Network access is only used when a teammate clicks the control. Extracted candidates remain `needs_review`; a text diff does not establish a verified legal change. Manual pasted snapshots remain available for pages that block automated collection.
+
+## Optional OpenAI planner assistant
+
+The planner assistant works offline by default. Its deterministic answers cite the selected immutable scenario and source records. To enable a model-written answer, copy `.env.example` to `.env` and set:
+
+```dotenv
+ASSISTANT_PROVIDER=openai
+OPENAI_API_KEY=your-api-key
+OPENAI_MODEL=gpt-5.4-mini
+```
+
+The integration uses the OpenAI Responses API with one allowlisted, read-only planning-context tool. It cannot approve, reject, or modify plans. Citations still come from stored evidence, API failures fall back visibly to the local assistant, and responses are sent with storage disabled. Never commit `.env` or an API key.
+
+## Teammate handoff checklist
+
+The application is complete and testable without external credentials. Teammates can contribute:
+
+- official or authoritative country research as JSON/CSV, with exact excerpts and effective dates;
+- a reviewed complete dataset if the trial, routes, demand, dates, or product differ from the demo;
+- an OpenAI API key/model only if model-written assistant prose is wanted;
+- Chalk credentials and matching deployed resolvers only if the team wants remote feature computation;
+- confirmed Photon credentials/contract only if external notifications become a requirement.
+
+Every imported rule should begin as `needs_review`. A qualified reviewer must inspect evidence in the UI. Dataset and rule commits generate proposals; a separate named plan approval is still required.
 
 ## Chalk
 
@@ -99,8 +130,8 @@ The browser suite starts an isolated database, exercises the UI, checks mobile o
 
 ## Architecture and limits
 
-The standard-library API, SQLite and buildless browser app deliberately replace the plan's suggested framework stack to keep offline startup simple. SQLite is the implemented persistence backend. Scenario payloads are immutable; approval decisions are separate; database triggers protect snapshots and audit entries.
+The standard-library API, SQLite and buildless browser app keep offline startup simple. SQLite is appropriate for this single-laptop, single-user hackathon workflow: it needs no server or credentials and still provides transactions, constraints, WAL mode, and immutable-snapshot triggers. PostgreSQL would become useful for a hosted multi-user deployment with concurrent writers, account isolation, centralized backups, and operational monitoring. Adding it now would introduce deployment work without improving this demo, so it is intentionally deferred.
 
-This is a single-user local tool. Reviewer names are attribution, not production authentication. Holiday calendars, route estimates and evidence quality depend on imported records. The assistant is a deterministic read-only explainer without a model-service dependency. Live regulator/weather feeds are not required or automatically enabled.
+This is a single-user local tool. Reviewer names are attribution, not production authentication. Holiday calendars, route estimates and evidence quality depend on imported records. The assistant remains usable without a model-service dependency. Source checks are user-triggered and only run while the application and laptop are on.
 
 Photon is the unfinished external messaging integration because its contract and credentials were not provided. Live Chalk and direct calendar-account synchronization need external setup; complete local features and ICS export work now. See [architecture](docs/architecture.md), [provenance](docs/data_provenance.md), and [demo script](docs/demo_script.md).

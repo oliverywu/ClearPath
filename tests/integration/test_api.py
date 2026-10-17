@@ -15,6 +15,7 @@ from packages.feature_provider.providers import LocalFeatureProvider, ChalkFeatu
 from packages.feature_provider.formulas import effective_transit, projected_delivery, delivery_slack, risk_score, risk_band
 from packages.ingestion.adapters import GenericPageAdapter, parse_records
 from packages.notifications.providers import PhotonNotificationProvider
+from packages.assistant.providers import OpenAIAssistantProvider
 
 
 class ServiceTests(unittest.TestCase):
@@ -210,6 +211,24 @@ class ServiceTests(unittest.TestCase):
         result = self.post('/api/sources/snapshot',{'source_id':'candidate','content':'Evidence','records':[{'review_status':'verified'}]})
         self.assertEqual(result['candidate_rules'][0]['review_status'],'needs_review')
 
+    def test_import_summary_and_duplicate_conflict(self):
+        row = copy.deepcopy(self.service.repo.dataset()['rules'][0])
+        row.update(id='summary-rule',review_status='needs_review')
+        preview = self.post('/api/rules/import/preview',{'records':[row]})
+        self.assertEqual(preview['summary']['records'],1)
+        self.assertEqual(preview['summary']['jurisdictions'],1)
+        duplicate = self.post('/api/rules/import/preview',{'records':[row,{**row,'id':'summary-rule-2'}]})
+        self.assertFalse(duplicate['valid'])
+        self.assertTrue(duplicate['summary']['conflicts'])
+
+    def test_source_registry_and_check(self):
+        source = self.post('/api/sources',{'title':'Official page','url':'https://official.example/rule','adapter':'generic'})
+        self.assertIn(source['id'],[s['id'] for s in self.service.handle('GET','/api/sources')['sources']])
+        with patch('packages.ingestion.adapters.GenericPageAdapter.fetch',return_value='Official evidence'):
+            checked = self.post('/api/sources/'+source['id']+'/check')
+        self.assertFalse(checked['changed'])
+        self.assertEqual(checked['review_status'],'needs_review')
+
 
 class ProviderTests(unittest.TestCase):
     def setUp(self):
@@ -248,6 +267,17 @@ class ProviderTests(unittest.TestCase):
     def test_photon_stub_is_honest(self):
         result = PhotonNotificationProvider().send({'id':'test'})
         self.assertFalse(result['delivered'])
+
+    def test_openai_assistant_uses_read_only_context_tool(self):
+        provider = OpenAIAssistantProvider(api_key='test',model='test-model')
+        first = {'id':'resp_1','output':[{'type':'function_call','name':'get_planning_context','call_id':'call_1','arguments':'{}'}]}
+        second = {'id':'resp_2','output':[{'type':'message','content':[{'type':'output_text','text':'Grounded model answer.'}]}]}
+        with patch.object(provider,'_post',side_effect=[first,second]) as post:
+            result = provider.answer('Why is this at risk?',self.service.bootstrap()['approved_scenario'],self.service.repo.dataset())
+        self.assertEqual(result['provider'],'openai')
+        self.assertIn('Grounded model answer',result['answer'])
+        self.assertEqual(post.call_args_list[0].args[0]['tool_choice']['name'],'get_planning_context')
+        self.assertEqual(post.call_args_list[1].args[0]['input'][0]['type'],'function_call_output')
 
 
 class HTTPTests(unittest.TestCase):
