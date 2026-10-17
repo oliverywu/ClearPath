@@ -10,7 +10,7 @@ from packages.domain.validation import validate_dataset, validate_rule
 from packages.planner.engine import generate_plan, compare_plans, select_rules, CALCULATION_VERSION
 from packages.feature_provider import configured_provider
 from packages.feature_provider.providers import LocalFeatureProvider
-from packages.ingestion.adapters import GenericPageAdapter, ECFRAdapter, EURLexAdapter, parse_records, field_diff, CachedGeographyProvider
+from packages.ingestion.adapters import GenericPageAdapter, ECFRAdapter, EURLexAdapter, EgovLawAdapter, parse_records, field_diff, CachedGeographyProvider
 from packages.assistant import configured_assistant
 from packages.research import configured_research, ResearchUnavailable
 from packages.calendar import ICSCalendarProvider, configured_calendar
@@ -18,6 +18,12 @@ from packages.notifications import configured_notifications
 from .repository import Repository, identifier, encode, now
 
 ROOT = Path(__file__).resolve().parents[2]
+LEGACY_MHLW_ENGLISH_PDF = 'https://www.mhlw.go.jp/file/04-Houdouhappyou-11123000-Iyakushokuhinkyoku-Shinsakanrika/0000190647.pdf'
+LEGACY_MHLW_GCP_URL = 'https://www.mhlw.go.jp/web/t_doc?dataId=81997396&dataType=0&pageNo=1'
+CURRENT_MHLW_GCP_TEXT = 'https://laws.e-gov.go.jp/law/409M50000100028'
+LEGACY_CANADA_GUI_URL = 'https://www.canada.ca/en/health-canada/services/drugs-health-products/compliance-enforcement/good-clinical-practices/guidance-documents/guidance-drugs-clinical-trials-human-subjects-gui-0100/labelling-records.html'
+CURRENT_CANADA_LABEL_RULE = 'https://laws-lois.justice.gc.ca/eng/regulations/c.r.c.%2C_c._870/section-C.05.011.html?wbdisable=true'
+MHLW_ARTICLE_16_EXCERPT = '治験依頼者は、治験薬の容器又は被包に次に掲げる事項（拡大治験を実施する場合にあっては、第一号及び第二号に掲げる事項に限る。）を邦文で記載しなければならない。'
 
 
 class APIError(Exception):
@@ -36,6 +42,8 @@ class Service:
         if self.repo.dataset() is None:
             path = Path(fixture) if fixture else ROOT / 'data/demo/trial.json'
             self.reset(json.loads(path.read_text(encoding='utf-8')))
+        else:
+            self.migrate_legacy_official_sources()
 
     def validate(self, dataset):
         errors = validate_dataset(dataset)
@@ -84,13 +92,66 @@ class Service:
             prior = next((s for s in self.repo.sources() if s.get('id') == f'dataset-source-{digest}'), {})
             self.repo.save_source({
                 'id':f'dataset-source-{digest}', 'title':sorted(item['titles'])[0], 'url':url,
-                'adapter':'generic', 'jurisdiction':', '.join(sorted(x for x in item['jurisdictions'] if x)),
+                'adapter':'egov' if url.startswith('https://laws.e-gov.go.jp/law/') else 'generic', 'jurisdiction':', '.join(sorted(x for x in item['jurisdictions'] if x)),
                 'source_tiers':sorted(item['tiers']), 'review_statuses':sorted(item['statuses']),
                 'requirement_keys':sorted(item['keys']), 'record_count':item['count'],
                 'managed_by':'dataset', 'enabled':True,
                 'last_checked_at':prior.get('last_checked_at'), 'last_content_hash':prior.get('last_content_hash'),
                 'last_check_changed':prior.get('last_check_changed'), 'last_check_error':prior.get('last_check_error')
             })
+
+    def migrate_legacy_official_sources(self):
+        """Replace retired/blocked citations with fetchable official primary law text."""
+        dataset = self.repo.dataset()
+        changed = []
+        for record in [*dataset.get('rules', []), *dataset.get('events', [])]:
+            old_url = record.get('source_url')
+            old_url_key = old_url.split('#',1)[0] if old_url else None
+            if old_url_key not in (LEGACY_MHLW_ENGLISH_PDF, LEGACY_MHLW_GCP_URL, LEGACY_CANADA_GUI_URL):
+                continue
+            if old_url_key == LEGACY_CANADA_GUI_URL:
+                record.update({
+                    'source_url':CURRENT_CANADA_LABEL_RULE,
+                    'source_title':'Canada: Food and Drug Regulations C.05.011 (official labelling rule)',
+                    'source_excerpt':'the sponsor shall ensure that the drug bears a label that sets out the following information in both official languages',
+                    'notes':'Updated from Health Canada GUI-0100 guidance to the controlling federal regulation, C.05.011. The guidance URL can time out in automated collection; this official Justice Laws text is the direct legal requirement.'
+                })
+            else:
+                record['source_url'] = CURRENT_MHLW_GCP_TEXT
+                record['source_title'] = str(record.get('source_title','Japan GCP Ordinance')).replace('MHLW:', 'Japan e-Gov:')
+                if old_url_key == LEGACY_MHLW_ENGLISH_PDF:
+                    record.update({
+                        'source_title':'Japan e-Gov: Ministerial Ordinance on Good Clinical Practice for Drugs (current official Japanese text)',
+                        'source_excerpt':MHLW_ARTICLE_16_EXCERPT,
+                        'notes':'The former MHLW English-translation PDF returned 404. This citation now links to Japan e-Gov current law data; the Japanese original controls, and qualified users must verify interpretation and applicability before real-trial use.'
+                    })
+                else:
+                    record['notes'] = str(record.get('notes','')).strip()
+            changed.append(record.get('id'))
+        if not changed:
+            return False
+        self.validate(dataset)
+        with self.repo.transaction():
+            dataset_id = self.repo.save_dataset(dataset)
+            self.sync_sources(dataset)
+            replacement_ids = {s.get('url'):s.get('id') for s in self.repo.sources() if s.get('url') in (CURRENT_MHLW_GCP_TEXT,CURRENT_CANADA_LABEL_RULE)}
+            for source in self.repo.sources():
+                old_url = source.get('url')
+                old_url_key = old_url.split('#',1)[0] if old_url else None
+                if old_url_key not in (LEGACY_MHLW_ENGLISH_PDF, LEGACY_MHLW_GCP_URL, LEGACY_CANADA_GUI_URL):
+                    continue
+                replacement_url = CURRENT_CANADA_LABEL_RULE if old_url_key == LEGACY_CANADA_GUI_URL else CURRENT_MHLW_GCP_TEXT
+                source.update({'enabled':False,'superseded_by_source_id':replacement_ids.get(replacement_url)})
+                self.repo.save_source(source)
+            self.repo.audit('source.url_migrated',dataset_id,payload={
+                'replacements':{
+                    LEGACY_MHLW_ENGLISH_PDF:CURRENT_MHLW_GCP_TEXT,
+                    LEGACY_MHLW_GCP_URL:CURRENT_MHLW_GCP_TEXT,
+                    LEGACY_CANADA_GUI_URL:CURRENT_CANADA_LABEL_RULE
+                },
+                'affected_record_ids':changed,'reason':'Replace dead or unreliable guidance links with fetchable current official primary legal texts.'
+            })
+        return True
 
     def generate(self, dataset, parent=None, event=None, repair=None):
         dataset = copy.deepcopy(dataset)
@@ -312,7 +373,7 @@ class Service:
             raise APIError('source_id required')
         content = body.get('content')
         adapter_name = body.get('adapter','generic')
-        adapters = {'generic':GenericPageAdapter,'ecfr':ECFRAdapter,'eurlex':EURLexAdapter}
+        adapters = {'generic':GenericPageAdapter,'ecfr':ECFRAdapter,'eurlex':EURLexAdapter,'egov':EgovLawAdapter}
         if adapter_name not in adapters:
             raise APIError('Unknown regulatory adapter')
         adapter = adapters[adapter_name]()
@@ -336,7 +397,12 @@ class Service:
     def check_source(self, source):
         if source.get('source_tier') == 'synthetic' or 'synthetic' in (source.get('source_tiers') or []):
             raise APIError('Synthetic demo citations are not live sources and cannot be checked',422)
-        result = self.snapshot({'source_id':source['id'],'url':source['url'],'adapter':source.get('adapter','generic'),'jurisdiction':source.get('jurisdiction')})
+        try:
+            result = self.snapshot({'source_id':source['id'],'url':source['url'],'adapter':source.get('adapter','generic'),'jurisdiction':source.get('jurisdiction')})
+        except Exception as exc:
+            source.update({'last_checked_at':now(),'last_check_error':str(exc)})
+            self.repo.save_source(source)
+            raise
         source.update({'last_checked_at':now(),'last_content_hash':result['content_hash'],'last_check_changed':result['changed'],'last_check_error':None})
         self.repo.save_source(source)
         return result
@@ -577,7 +643,7 @@ class Service:
                 source = {k:body.get(k) for k in ('id','title','url','adapter','jurisdiction','enabled')}
                 source['id'], source['title'], source['url'] = str(source.get('id') or identifier('source')).strip(),str(source.get('title') or '').strip(),str(source.get('url') or '').strip()
                 source['adapter'] = source.get('adapter') or 'generic'; source['enabled'] = source.get('enabled') is not False
-                if not source['title'] or not source['url'].startswith('https://') or source['adapter'] not in ('generic','ecfr','eurlex'):
+                if not source['title'] or not source['url'].startswith('https://') or source['adapter'] not in ('generic','ecfr','eurlex','egov'):
                     raise APIError('Source title, HTTPS URL, and supported adapter required')
                 self.repo.save_source(source); self.repo.audit('source.registered',source['id'],payload=source)
                 return source

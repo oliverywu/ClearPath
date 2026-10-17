@@ -13,7 +13,7 @@ from apps.api.service import Service, APIError, ROOT
 from apps.api.server import make_server
 from packages.feature_provider.providers import LocalFeatureProvider, ChalkFeatureProvider
 from packages.feature_provider.formulas import effective_transit, projected_delivery, delivery_slack, risk_score, risk_band
-from packages.ingestion.adapters import GenericPageAdapter, parse_records
+from packages.ingestion.adapters import GenericPageAdapter, EgovLawAdapter, parse_records
 from packages.notifications.providers import PhotonNotificationProvider
 from packages.calendar.providers import GoogleCalendarProvider, OutlookCalendarProvider
 from packages.assistant.providers import OpenAIAssistantProvider
@@ -132,7 +132,7 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(6, len(candidates))
         self.assertTrue(all(r['source_tier'] == 'official' for r in candidates))
         self.assertTrue(all(r['review_status'] == 'needs_review' for r in candidates))
-        self.assertTrue(all(r['source_url'].startswith('https://www.mhlw.go.jp/web/t_doc?') for r in candidates))
+        self.assertTrue(all(r['source_url'].startswith('https://laws.e-gov.go.jp/law/409M50000100028') for r in candidates))
         self.assertTrue(all(r['source_excerpt'] for r in candidates))
         self.assertTrue(all(not r['active'] for r in candidates))
         keys = {r['requirement_key'] for r in candidates}
@@ -257,7 +257,7 @@ class ServiceTests(unittest.TestCase):
 
     def test_focused_official_evidence_slice_is_cited_and_verified(self):
         rules = self.service.repo.dataset()['rules']
-        expected_hosts = {'US':'fda.gov','DE':'eur-lex.europa.eu','CA':'canada.ca','JP':'mhlw.go.jp'}
+        expected_hosts = {'US':'fda.gov','DE':'eur-lex.europa.eu','CA':'laws-lois.justice.gc.ca','JP':'laws.e-gov.go.jp'}
         for country,host in expected_hosts.items():
             verified = [r for r in rules if r['jurisdiction']==country and r['review_status']=='verified']
             self.assertTrue(verified,country)
@@ -289,7 +289,7 @@ class ServiceTests(unittest.TestCase):
         cited_urls = {r['source_url'] for r in self.service.repo.dataset()['rules']}
         managed_urls = {s['url'] for s in registry if s.get('managed_by') == 'dataset'}
         self.assertTrue(cited_urls.issubset(managed_urls))
-        japan = next(s for s in registry if s.get('url','').startswith('https://www.mhlw.go.jp/web/t_doc?'))
+        japan = next(s for s in registry if s.get('url','').startswith('https://laws.e-gov.go.jp/law/409M50000100028'))
         self.assertEqual('official', japan['source_tiers'][0])
         self.assertIn('label.mandatory_fields', japan['requirement_keys'])
         source = self.post('/api/sources',{'title':'Official page','url':'https://official.example/rule','adapter':'generic'})
@@ -298,6 +298,51 @@ class ServiceTests(unittest.TestCase):
             checked = self.post('/api/sources/'+source['id']+'/check')
         self.assertFalse(checked['changed'])
         self.assertEqual(checked['review_status'],'needs_review')
+
+    def test_unreliable_regulatory_links_migrate_to_checkable_official_text(self):
+        dataset = self.service.repo.dataset()
+        japan = next(r for r in dataset['rules'] if r.get('jurisdiction') == 'JP' and r.get('requirement_key') == 'label.languages')
+        japan_article = next(r for r in dataset['rules'] if r.get('id') == 'candidate-JP-label.mandatory_fields-article16')
+        canada = next(r for r in dataset['rules'] if r.get('jurisdiction') == 'CA' and r.get('requirement_key') == 'label.languages')
+        old_url = 'https://www.mhlw.go.jp/file/04-Houdouhappyou-11123000-Iyakushokuhinkyoku-Shinsakanrika/0000190647.pdf'
+        legacy_mhlw = 'https://www.mhlw.go.jp/web/t_doc?dataId=81997396&dataType=0&pageNo=1#article16'
+        legacy_canada = 'https://www.canada.ca/en/health-canada/services/drugs-health-products/compliance-enforcement/good-clinical-practices/guidance-documents/guidance-drugs-clinical-trials-human-subjects-gui-0100/labelling-records.html'
+        japan['source_url'] = old_url
+        japan['source_title'] = 'MHLW: Ministerial Ordinance on Good Clinical Practice for Drugs (English translation)'
+        japan['source_excerpt'] = 'A sponsor shall indicate the following information in the Japanese language on the container or package of the investigational products'
+        japan['notes'] = 'Legacy fixture source.'
+        japan_article['source_url'] = legacy_mhlw
+        japan_article['source_title'] = 'MHLW: Ministerial Ordinance on Good Clinical Practice for Drugs, Article 16(1)'
+        canada['source_url'] = legacy_canada
+        canada['source_title'] = 'Health Canada GUI-0100: Labelling and records'
+        canada['source_excerpt'] = 'This information must be provided in both official languages.'
+        canada['notes'] = 'Legacy fixture source.'
+        self.service.repo.save_dataset(dataset)
+        self.service.sync_sources(dataset)
+        legacy_jp = next(s for s in self.service.repo.sources() if s.get('url') == old_url)
+        legacy_mhlw_source = next(s for s in self.service.repo.sources() if s.get('url') == legacy_mhlw)
+        legacy_ca = next(s for s in self.service.repo.sources() if s.get('url') == legacy_canada)
+
+        self.assertTrue(self.service.migrate_legacy_official_sources())
+        migrated = self.service.repo.dataset()
+        updated_jp = next(r for r in migrated['rules'] if r['id'] == japan['id'])
+        updated_ca = next(r for r in migrated['rules'] if r['id'] == canada['id'])
+        self.assertIn('laws.e-gov.go.jp/law/409M50000100028', updated_jp['source_url'])
+        self.assertIn('laws-lois.justice.gc.ca', updated_ca['source_url'])
+        self.assertIn('both official languages', updated_ca['source_excerpt'])
+        self.assertIn('邦文で記載', updated_jp['source_excerpt'])
+        replaced_jp = next(s for s in self.service.repo.sources() if s['id'] == legacy_jp['id'])
+        replaced_mhlw = next(s for s in self.service.repo.sources() if s['id'] == legacy_mhlw_source['id'])
+        replaced_ca = next(s for s in self.service.repo.sources() if s['id'] == legacy_ca['id'])
+        self.assertFalse(replaced_jp['enabled'])
+        self.assertTrue(replaced_jp['superseded_by_source_id'])
+        self.assertFalse(replaced_mhlw['enabled'])
+        self.assertTrue(replaced_mhlw['superseded_by_source_id'])
+        self.assertFalse(replaced_ca['enabled'])
+        self.assertTrue(replaced_ca['superseded_by_source_id'])
+        current_jp = next(s for s in self.service.repo.sources() if s['url'] == updated_jp['source_url'])
+        self.assertEqual(current_jp['adapter'],'egov')
+        self.assertFalse(self.service.migrate_legacy_official_sources(), 'Migration should be idempotent')
 
     def test_recalculate_freshness_check_detects_changes_and_skips_synthetic_sources(self):
         source = self.post('/api/sources',{'title':'Official change test','url':'https://official.example/change','adapter':'generic'})
@@ -412,6 +457,14 @@ class ProviderTests(unittest.TestCase):
     def test_scraped_candidates_cannot_self_verify(self):
         candidates = GenericPageAdapter().normalize_candidate_rules([{'review_status':'verified','source_excerpt':'Text'}])
         self.assertEqual(candidates[0]['review_status'],'needs_review')
+
+    def test_egov_adapter_fetches_law_api_from_official_page_url(self):
+        url = 'https://laws.e-gov.go.jp/law/409M50000100028'
+        with patch.object(GenericPageAdapter,'fetch',return_value='official law data') as fetch:
+            self.assertEqual(EgovLawAdapter().fetch(url),'official law data')
+        fetch.assert_called_once_with('https://laws.e-gov.go.jp/api/2/law_data/409M50000100028')
+        with self.assertRaises(ValueError):
+            EgovLawAdapter().fetch('https://attacker.example/law/409M50000100028')
 
     def test_photon_stub_is_honest(self):
         result = PhotonNotificationProvider().send({'id':'test'})

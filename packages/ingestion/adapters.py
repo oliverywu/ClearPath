@@ -6,11 +6,28 @@ import ipaddress
 import json
 import re
 import socket
+import ssl
 from datetime import datetime, timezone
 from html import unescape
 from typing import Protocol
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
+
+
+def _source_ssl_context():
+    """Use normal CA verification, falling back to Windows' trusted root store."""
+    context = ssl.create_default_context()
+    # Some bundled Python distributions don't ship a CA bundle. On Windows, use
+    # the OS trust store rather than disabling certificate verification.
+    paths = ssl.get_default_verify_paths()
+    if not paths.cafile and not paths.capath and hasattr(ssl, 'enum_certificates'):
+        roots = []
+        for certificate, encoding, trust in ssl.enum_certificates('ROOT'):
+            if encoding == 'x509_asn' and (trust is True or trust is None or '1.3.6.1.5.5.7.3.1' in trust):
+                roots.append(ssl.DER_cert_to_PEM_cert(certificate))
+        if roots:
+            context.load_verify_locations(cadata=''.join(roots))
+    return context
 
 
 class RegulatoryAdapter(Protocol):
@@ -33,11 +50,11 @@ class GenericPageAdapter:
             if not ipaddress.ip_address(address[4][0]).is_global:
                 raise ValueError('Private source URLs are not allowed')
         # No redirects: a public source must not redirect collection into private networks.
-        from urllib.request import HTTPRedirectHandler, build_opener
+        from urllib.request import HTTPRedirectHandler, HTTPSHandler, build_opener
         class NoRedirect(HTTPRedirectHandler):
             def redirect_request(self, *args, **kwargs):
                 raise ValueError('Source redirects require a new registered URL')
-        with build_opener(NoRedirect).open(Request(url, headers={'User-Agent':'ClearedForTakeoff/1.0 evidence-snapshot'}), timeout=10) as response:
+        with build_opener(NoRedirect, HTTPSHandler(context=_source_ssl_context())).open(Request(url, headers={'User-Agent':'ClearedForTakeoff/1.0 evidence-snapshot'}), timeout=30) as response:
             content = response.read(2_000_001)
             if len(content) > 2_000_000:
                 raise ValueError('Source exceeds 2 MB collection limit')
@@ -60,6 +77,19 @@ class ECFRAdapter(GenericPageAdapter):
 
 class EURLexAdapter(GenericPageAdapter):
     allowed_hosts = {'eur-lex.europa.eu'}
+
+
+class EgovLawAdapter(GenericPageAdapter):
+    """Fetch the current law data behind a human-readable official e-Gov page."""
+    allowed_hosts = {'laws.e-gov.go.jp'}
+
+    def fetch(self, url):
+        parsed = urlparse(url)
+        match = re.fullmatch(r'/law/([A-Za-z0-9_-]+)(?:/.*)?', parsed.path)
+        if parsed.scheme != 'https' or parsed.hostname not in self.allowed_hosts or parsed.username or parsed.password or not match:
+            raise ValueError('e-Gov adapter requires an official e-Gov law page URL')
+        api_url = f'https://laws.e-gov.go.jp/api/2/law_data/{match.group(1)}'
+        return super().fetch(api_url)
 
 
 class GeographyProvider(Protocol):

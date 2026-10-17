@@ -80,6 +80,8 @@ The loop repeats whenever requirements, routes, or operating conditions change. 
 | Understand why something is at risk | **Planner assistant** | A read-only explanation with stored citations |
 | Check who changed what | **Audit history** | Append-only activity and decision history |
 
+On **Data & sources**, the source status list puts failed and changed links first and can filter by result. **Check now** fetches that source; **Reload list** only reloads the locally saved registry. The checker allows up to 30 seconds for a response and uses normal HTTPS certificate verification (including Windows' trusted root store where the bundled Python has no CA bundle). It does not continuously monitor websites. Startup migrations replace unreliable Health Canada guidance and MHLW links with fetchable official primary texts: Justice Laws C.05.011 for Canada and current e-Gov GCP Ordinance data for Japan. Their old registry entries remain disabled and marked replaced, with an audit entry; the broken MHLW English PDF is not replaced with synthetic evidence.
+
 ## Start
 
 Prerequisite: **Python 3.11+**. No runtime package installation, Docker, cloud service, model key, Chalk or Photon credentials are needed. The Windows launcher also detects Codex's bundled Python.

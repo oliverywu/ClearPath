@@ -55,8 +55,9 @@ async function main() {
     assert.ok(await page.locator('.calendar-event').count() > 0, 'Dashboard calendar should contain scenario milestones');
     fs.mkdirSync(path.join(root, 'test-results'), {recursive:true});
     await page.screenshot({path:path.join(root,'test-results/control-tower.png'),fullPage:true});
-    let sourceCheckMode = 'clean';
+    let sourceCheckMode = 'clean', sourceCheckRequests = 0;
     await page.route('**/api/sources/check-all', route => {
+      sourceCheckRequests++;
       const payload = sourceCheckMode === 'clean'
         ? {checked:1,changed:0,failed:0,results:[{source_id:'official-1',title:'Official rule'}]}
         : sourceCheckMode === 'changed'
@@ -74,6 +75,17 @@ async function main() {
     await page.locator('#ai-analyze-change').waitFor();
     assert.match(await page.locator('#notice').innerText(), /source change was detected[\s\S]*No proposal was created/i);
     assert.equal((await api('/api/bootstrap')).scenarios.length, scenariosBeforeSourceChange, 'A detected source change must pause proposal creation');
+    assert.equal(await page.locator('#refresh-sources').innerText(), 'Reload list');
+    assert.equal(await page.locator('#source-status-filter').inputValue(), 'attention');
+    await page.locator('#source-status-filter').selectOption('all');
+    await page.locator('.source-row').first().waitFor();
+    assert.ok(await page.locator('.source-row').count() > 0, 'All-source filter should expose the source registry');
+    await page.locator('#source-status-filter').selectOption('synthetic');
+    await page.locator('.source-synthetic').first().waitFor();
+    assert.ok(await page.locator('.source-synthetic').count() > 0, 'Synthetic demo sources should remain visible but distinct');
+    await page.locator('#refresh-sources').click();
+    await page.locator('#source-status-filter').waitFor();
+    assert.equal(sourceCheckRequests, 2, 'Reload list must not fetch external sources');
     await page.locator('[data-view="overview"]').click();
     sourceCheckMode = 'failed';
     await page.locator('#generate-plan').click();
@@ -102,7 +114,7 @@ async function main() {
     assert.match(await page.locator('[data-req-sort="date"]').innerText(), /Effective\s*[▲▼]/i);
     await page.locator('[data-req-sort="review"]').click();
     await page.locator('.rule-select').first().click();
-    assert.match(await page.locator('#evidence-content').innerText(), /Needs Review Official[\s\S]*MHLW/i);
+    assert.match(await page.locator('#evidence-content').innerText(), /Needs Review Official[\s\S]*Japan e-Gov/i);
     await page.locator('[data-view="scenarios"]').click();
     assert.equal(await page.locator('.page-heading h1').innerText(), 'Plans & decisions');
     const jp = boot.events.find(e => e.jurisdiction === 'JP');

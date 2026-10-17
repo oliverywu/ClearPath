@@ -109,8 +109,10 @@ This mapping was discovered and source-checked during implementation; it was not
 
 - United States — FDA, 21 CFR 312.6 investigational-drug labeling: https://www.fda.gov/science-research/clinical-trials-and-human-subject-protection/new-drug-antibiotic-and-biologic-drug-product-regulations-part-3
 - EU/Germany — Regulation (EU) No 536/2014, Annex VI: https://eur-lex.europa.eu/legal-content/EN-DE/TXT/?uri=CELEX%3A32014R0536
-- Canada — Health Canada GUI-0100, Labelling and records: https://www.canada.ca/en/health-canada/services/drugs-health-products/compliance-enforcement/good-clinical-practices/guidance-documents/guidance-drugs-clinical-trials-human-subjects-gui-0100/labelling-records.html
-- Japan — MHLW English translation of the Ministerial Ordinance on GCP for Drugs: https://www.mhlw.go.jp/file/04-Houdouhappyou-11123000-Iyakushokuhinkyoku-Shinsakanrika/0000190647.pdf
-- Japan Article 16 expansion — current official MHLW Japanese consolidated text: https://www.mhlw.go.jp/web/t_doc?dataId=81997396&dataType=0&pageNo=1 (six atomic candidates are linked per rule and remain `needs_review` pending qualified translation, scope, and effective-date review)
+- Canada — Food and Drug Regulations C.05.011, official Justice Laws HTML (GUI-0100 remains a useful interpretation source): https://laws-lois.justice.gc.ca/eng/regulations/c.r.c.%2C_c._870/section-C.05.011.html?wbdisable=true
+- Japan — current official e-Gov GCP Ordinance page; the checker fetches current law data through e-Gov API v2: https://laws.e-gov.go.jp/law/409M50000100028
+- Japan Article 16 expansion — same current official e-Gov Japanese ordinance text (six atomic candidates are linked per rule and remain `needs_review` pending qualified translation, scope, and effective-date review)
+
+The earlier GUI-0100 and MHLW URLs are retained as disabled, superseded source-registry rows in existing installations. Their replacement URLs point to the current controlling primary legal texts that were successfully fetched through the app checker. The broken MHLW English-PDF citation was replaced with Japanese primary text rather than synthetic evidence.
 
 The source excerpt and normalized requirement are stored in data/demo/trial.json. This is a focused demonstration slice, not a substitute for qualified regulatory review.
