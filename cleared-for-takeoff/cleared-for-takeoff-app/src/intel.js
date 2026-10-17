@@ -21,7 +21,9 @@ export async function attachLiveShipments() {
   const ids = new Set(list.map(s => s.id));
   $$('#tlist .ti2').forEach(b => { if (!ids.has(b.dataset.id)) return;
     if (!b.querySelector('.ldot')) b.querySelector('b')?.insertAdjacentHTML('beforeend', '<s class="ldot" title="Live route view"></s>');
-    b.onclick = () => { $$('#tlist .ti2').forEach(x => x.classList.toggle('sel', x === b)); open(b.dataset.id); }; });
+    // Keep the original handler (map select + detailed milestone timeline drawer) and add the route panel.
+    const orig = b.onclick;
+    b.onclick = e => { orig?.call(b, e); $$('#tlist .ti2').forEach(x => x.classList.toggle('sel', x === b)); open(b.dataset.id); }; });
 }
 function shell() {
   let el = $('#intel');
