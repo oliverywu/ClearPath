@@ -7,14 +7,21 @@ The product deliberately combines two kinds of intelligence. Deterministic code 
 ## Product decision levels
 
 ```mermaid
-flowchart TB
-    L1["Level 1: Evidence and inputs<br/>Regulations, routes, product data, disruptions"]
-    L2["Level 2: AI research and analysis<br/>Extract, compare, classify, explain, simulate<br/>Implemented with optional OpenAI provider"]
-    L3["Level 3: Deterministic planning<br/>Rule selection, label grouping, dates, slack, risk, repairs<br/>Implemented"]
-    L4["Level 4: Human governance<br/>Verify evidence, review trade-offs, approve or reject<br/>Implemented"]
-    L5["Level 5: Coordination<br/>Dashboard, calendar, Photon alerts and follow-up<br/>Implemented; live credentials optional"]
+flowchart LR
+    IN["1 · Evidence and operating inputs<br/>Dated country rules + citations, product and route constraints, deadlines, disruptions<br/>Website: Requirements & evidence · Data & sources"]
+    AI["2 · Optional AI assistance<br/>Extract candidate rules, compare source versions, explain risk, answer what-if questions<br/>OpenAI is optional; outputs remain review-gated"]
+    HR["Human evidence review<br/>Verify, retain for review, or retire a candidate"]
+    CALC["3 · Reproducible calculation<br/>Select accepted rules, group compatible labels, schedule milestones, calculate slack and risk<br/>Local engine; optional Chalk parity check"]
+    PLAN["Immutable proposed plan<br/>A calculation never replaces the current plan"]
+    DECIDE["4 · Human plan decision<br/>Compare before/after; Use as current plan or Keep current plan<br/>Website: Plans & decisions"]
+    CURRENT["5 · Current plan and coordination<br/>Dashboard, audit history, calendar milestones, Photon alerts/follow-up<br/>External credentials optional"]
 
-    L1 --> L2 --> L3 --> L4 --> L5
+    IN --> AI
+    AI -->|candidate evidence| HR
+    IN -->|reviewed or imported inputs| CALC
+    HR -->|verified inputs| CALC
+    CALC --> PLAN --> DECIDE
+    DECIDE --> CURRENT
 ```
 
 AI may propose structured candidates and scenario questions, but it may not verify a regulation, perform the authoritative schedule calculation, or approve a plan. This boundary keeps the system useful when model access is unavailable and makes every operational result reproducible.
@@ -23,23 +30,23 @@ AI may propose structured candidates and scenario questions, but it may not veri
 
 ```mermaid
 flowchart LR
-    A["Official regulatory sources"] --> I["Source ingestion + SQLite citation registry<br/>links, snapshots, hashes, affected rule keys"]
-    B["Weather and logistics reports"] --> I
-    C["Trial and product data"] --> V["Schema validation"]
+    A["Official regulatory sources<br/>exact URL + excerpt + effective date"] --> I["Evidence layer<br/>source ingestion + SQLite citation registry<br/>snapshots, hashes, affected rule keys"]
+    B["Weather and logistics reports<br/>potential disruptions"] --> I
+    C["Trial, product, route and deadline data"] --> V["Validation boundary<br/>schema + provenance + supported values"]
 
     I --> R["AI Research Copilot<br/>structured extraction + change analysis"]
     R -->|candidate rules and change events| V
     I -->|manual structured import| V
-    V --> H["Human evidence review"]
-    H --> S["Versioned SQLite planning store<br/>rules, scenarios, decisions, audit"]
+    V --> H["Human evidence review<br/>verify, keep in review, or retire"]
+    H --> S["System of record · SQLite<br/>versioned rules, immutable plan inputs,<br/>decisions, source registry, audit"]
 
-    S --> P["Deterministic planner"]
-    P --> F["Local or Chalk feature provider"]
-    F --> Q["Immutable proposed scenario"]
-    Q --> D["Dashboard comparison"]
+    S --> P["Deterministic planner<br/>labels, dates, routes, slack, risk, responses"]
+    P --> F["Feature calculation<br/>local by default; optional Chalk with parity check"]
+    F --> Q["Immutable proposed plan<br/>never replaces the current plan automatically"]
+    Q --> D["Plans & decisions UI<br/>changed shipments first + full audit view"]
     Q --> X["Grounded planner assistant<br/>ephemeral what-if simulations"]
-    D --> G["Human approval or rejection"]
-    G --> K["Approved calendar and audit history"]
+    D --> G["Named human decision<br/>Use as current plan / Keep current plan"]
+    G --> K["Current plan<br/>dashboard, calendar and audit history"]
     Q --> N["Photon 2.0 notification and follow-up"]
     N --> X
 ```
@@ -50,17 +57,28 @@ The implementation covers AI-assisted candidate extraction and semantic source-c
 
 ```mermaid
 flowchart TD
-    R["Review country requirements<br/>and source evidence"] --> P["Recalculate supply plan<br/>creates a proposal"]
-    P --> C["See what changed<br/>against the current plan"]
-    C --> D{"Human decision"}
-    D -->|Use as current plan| A["Current working plan"]
+    R["1 · Requirements & evidence<br/>Confirm dated rules, exact citations and review status"] --> P["2 · Recalculate supply plan<br/>Create an immutable proposal from active inputs"]
+    P --> C["3 · See what changed<br/>Compare dates, routes, labels, cost and risk with the current plan"]
+    C --> D{"4 · Named human decision"}
+    D -->|Use as current plan| A["Current working plan<br/>drives dashboard and calendar"]
     D -->|Keep current plan| A
-    A --> E["Potential disruption occurs<br/>regulatory or logistics"]
-    E --> I["Calculate impact<br/>creates another proposal"]
+    A --> E["Potential disruption<br/>a regulatory or logistics condition changes"]
+    E --> I["Calculate impact<br/>Create a new proposal; do not mutate the current plan"]
     I --> C
 ```
 
 The loop repeats whenever requirements, routes, or operating conditions change. Calculation never changes the current plan by itself: every proposal returns to **See what changed** and a named person chooses **Use as current plan** or **Keep current plan**.
+
+| What you want to do | Where in the website | Result |
+| --- | --- | --- |
+| Inspect a country rule and its citation | **Requirements & evidence** | Evidence is visible; viewing it changes nothing |
+| Add or refresh regulatory material | **Data & sources** | A review-gated candidate or source snapshot |
+| Recalculate from current inputs | **Control tower → Recalculate supply plan** | A proposed plan, never an automatic replacement |
+| Understand a proposal | **Plans & decisions → See what changed** | Before/after dates, routes, labels, risk and cost |
+| Test a regulatory or logistics event | **Plans & decisions → Potential disruptions → Calculate impact** | Another proposed plan |
+| Adopt or decline a proposal | **Plans & decisions → Use as current plan / Keep current plan** | A named, audited human decision |
+| Understand why something is at risk | **Planner assistant** | A read-only explanation with stored citations |
+| Check who changed what | **Audit history** | Append-only activity and decision history |
 
 ## Start
 
@@ -109,7 +127,7 @@ Use **Restore demo starting point** on the Control tower, or stop the app and ru
 
 ## Teammate research and replacement data
 
-Use **Data & research**. Atomic research imports accept one or more JSON or CSV files and combine records across countries into one reviewable preview. The preview reports record, country, addition, supersession, needs-review, and duplicate-conflict counts. Full dataset imports take one complete JSON object because a dataset is an atomic workspace containing all countries and trial inputs. Both paths require **Validate & preview** before **Commit** with reviewer attribution. Downloadable templates are available in the screen and under `data/schemas/`.
+Use **Data & sources**. Atomic research imports accept one or more JSON or CSV files and combine records across countries into one reviewable preview. The preview reports record, country, addition, supersession, needs-review, and duplicate-conflict counts. Full dataset imports take one complete JSON object because a dataset is an atomic workspace containing all countries and trial inputs. Both paths require **Validate & preview** before **Commit** with reviewer attribution. Downloadable templates are available in the screen and under `data/schemas/`.
 
 See `data/schemas/` and complete working examples `data/demo/trial.json` and `data/demo/replacement.json`. `GET /api/dataset` exports the active dataset as a template. Replace the JSON records or import them; no application changes or fixture-builder execution are required.
 
@@ -123,7 +141,7 @@ See `data/schemas/` and complete working examples `data/demo/trial.json` and `da
 
 Complete datasets contain `id`, `as_of`, `trial` (including `product`), `config`, `jurisdictions`, `country_plans`, `rules`, `routes`, and `events`. Country plans hold site/depot, enrollment, demand/quantity, ready date, delivery target and holidays. Routes hold legs, transit/customs/depot/last-mile durations, temperature band, cost and source. Configuration controls booklet capacity and risk/readiness weights. Events describe normalized changes and repair choices.
 
-The interface distinguishes **verified**, **needs review**, **authoritative secondary** and **synthetic**. New research should remain `needs_review` until qualified human review; synthetic sources cannot be marked verified. Select a requirement in **Requirements**, enter a reviewer name and note, then verify, retain for review, or retire it. The decision creates a new immutable rule version and regenerates a proposed plan. Existing approved snapshots retain their original inputs.
+The interface distinguishes **verified**, **needs review**, **authoritative secondary** and **synthetic**. New research should remain `needs_review` until qualified human review; synthetic sources cannot be marked verified. Select a requirement in **Requirements & evidence**, enter a reviewer name and note, then verify, retain for review, or retire it. The decision creates a new immutable rule version and regenerates a proposed plan. Existing approved snapshots retain their original inputs.
 
 The packaged Japan view also includes six atomic Article 16 candidates linked directly to the current official MHLW Japanese text: mandatory label fields, prohibited claims, the foreign-sponsor/in-country-caretaker condition, emergency unblinding, transport/storage packaging integrity, and investigational-product records/procedures. They appear first with an **Official** evidence link and **Needs review** badge. They intentionally do not replace the active synthetic planning assumptions until a qualified reviewer confirms the translation, scope, and effective-date applicability. Article 16 does not establish the fixture's numeric temperature band, review/permit lead times, packaging duration, or expiry display format.
 
@@ -151,7 +169,7 @@ To enable both AI research flows, use the same OpenAI configuration as the plann
 AI_RESEARCH_PROVIDER=openai
 ```
 
-In **Data & research**, register a source with its jurisdiction, collect or paste a snapshot, and choose **Extract candidate requirements**. Candidates then pass through the existing validation/import preview and separate evidence-review workflow. After two changed snapshots exist, choose **Analyze latest change**, inspect the semantic summary, quotations, raw diff and proposed event, then record a named confirmation. OpenAI requests use the Responses API with strict JSON Schema output and storage disabled. Provider failures do not create rules or events.
+In **Data & sources**, register a source with its jurisdiction, collect or paste a snapshot, and choose **Extract candidate requirements**. Candidates then pass through the existing validation/import preview and separate evidence-review workflow. After two changed snapshots exist, choose **Analyze latest change**, inspect the semantic summary, quotations, raw diff and proposed event, then record a named confirmation. OpenAI requests use the Responses API with strict JSON Schema output and storage disabled. Provider failures do not create rules or events.
 
 Questions beginning with “What if” use an allowlisted simulation path for separate labels, alternative routes, expedited label review, and expedited permits. The selected scenario is copied in memory, the deterministic planner calculates the comparison, and the result is returned as `temporary` without creating, approving, or applying a scenario. Unsupported countries or actions produce an explicit limitation.
 
@@ -167,10 +185,10 @@ Every imported rule should begin as `needs_review`. A qualified reviewer must in
 
 ### Required before using real trial data
 
-- [ ] Country researchers replace synthetic rules with official or authoritative research using the CSV/JSON templates in **Data & research**. Every record needs an exact excerpt, source URL, retrieval date, and effective date.
+- [ ] Country researchers replace synthetic rules with official or authoritative research using the CSV/JSON templates in **Data & sources**. Every record needs an exact excerpt, source URL, retrieval date, and effective date.
 - [ ] A qualified reviewer imports the research, resolves duplicate conflicts, and records **Verify**, **Keep in review**, or **Retire** for every rule used operationally.
 - [ ] The supply-planning owner replaces demo product, demand, quantities, sites, depots, routes, ready dates, delivery targets, holidays, and risk settings in one complete dataset JSON.
-- [ ] The team validates the full dataset in **Data & research**, commits it with reviewer attribution, and checks every country for missing or blocked inputs.
+- [ ] The team validates the full dataset in **Data & sources**, commits it with reviewer attribution, and checks every country for missing or blocked inputs.
 - [ ] The team reviews generated proposals in **Plans & decisions** and records either **Use as current plan** or **Keep current plan** with a named decision note. Confirm that the dashboard calendar and country progress dates match the current plan.
 - [ ] Before a demo or handoff, run `python -m unittest discover -v`. For full UI verification, also run `npm install`, `npx playwright install chromium`, and `npm run test:browser`.
 
@@ -187,7 +205,7 @@ Never share or commit `.env`, API keys, client secrets, or the local `.local/cle
 1. Pull the branch: `git pull origin cleared-for-takeoff`.
 2. Start the app with `./start.ps1` in PowerShell or `python start.py` on macOS/Linux.
 3. Open `http://localhost:3000`. Keep the terminal open while using the app.
-4. Import research in **Data & research**, review evidence in **Requirements**, and assess resulting dates in **Scenarios** and the Control tower calendar.
+4. Import research in **Data & sources**, review evidence in **Requirements & evidence**, and assess resulting dates in **Plans & decisions** and the Control tower calendar.
 5. Stop the app with Ctrl+C. Local work is stored in `.local/cleared.sqlite3`; do not commit that database.
 
 ## Chalk

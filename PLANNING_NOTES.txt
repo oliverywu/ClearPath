@@ -24,6 +24,17 @@ Requirements → Recalculate supply plan → See what changed → named human ch
 
 Every calculation produces an immutable proposal. Only a named Use as current plan decision changes the current working plan; the same comparison and decision gate repeats after every disruption.
 
+WEBSITE WAYFINDING
+
+- Control tower: start here; follow the four-step Evidence → proposal → decision guide. Recalculate creates a proposal and does not silently replace the current plan.
+- Requirements & evidence: inspect dated country rules, exact source excerpts and links, evidence tier, and review status.
+- Plans & decisions: compare the proposal with the current plan, calculate a disruption's impact, then record a named decision.
+- Data & sources: import evidence, inspect the citation/source registry, and manage source snapshots.
+- Planner assistant: ask for a grounded explanation or try a non-persistent what-if question.
+- Audit history: inspect recorded evidence and plan decisions.
+
+README.md mirrors this workflow and maps each user intent to its website location. Architecture diagrams distinguish optional AI suggestions from human-reviewed evidence and deterministic calculations.
+
 
 IMPLEMENTED FOUNDATION
 
