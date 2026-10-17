@@ -84,14 +84,16 @@ class Frontend:
         features = s.get('features', {})
         return {
             'id': s['id'], 'country': s['country_code'], 'countryName': s['country_name'], 'study': study_code(trial),
-            'kit': kit_label(trial), 'origin': trial.get('manufacturing_origin', {}).get('city', 'Origin'),
-            'destination': s['country_name'], 'site': s.get('site'), 'depot': s.get('depot'),
+            'kit': s.get('drug_name') or kit_label(trial), 'origin': s.get('origin') or trial.get('manufacturing_origin', {}).get('city', 'Origin'),
+            'destination': s.get('destination') or s['country_name'], 'site': s.get('site'), 'depot': s.get('depot'),
             'status': s['risk_band'], 'slackDays': int(s['slack_days']), 'targetDelivery': s['target_delivery'],
             'projectedDelivery': s['projected_delivery'], 'labelGroup': s['label_group_id'],
             'route': {'id': s['route_id'], 'name': s['route_name'], 'gatewayAirport': s.get('gateway_airport')},
             'deliveryRange': s['delivery_range'], 'shipBy': s['ship_by'], 'worstCaseSlackDays': int(s['worst_case_slack_days']),
             'riskScore': s['risk_score'], 'quantity': s.get('quantity'), 'reasons': [str(r) for r in s.get('reasons', [])],
             'verificationStatus': s.get('verification_status'),
+            'sourceShipmentId': s.get('source_shipment_id'), 'sourceRequiredDelivery': s.get('source_required_delivery_date'),
+            'sourceShippingDate': s.get('shipping_date'), 'dataProvenance': s.get('data_provenance', 'planner_demo'),
             'outlook': {'agentAnswer': features.get('agent_answer'), 'source': features.get('outlook_source', 'local')},
             'currentPlanId': plan['id'], 'proposalIds': (pending or {}).get(s['id'], []),
             'provenance': 'synthetic' if synthetic else ('needs_review' if s.get('verification_status') == 'needs_review' else 'modeled'),
@@ -163,7 +165,8 @@ class Frontend:
         title = event.get('title', 'Planning event')
         requirement = event.get('requirement') or (title.split(' · ', 1)[1] if ' · ' in title else title)
         kind = event.get('event_type', 'event')
-        provenance = 'synthetic' if evid == 'synthetic' else ('needs_review' if evid == 'needs_review' else 'live')
+        provenance = ('sample' if event.get('operational_provenance') == 'anna_sample' else
+                      'synthetic' if evid == 'synthetic' else ('needs_review' if evid == 'needs_review' else 'live'))
         source = event.get('source_title') or event.get('source_url') or 'Planner event'
         source_label = {'synthetic': f'Synthetic demo event · {kind}', 'needs_review': f'{source} (needs review)'}.get(evid, source)
         jurisdiction = event.get('jurisdiction') or ''
@@ -421,6 +424,11 @@ class Frontend:
             if len(parts) == 4 and parts[1] == 'warnings' and parts[3] == 'options':
                 return S.list_of(S.OPTION), [self.option(v) for v in self.gov.option_views(parts[2].removeprefix('wrn-'))]
             if path == '/api/inventory':
+                items = self.dataset().get('inventory', [])
+                if items:
+                    return S.INVENTORY, {'configured': True, 'items': items,
+                                         'provenance': self.dataset().get('inventory_provenance', 'sample'),
+                                         'message': 'Sample recurring inventory supplied with the integrated dataset; no live inventory system is connected.'}
                 return S.INVENTORY, {'configured': False, 'items': [], 'provenance': 'not_configured',
                                      'message': 'Inventory data is not configured. No inventory system is connected, and shipment schedules are not shown as stock.'}
             if path == '/api/photon/chats':

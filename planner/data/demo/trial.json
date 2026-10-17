@@ -59,6 +59,7 @@
       "name": "United States",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/us",
+      "source_tier": "synthetic",
       "latitude": 38,
       "longitude": -97
     },
@@ -68,6 +69,7 @@
       "name": "Germany",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/de",
+      "source_tier": "synthetic",
       "latitude": 51,
       "longitude": 10
     },
@@ -77,6 +79,7 @@
       "name": "Canada",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/ca",
+      "source_tier": "synthetic",
       "latitude": 56,
       "longitude": -106
     },
@@ -86,6 +89,7 @@
       "name": "Japan",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/jp",
+      "source_tier": "synthetic",
       "latitude": 36,
       "longitude": 138
     },
@@ -95,6 +99,7 @@
       "name": "United Kingdom",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/gb",
+      "source_tier": "synthetic",
       "latitude": 55,
       "longitude": -3
     },
@@ -104,6 +109,7 @@
       "name": "Australia",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/au",
+      "source_tier": "synthetic",
       "latitude": -25,
       "longitude": 134
     },
@@ -113,6 +119,7 @@
       "name": "France",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/fr",
+      "source_tier": "synthetic",
       "latitude": 46,
       "longitude": 2
     },
@@ -122,6 +129,7 @@
       "name": "Spain",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/es",
+      "source_tier": "synthetic",
       "latitude": 40,
       "longitude": -4
     },
@@ -131,6 +139,7 @@
       "name": "Italy",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/it",
+      "source_tier": "synthetic",
       "latitude": 42,
       "longitude": 12
     },
@@ -140,6 +149,7 @@
       "name": "Netherlands",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/nl",
+      "source_tier": "synthetic",
       "latitude": 52,
       "longitude": 5
     },
@@ -149,6 +159,7 @@
       "name": "Belgium",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/be",
+      "source_tier": "synthetic",
       "latitude": 50,
       "longitude": 4
     },
@@ -158,6 +169,7 @@
       "name": "Austria",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/at",
+      "source_tier": "synthetic",
       "latitude": 47,
       "longitude": 14
     },
@@ -167,6 +179,7 @@
       "name": "Switzerland",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/ch",
+      "source_tier": "synthetic",
       "latitude": 47,
       "longitude": 8
     },
@@ -176,6 +189,7 @@
       "name": "Denmark",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/dk",
+      "source_tier": "synthetic",
       "latitude": 56,
       "longitude": 10
     },
@@ -185,6 +199,7 @@
       "name": "Finland",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/fi",
+      "source_tier": "synthetic",
       "latitude": 64,
       "longitude": 26
     },
@@ -194,6 +209,7 @@
       "name": "Ireland",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/ie",
+      "source_tier": "synthetic",
       "latitude": 53,
       "longitude": -8
     },
@@ -203,6 +219,7 @@
       "name": "New Zealand",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/nz",
+      "source_tier": "synthetic",
       "latitude": -41,
       "longitude": 174
     },
@@ -212,6 +229,7 @@
       "name": "Singapore",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/sg",
+      "source_tier": "synthetic",
       "latitude": 1,
       "longitude": 104
     },
@@ -221,6 +239,7 @@
       "name": "South Korea",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/kr",
+      "source_tier": "synthetic",
       "latitude": 36,
       "longitude": 128
     },
@@ -230,6 +249,7 @@
       "name": "Brazil",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/br",
+      "source_tier": "synthetic",
       "latitude": -14,
       "longitude": -52
     },
@@ -239,6 +259,7 @@
       "name": "Mexico",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/mx",
+      "source_tier": "synthetic",
       "latitude": 23,
       "longitude": -102
     },
@@ -248,6 +269,7 @@
       "name": "Argentina",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/ar",
+      "source_tier": "synthetic",
       "latitude": -34,
       "longitude": -64
     },
@@ -257,6 +279,7 @@
       "name": "India",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/in",
+      "source_tier": "synthetic",
       "latitude": 21,
       "longitude": 79
     },
@@ -266,6 +289,7 @@
       "name": "China",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/demo/cn",
+      "source_tier": "synthetic",
       "latitude": 35,
       "longitude": 104
     }
@@ -279,17 +303,26 @@
       "site": "United States research site 01",
       "depot": "United States qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-de",
       "jurisdiction": "DE",
-      "target_delivery": "2026-12-04",
+      "target_delivery": "2026-10-10",
       "quantity": 204,
       "site": "Germany research site 02",
       "depot": "Germany qualified depot",
-      "ready_date": "2026-10-19",
-      "holidays": []
+      "ready_date": "2026-10-01",
+      "holidays": [],
+      "data_provenance": "anna_sample",
+      "source_shipment_id": "SHIP-001",
+      "drug_name": "Investigational Insulin Glargine",
+      "origin": "Indianapolis, US",
+      "destination": "Berlin, DE",
+      "shipping_date": "2026-10-01",
+      "source_required_delivery_date": "2026-10-10",
+      "source_estimated_transit_days": 5
     },
     {
       "id": "demo-ca",
@@ -299,17 +332,26 @@
       "site": "Canada research site 03",
       "depot": "Canada qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-jp",
       "jurisdiction": "JP",
-      "target_delivery": "2026-12-04",
+      "target_delivery": "2026-10-08",
       "quantity": 252,
       "site": "Japan research site 04",
       "depot": "Japan qualified depot",
-      "ready_date": "2026-10-19",
-      "holidays": []
+      "ready_date": "2026-10-03",
+      "holidays": [],
+      "data_provenance": "anna_sample",
+      "source_shipment_id": "SHIP-002",
+      "drug_name": "Investigational Insulin Glargine",
+      "origin": "Indianapolis, US",
+      "destination": "Tokyo, JP",
+      "shipping_date": "2026-10-03",
+      "source_required_delivery_date": "2026-10-08",
+      "source_estimated_transit_days": 6
     },
     {
       "id": "demo-gb",
@@ -319,7 +361,8 @@
       "site": "United Kingdom research site 05",
       "depot": "United Kingdom qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-au",
@@ -329,7 +372,8 @@
       "site": "Australia research site 06",
       "depot": "Australia qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-fr",
@@ -339,7 +383,8 @@
       "site": "France research site 07",
       "depot": "France qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-es",
@@ -349,7 +394,8 @@
       "site": "Spain research site 08",
       "depot": "Spain qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-it",
@@ -359,7 +405,8 @@
       "site": "Italy research site 09",
       "depot": "Italy qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-nl",
@@ -369,7 +416,8 @@
       "site": "Netherlands research site 10",
       "depot": "Netherlands qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-be",
@@ -379,7 +427,8 @@
       "site": "Belgium research site 11",
       "depot": "Belgium qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-at",
@@ -389,7 +438,8 @@
       "site": "Austria research site 12",
       "depot": "Austria qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-ch",
@@ -399,7 +449,8 @@
       "site": "Switzerland research site 13",
       "depot": "Switzerland qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-dk",
@@ -409,7 +460,8 @@
       "site": "Denmark research site 14",
       "depot": "Denmark qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-fi",
@@ -419,7 +471,8 @@
       "site": "Finland research site 15",
       "depot": "Finland qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-ie",
@@ -429,7 +482,8 @@
       "site": "Ireland research site 16",
       "depot": "Ireland qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-nz",
@@ -439,7 +493,8 @@
       "site": "New Zealand research site 17",
       "depot": "New Zealand qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-sg",
@@ -449,7 +504,8 @@
       "site": "Singapore research site 18",
       "depot": "Singapore qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-kr",
@@ -459,17 +515,26 @@
       "site": "South Korea research site 19",
       "depot": "South Korea qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-br",
       "jurisdiction": "BR",
-      "target_delivery": "2026-12-17",
+      "target_delivery": "2026-10-09",
       "quantity": 636,
       "site": "Brazil research site 20",
       "depot": "Brazil qualified depot",
-      "ready_date": "2026-10-19",
-      "holidays": []
+      "ready_date": "2026-10-05",
+      "holidays": [],
+      "data_provenance": "anna_sample",
+      "source_shipment_id": "SHIP-003",
+      "drug_name": "Investigational Insulin Aspart",
+      "origin": "Puerto Rico, US",
+      "destination": "Sao Paulo, BR",
+      "shipping_date": "2026-10-05",
+      "source_required_delivery_date": "2026-10-09",
+      "source_estimated_transit_days": 4
     },
     {
       "id": "demo-mx",
@@ -479,7 +544,8 @@
       "site": "Mexico research site 21",
       "depot": "Mexico qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-ar",
@@ -489,17 +555,26 @@
       "site": "Argentina research site 22",
       "depot": "Argentina qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "demo-in",
       "jurisdiction": "IN",
-      "target_delivery": "2026-12-14",
+      "target_delivery": "2026-10-09",
       "quantity": 708,
       "site": "India research site 23",
       "depot": "India qualified depot",
-      "ready_date": "2026-10-19",
-      "holidays": []
+      "ready_date": "2026-10-02",
+      "holidays": [],
+      "data_provenance": "anna_sample",
+      "source_shipment_id": "SHIP-004",
+      "drug_name": "Investigational Insulin Aspart",
+      "origin": "Puerto Rico, US",
+      "destination": "Mumbai, IN",
+      "shipping_date": "2026-10-02",
+      "source_required_delivery_date": "2026-10-09",
+      "source_estimated_transit_days": 9
     },
     {
       "id": "demo-cn",
@@ -509,7 +584,8 @@
       "site": "China research site 24",
       "depot": "China qualified depot",
       "ready_date": "2026-10-19",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     }
   ],
   "rules": [
@@ -537,50 +613,51 @@
       "notes": "Replace through the research importer after human verification."
     },
     {
+      "confidence": 1.0,
+      "effective_from": "2026-01-01",
+      "effective_to": null,
       "id": "demo-US-label.mandatory_fields-v1",
       "jurisdiction": "US",
-      "rule_type": "label",
-      "requirement_key": "label.mandatory_fields",
+      "last_verified_at": "2026-10-17T00:00:00Z",
+      "notes": "Focused evidence slice. Source text and normalized field were reviewed during repository implementation; qualified users must confirm applicability before real-trial use.",
       "operator": "contains_all",
+      "requirement_key": "label.mandatory_fields",
+      "retrieved_at": "2026-10-17T00:00:00Z",
+      "review_status": "verified",
+      "rule_type": "label",
+      "source_document_id": "source-US",
+      "source_excerpt": "Caution: New Drug--Limited by Federal (or United States) law to investigational use.",
+      "source_tier": "official",
+      "source_title": "FDA: 21 CFR 312.6 Labeling of an investigational new drug",
+      "source_url": "https://www.fda.gov/science-research/clinical-trials-and-human-subject-protection/new-drug-antibiotic-and-biologic-drug-product-regulations-part-3",
+      "supersedes_id": null,
       "value": [
         "investigational_use_statement"
-      ],
-      "effective_from": "2026-01-01",
-      "effective_to": null,
-      "source_url": "https://www.fda.gov/science-research/clinical-trials-and-human-subject-protection/new-drug-antibiotic-and-biologic-drug-product-regulations-part-3",
-      "source_title": "FDA: 21 CFR 312.6 Labeling of an investigational new drug",
-      "source_excerpt": "Caution: New Drug--Limited by Federal (or United States) law to investigational use.",
-      "retrieved_at": "2026-10-17T00:00:00Z",
-      "source_tier": "official",
-      "confidence": 1.0,
-      "review_status": "verified",
-      "last_verified_at": "2026-10-17T00:00:00Z",
-      "supersedes_id": null,
-      "source_document_id": "source-US",
-      "notes": "Focused evidence slice. Source text and normalized field were reviewed during repository implementation; qualified users must confirm applicability before real-trial use."
+      ]
     },
     {
-      "id": "demo-US-label.prohibited_fields-v1",
-      "jurisdiction": "US",
-      "rule_type": "label",
-      "requirement_key": "label.prohibited_fields",
-      "operator": "contains_all",
-      "value": [
-        "local_contact"
-      ],
+      "confidence": 1.0,
       "effective_from": "2026-01-01",
       "effective_to": null,
-      "source_url": "https://example.org/cleared-synthetic/demo/us",
-      "source_title": "United States simulated label assumptions",
-      "source_excerpt": "SYNTHETIC DEMO ONLY: assume label.prohibited_fields = [\"local_contact\"]. This is not a statement of United States law.",
+      "id": "demo-US-label.prohibited_fields-v1",
+      "jurisdiction": "US",
+      "last_verified_at": "2026-10-19",
+      "notes": "Normalized from Anna's verbatim official eCFR record US-312-6-b-2.",
+      "operator": "contains_all",
+      "requirement_key": "label.prohibited_fields",
       "retrieved_at": "2026-10-19T00:00:00Z",
-      "source_tier": "synthetic",
-      "confidence": 0.5,
-      "review_status": "synthetic",
-      "last_verified_at": null,
-      "supersedes_id": null,
+      "review_status": "verified",
+      "rule_type": "label",
       "source_document_id": "source-US",
-      "notes": "Replace through the research importer after human verification."
+      "source_excerpt": "Investigational-drug labeling must not be false or misleading or represent the drug as safe or effective.",
+      "source_tier": "official",
+      "source_title": "21 CFR 312.6(b) — Prohibited label representations",
+      "source_url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312/subpart-A/section-312.6",
+      "supersedes_id": null,
+      "value": [
+        "false_or_misleading_claims",
+        "safe_or_effective_claims"
+      ]
     },
     {
       "id": "demo-US-label.expiry_format-v1",
@@ -758,27 +835,27 @@
       "notes": "Replace through the research importer after human verification."
     },
     {
-      "id": "demo-DE-label.mandatory_fields-v1",
-      "jurisdiction": "DE",
-      "rule_type": "label",
-      "requirement_key": "label.mandatory_fields",
-      "operator": "contains_all",
-      "value": [
-        "clinical_trial_use_statement"
-      ],
+      "confidence": 1.0,
       "effective_from": "2026-01-01",
       "effective_to": null,
-      "source_url": "https://eur-lex.europa.eu/legal-content/EN-DE/TXT/?uri=CELEX%3A32014R0536",
-      "source_title": "Regulation (EU) No 536/2014, Annex VI",
-      "source_excerpt": "the words ‘For clinical trial use only’ or similar wording",
-      "retrieved_at": "2026-10-17T00:00:00Z",
-      "source_tier": "official",
-      "confidence": 1.0,
-      "review_status": "verified",
+      "id": "demo-DE-label.mandatory_fields-v1",
+      "jurisdiction": "DE",
       "last_verified_at": "2026-10-17T00:00:00Z",
-      "supersedes_id": null,
+      "notes": "EU rule used for the Germany plan. Focused evidence slice; qualified users must confirm applicability before real-trial use.",
+      "operator": "contains_all",
+      "requirement_key": "label.mandatory_fields",
+      "retrieved_at": "2026-10-17T00:00:00Z",
+      "review_status": "verified",
+      "rule_type": "label",
       "source_document_id": "source-DE",
-      "notes": "EU rule used for the Germany plan. Focused evidence slice; qualified users must confirm applicability before real-trial use."
+      "source_excerpt": "the words ‘For clinical trial use only’ or similar wording",
+      "source_tier": "official",
+      "source_title": "Regulation (EU) No 536/2014, Annex VI",
+      "source_url": "https://eur-lex.europa.eu/legal-content/EN-DE/TXT/?uri=CELEX%3A32014R0536",
+      "supersedes_id": null,
+      "value": [
+        "clinical_trial_use_statement"
+      ]
     },
     {
       "id": "demo-DE-label.prohibited_fields-v1",
@@ -955,28 +1032,28 @@
       "notes": "Replace through the research importer after human verification."
     },
     {
+      "confidence": 1.0,
+      "effective_from": "2026-01-01",
+      "effective_to": null,
       "id": "demo-CA-label.languages-v1",
       "jurisdiction": "CA",
-      "rule_type": "label",
-      "requirement_key": "label.languages",
+      "last_verified_at": "2026-10-17T00:00:00Z",
+      "notes": "Direct citation to the federal Food and Drug Regulations C.05.011, which requires trial-drug label information in both official languages. English and French are normalized as en/fr; qualified users must confirm applicability before real-trial use.",
       "operator": "contains_all",
+      "requirement_key": "label.languages",
+      "retrieved_at": "2026-10-17T00:00:00Z",
+      "review_status": "verified",
+      "rule_type": "label",
+      "source_document_id": "source-CA",
+      "source_excerpt": "the sponsor shall ensure that the drug bears a label that sets out the following information in both official languages",
+      "source_tier": "official",
+      "source_title": "Canada: Food and Drug Regulations C.05.011 (official labelling rule)",
+      "source_url": "https://laws-lois.justice.gc.ca/eng/regulations/c.r.c.%2C_c._870/section-C.05.011.html?wbdisable=true",
+      "supersedes_id": null,
       "value": [
         "en",
         "fr"
-      ],
-      "effective_from": "2026-01-01",
-      "effective_to": null,
-      "source_url": "https://laws-lois.justice.gc.ca/eng/regulations/c.r.c.%2C_c._870/section-C.05.011.html?wbdisable=true",
-      "source_title": "Canada: Food and Drug Regulations C.05.011 (official labelling rule)",
-      "source_excerpt": "the sponsor shall ensure that the drug bears a label that sets out the following information in both official languages",
-      "retrieved_at": "2026-10-17T00:00:00Z",
-      "source_tier": "official",
-      "confidence": 1.0,
-      "review_status": "verified",
-      "last_verified_at": "2026-10-17T00:00:00Z",
-      "supersedes_id": null,
-      "source_document_id": "source-CA",
-      "notes": "Direct citation to the federal Food and Drug Regulations C.05.011, which requires trial-drug label information in both official languages. English and French are normalized as en/fr; qualified users must confirm applicability before real-trial use."
+      ]
     },
     {
       "id": "demo-CA-label.mandatory_fields-v1",
@@ -1180,218 +1257,80 @@
       "notes": "Replace through the research importer after human verification."
     },
     {
+      "confidence": 0.95,
+      "effective_from": "2026-01-01",
+      "effective_to": null,
       "id": "demo-JP-label.languages-v1",
       "jurisdiction": "JP",
-      "rule_type": "label",
-      "requirement_key": "label.languages",
+      "last_verified_at": "2026-10-17T00:00:00Z",
+      "notes": "The prior MHLW English-translation PDF URL returned 404. This citation now links to current e-Gov law data; the Japanese original controls, and qualified users must verify interpretation and applicability before real-trial use.",
       "operator": "contains_all",
+      "requirement_key": "label.languages",
+      "retrieved_at": "2026-10-17T00:00:00Z",
+      "review_status": "verified",
+      "rule_type": "label",
+      "source_document_id": "source-JP",
+      "source_excerpt": "治験依頼者は、治験薬の容器又は被包に次に掲げる事項（拡大治験を実施する場合にあっては、第一号及び第二号に掲げる事項に限る。）を邦文で記載しなければならない。",
+      "source_tier": "official",
+      "source_title": "Japan e-Gov: Ministerial Ordinance on Good Clinical Practice for Drugs (current official Japanese text)",
+      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
+      "supersedes_id": null,
       "value": [
         "ja"
-      ],
-      "effective_from": "2026-01-01",
-      "effective_to": null,
-      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
-      "source_title": "Japan e-Gov: Ministerial Ordinance on Good Clinical Practice for Drugs (current official Japanese text)",
-      "source_excerpt": "治験依頼者は、治験薬の容器又は被包に次に掲げる事項（拡大治験を実施する場合にあっては、第一号及び第二号に掲げる事項に限る。）を邦文で記載しなければならない。",
-      "retrieved_at": "2026-10-17T00:00:00Z",
-      "source_tier": "official",
-      "confidence": 0.95,
-      "review_status": "verified",
-      "last_verified_at": "2026-10-17T00:00:00Z",
-      "supersedes_id": null,
-      "source_document_id": "source-JP",
-      "notes": "The prior MHLW English-translation PDF URL returned 404. This citation now links to current e-Gov law data; the Japanese original controls, and qualified users must verify interpretation and applicability before real-trial use."
+      ]
     },
     {
-      "id": "candidate-JP-label.mandatory_fields-article16",
-      "jurisdiction": "JP",
-      "rule_type": "label",
-      "requirement_key": "label.mandatory_fields",
-      "operator": "contains_all",
-      "value": [
-        "clinical_trial_use_statement",
-        "sponsor_name_and_address",
-        "drug_chemical_name_or_identification_code",
-        "manufacturing_number_or_code",
-        "storage_conditions_if_applicable",
-        "validity_period_if_applicable"
-      ],
-      "effective_from": "2026-10-17",
-      "effective_to": null,
-      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
-      "source_title": "Japan e-Gov: Ministerial Ordinance on Good Clinical Practice for Drugs, Article 16(1)",
-      "source_excerpt": "第十六条　治験依頼者は、治験薬の容器又は被包に次に掲げる事項（拡大治験を実施する場合にあっては、第一号及び第二号に掲げる事項に限る。）を邦文で記載しなければならない。 一　治験用である旨 二　治験依頼者の氏名及び住所 三　化学名又は識別記号 四　製造番号又は製造記号 五　貯蔵方法、有効期間等を定める必要があるものについては、その内容",
-      "retrieved_at": "2026-10-17T00:00:00Z",
-      "source_tier": "official",
       "confidence": 0.9,
-      "review_status": "needs_review",
-      "last_verified_at": null,
-      "supersedes_id": null,
-      "source_document_id": "source-JP",
-      "notes": "Imported from the current official Japanese text. The normalized English field mapping and applicability date require qualified review; expanded-access trials have a narrower field set."
-    },
-    {
-      "id": "candidate-JP-label.prohibited_fields-article16",
-      "jurisdiction": "JP",
-      "rule_type": "label",
-      "requirement_key": "label.prohibited_fields",
-      "operator": "excludes",
-      "value": [
-        "proposed_commercial_name",
-        "proposed_indications_or_effects",
-        "proposed_dosage_or_administration"
-      ],
-      "effective_from": "2026-10-17",
-      "effective_to": null,
-      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
-      "source_title": "Japan e-Gov: Ministerial Ordinance on Good Clinical Practice for Drugs, Article 16(2)",
-      "source_excerpt": "一　予定される販売名 二　予定される効能又は効果 三　予定される用法又は用量",
-      "retrieved_at": "2026-10-17T00:00:00Z",
-      "source_tier": "official",
-      "confidence": 0.9,
-      "review_status": "needs_review",
-      "last_verified_at": null,
-      "supersedes_id": null,
-      "source_document_id": "source-JP",
-      "notes": "Article 16(2) includes exceptions for open-label investigational products and expanded-access trials; qualified review is required before acceptance."
-    },
-    {
-      "id": "candidate-JP-label.sponsor_constraint-article16",
-      "jurisdiction": "JP",
-      "rule_type": "label",
-      "requirement_key": "label.sponsor_constraint",
-      "operator": "equals",
-      "value": "foreign_sponsor_country_and_japan_in_country_caretaker_name_and_address_required",
-      "effective_from": "2026-10-17",
-      "effective_to": null,
-      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
-      "source_title": "Japan e-Gov: Ministerial Ordinance on Good Clinical Practice for Drugs, Article 16(1)(ii)",
-      "source_excerpt": "当該者が本邦内に住所を有しない場合にあっては、その氏名及び住所地の国名並びに治験国内管理人の氏名及び住所",
-      "retrieved_at": "2026-10-17T00:00:00Z",
-      "source_tier": "official",
-      "confidence": 0.88,
-      "review_status": "needs_review",
-      "last_verified_at": null,
-      "supersedes_id": null,
-      "source_document_id": "source-JP",
-      "notes": "The English normalization of 治験国内管理人 is intentionally review-gated."
-    },
-    {
-      "id": "candidate-JP-label.blinding_constraint-article16",
-      "jurisdiction": "JP",
-      "rule_type": "label",
-      "requirement_key": "label.blinding_constraint",
-      "operator": "equals",
-      "value": "emergency_identification_measures_required_for_blinded_products",
-      "effective_from": "2026-10-17",
-      "effective_to": null,
-      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
-      "source_title": "Japan e-Gov: Ministerial Ordinance on Good Clinical Practice for Drugs, Article 16(3)",
-      "source_excerpt": "緊急時に、治験責任医師等が被験薬及び対照薬の識別を直ちにできるよう必要な措置を講じておかなければならない。",
-      "retrieved_at": "2026-10-17T00:00:00Z",
-      "source_tier": "official",
-      "confidence": 0.9,
-      "review_status": "needs_review",
-      "last_verified_at": null,
-      "supersedes_id": null,
-      "source_document_id": "source-JP",
-      "notes": "Applies to blinded investigational products supplied to the institution."
-    },
-    {
-      "id": "candidate-JP-packaging.integrity_constraint-article16",
-      "jurisdiction": "JP",
-      "rule_type": "packaging",
-      "requirement_key": "packaging.integrity_constraint",
-      "operator": "equals",
-      "value": "packaging_must_prevent_contamination_and_deterioration_during_transport_and_storage",
-      "effective_from": "2026-10-17",
-      "effective_to": null,
-      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
-      "source_title": "Japan e-Gov: Ministerial Ordinance on Good Clinical Practice for Drugs, Article 16(4)",
-      "source_excerpt": "輸送及び保存中の汚染や劣化を防止するため治験薬を包装して実施医療機関に交付しなければならない。",
-      "retrieved_at": "2026-10-17T00:00:00Z",
-      "source_tier": "official",
-      "confidence": 0.92,
-      "review_status": "needs_review",
-      "last_verified_at": null,
-      "supersedes_id": null,
-      "source_document_id": "source-JP",
-      "notes": "Qualitative packaging control only; this does not establish a packaging duration or temperature range."
-    },
-    {
-      "id": "candidate-JP-documents.required-article16",
-      "jurisdiction": "JP",
-      "rule_type": "required_document",
-      "requirement_key": "documents.required",
-      "operator": "contains_all",
-      "value": [
-        "investigational_product_manufacturing_and_quality_records",
-        "site_distribution_and_retrieval_records",
-        "investigational_product_disposal_records",
-        "investigational_product_management_procedures",
-        "handling_or_dissolution_instructions_if_needed"
-      ],
-      "effective_from": "2026-10-17",
-      "effective_to": null,
-      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
-      "source_title": "Japan e-Gov: Ministerial Ordinance on Good Clinical Practice for Drugs, Article 16(5)-(7)",
-      "source_excerpt": "治験薬又は治験使用薬に関する次に掲げる記録を作成しなければならない。 六　治験依頼者は、治験の契約の締結後遅滞なく、実施医療機関における治験使用薬の管理に関する手順書を作成し、これを実施医療機関に交付しなければならない。",
-      "retrieved_at": "2026-10-17T00:00:00Z",
-      "source_tier": "official",
-      "confidence": 0.87,
-      "review_status": "needs_review",
-      "last_verified_at": null,
-      "supersedes_id": null,
-      "source_document_id": "source-JP",
-      "notes": "These are investigational-product control records and procedures, not import-permit documents. Article 16(7) makes handling instructions conditional on need."
-    },
-    {
-      "id": "demo-JP-label.mandatory_fields-v1",
-      "jurisdiction": "JP",
-      "rule_type": "label",
-      "requirement_key": "label.mandatory_fields",
-      "operator": "contains_all",
-      "value": [
-        "trial_id",
-        "batch_number",
-        "expiry",
-        "storage",
-        "blinded_kit_id"
-      ],
       "effective_from": "2026-01-01",
       "effective_to": "2027-01-15",
-      "source_url": "https://example.org/cleared-synthetic/demo/jp",
-      "source_title": "Japan simulated label assumptions",
-      "source_excerpt": "SYNTHETIC DEMO ONLY: assume label.mandatory_fields = [\"trial_id\", \"batch_number\", \"expiry\", \"storage\", \"blinded_kit_id\"]. This is not a statement of Japan law.",
+      "id": "demo-JP-label.mandatory_fields-v1",
+      "jurisdiction": "JP",
+      "last_verified_at": "2026-10-19",
+      "notes": "Verified against the cited official Japanese Article 16; Anna's English rendering remains a working translation.",
+      "operator": "contains_all",
+      "requirement_key": "label.mandatory_fields",
       "retrieved_at": "2026-10-19T00:00:00Z",
-      "source_tier": "synthetic",
-      "confidence": 0.5,
-      "review_status": "synthetic",
-      "last_verified_at": null,
-      "supersedes_id": null,
+      "review_status": "verified",
+      "rule_type": "label",
       "source_document_id": "source-JP",
-      "notes": "Replace through the research importer after human verification."
+      "source_excerpt": "Anna's working translation lists clinical-trial use, sponsor, product identification, batch, storage and validity information.",
+      "source_tier": "official",
+      "source_title": "Japan GCP Ordinance, Article 16(1) — Mandatory labeling",
+      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
+      "supersedes_id": null,
+      "value": [
+        "clinical_trial_use",
+        "sponsor_name_and_address",
+        "chemical_name_or_identification_code",
+        "batch_number",
+        "storage",
+        "expiry"
+      ]
     },
     {
-      "id": "demo-JP-label.prohibited_fields-v1",
-      "jurisdiction": "JP",
-      "rule_type": "label",
-      "requirement_key": "label.prohibited_fields",
-      "operator": "contains_all",
-      "value": [],
+      "confidence": 0.9,
       "effective_from": "2026-01-01",
       "effective_to": null,
-      "source_url": "https://example.org/cleared-synthetic/demo/jp",
-      "source_title": "Japan simulated label assumptions",
-      "source_excerpt": "SYNTHETIC DEMO ONLY: assume label.prohibited_fields = []. This is not a statement of Japan law.",
+      "id": "demo-JP-label.prohibited_fields-v1",
+      "jurisdiction": "JP",
+      "last_verified_at": "2026-10-19",
+      "notes": "Verified against the cited official Japanese Article 16; exceptions and the English rendering still require qualified operational review.",
+      "operator": "contains_all",
+      "requirement_key": "label.prohibited_fields",
       "retrieved_at": "2026-10-19T00:00:00Z",
-      "source_tier": "synthetic",
-      "confidence": 0.5,
-      "review_status": "synthetic",
-      "last_verified_at": null,
-      "supersedes_id": null,
+      "review_status": "verified",
+      "rule_type": "label",
       "source_document_id": "source-JP",
-      "notes": "Replace through the research importer after human verification."
+      "source_excerpt": "Anna's working translation identifies proposed commercial name, indications, and dosage/administration as prohibited subject to stated exceptions.",
+      "source_tier": "official",
+      "source_title": "Japan GCP Ordinance, Article 16(2) — Prohibited labeling",
+      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
+      "supersedes_id": null,
+      "value": [
+        "proposed_commercial_name",
+        "proposed_indications",
+        "proposed_dosage_and_administration"
+      ]
     },
     {
       "id": "demo-JP-label.expiry_format-v1",
@@ -6065,7 +6004,150 @@
       "last_verified_at": null,
       "supersedes_id": "demo-JP-label.mandatory_fields-v1",
       "source_document_id": "source-JP",
-      "notes": "Replace through the research importer after human verification."
+      "notes": "Synthetic future rule for scenario testing; not a statement of Japanese law."
+    },
+    {
+      "confidence": 0.9,
+      "effective_from": "2026-10-17",
+      "effective_to": null,
+      "id": "candidate-JP-label.mandatory_fields-article16",
+      "jurisdiction": "JP",
+      "last_verified_at": null,
+      "notes": "Imported from the current official Japanese text. The normalized English field mapping and applicability date require qualified review; expanded-access trials have a narrower field set.",
+      "operator": "contains_all",
+      "requirement_key": "label.mandatory_fields",
+      "retrieved_at": "2026-10-17T00:00:00Z",
+      "review_status": "needs_review",
+      "rule_type": "label",
+      "source_document_id": "source-JP",
+      "source_excerpt": "第十六条　治験依頼者は、治験薬の容器又は被包に次に掲げる事項（拡大治験を実施する場合にあっては、第一号及び第二号に掲げる事項に限る。）を邦文で記載しなければならない。 一　治験用である旨 二　治験依頼者の氏名及び住所 三　化学名又は識別記号 四　製造番号又は製造記号 五　貯蔵方法、有効期間等を定める必要があるものについては、その内容",
+      "source_tier": "official",
+      "source_title": "Japan e-Gov: Ministerial Ordinance on Good Clinical Practice for Drugs, Article 16(1)",
+      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
+      "supersedes_id": null,
+      "value": [
+        "clinical_trial_use_statement",
+        "sponsor_name_and_address",
+        "drug_chemical_name_or_identification_code",
+        "manufacturing_number_or_code",
+        "storage_conditions_if_applicable",
+        "validity_period_if_applicable"
+      ]
+    },
+    {
+      "confidence": 0.9,
+      "effective_from": "2026-10-17",
+      "effective_to": null,
+      "id": "candidate-JP-label.prohibited_fields-article16",
+      "jurisdiction": "JP",
+      "last_verified_at": null,
+      "notes": "Article 16(2) includes exceptions for open-label investigational products and expanded-access trials; qualified review is required before acceptance.",
+      "operator": "excludes",
+      "requirement_key": "label.prohibited_fields",
+      "retrieved_at": "2026-10-17T00:00:00Z",
+      "review_status": "needs_review",
+      "rule_type": "label",
+      "source_document_id": "source-JP",
+      "source_excerpt": "一　予定される販売名 二　予定される効能又は効果 三　予定される用法又は用量",
+      "source_tier": "official",
+      "source_title": "Japan e-Gov: Ministerial Ordinance on Good Clinical Practice for Drugs, Article 16(2)",
+      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
+      "supersedes_id": null,
+      "value": [
+        "proposed_commercial_name",
+        "proposed_indications_or_effects",
+        "proposed_dosage_or_administration"
+      ]
+    },
+    {
+      "confidence": 0.88,
+      "effective_from": "2026-10-17",
+      "effective_to": null,
+      "id": "candidate-JP-label.sponsor_constraint-article16",
+      "jurisdiction": "JP",
+      "last_verified_at": null,
+      "notes": "The English normalization of 治験国内管理人 is intentionally review-gated.",
+      "operator": "equals",
+      "requirement_key": "label.sponsor_constraint",
+      "retrieved_at": "2026-10-17T00:00:00Z",
+      "review_status": "needs_review",
+      "rule_type": "label",
+      "source_document_id": "source-JP",
+      "source_excerpt": "当該者が本邦内に住所を有しない場合にあっては、その氏名及び住所地の国名並びに治験国内管理人の氏名及び住所",
+      "source_tier": "official",
+      "source_title": "Japan e-Gov: Ministerial Ordinance on Good Clinical Practice for Drugs, Article 16(1)(ii)",
+      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
+      "supersedes_id": null,
+      "value": "foreign_sponsor_country_and_japan_in_country_caretaker_name_and_address_required"
+    },
+    {
+      "confidence": 0.9,
+      "effective_from": "2026-10-17",
+      "effective_to": null,
+      "id": "candidate-JP-label.blinding_constraint-article16",
+      "jurisdiction": "JP",
+      "last_verified_at": null,
+      "notes": "Applies to blinded investigational products supplied to the institution.",
+      "operator": "equals",
+      "requirement_key": "label.blinding_constraint",
+      "retrieved_at": "2026-10-17T00:00:00Z",
+      "review_status": "needs_review",
+      "rule_type": "label",
+      "source_document_id": "source-JP",
+      "source_excerpt": "緊急時に、治験責任医師等が被験薬及び対照薬の識別を直ちにできるよう必要な措置を講じておかなければならない。",
+      "source_tier": "official",
+      "source_title": "Japan e-Gov: Ministerial Ordinance on Good Clinical Practice for Drugs, Article 16(3)",
+      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
+      "supersedes_id": null,
+      "value": "emergency_identification_measures_required_for_blinded_products"
+    },
+    {
+      "confidence": 0.92,
+      "effective_from": "2026-10-17",
+      "effective_to": null,
+      "id": "candidate-JP-packaging.integrity_constraint-article16",
+      "jurisdiction": "JP",
+      "last_verified_at": null,
+      "notes": "Qualitative packaging control only; this does not establish a packaging duration or temperature range.",
+      "operator": "equals",
+      "requirement_key": "packaging.integrity_constraint",
+      "retrieved_at": "2026-10-17T00:00:00Z",
+      "review_status": "needs_review",
+      "rule_type": "packaging",
+      "source_document_id": "source-JP",
+      "source_excerpt": "輸送及び保存中の汚染や劣化を防止するため治験薬を包装して実施医療機関に交付しなければならない。",
+      "source_tier": "official",
+      "source_title": "Japan e-Gov: Ministerial Ordinance on Good Clinical Practice for Drugs, Article 16(4)",
+      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
+      "supersedes_id": null,
+      "value": "packaging_must_prevent_contamination_and_deterioration_during_transport_and_storage"
+    },
+    {
+      "confidence": 0.87,
+      "effective_from": "2026-10-17",
+      "effective_to": null,
+      "id": "candidate-JP-documents.required-article16",
+      "jurisdiction": "JP",
+      "last_verified_at": null,
+      "notes": "These are investigational-product control records and procedures, not import-permit documents. Article 16(7) makes handling instructions conditional on need.",
+      "operator": "contains_all",
+      "requirement_key": "documents.required",
+      "retrieved_at": "2026-10-17T00:00:00Z",
+      "review_status": "needs_review",
+      "rule_type": "required_document",
+      "source_document_id": "source-JP",
+      "source_excerpt": "治験薬又は治験使用薬に関する次に掲げる記録を作成しなければならない。 六　治験依頼者は、治験の契約の締結後遅滞なく、実施医療機関における治験使用薬の管理に関する手順書を作成し、これを実施医療機関に交付しなければならない。",
+      "source_tier": "official",
+      "source_title": "Japan e-Gov: Ministerial Ordinance on Good Clinical Practice for Drugs, Article 16(5)-(7)",
+      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
+      "supersedes_id": null,
+      "value": [
+        "investigational_product_manufacturing_and_quality_records",
+        "site_distribution_and_retrieval_records",
+        "investigational_product_disposal_records",
+        "investigational_product_management_procedures",
+        "handling_or_dissolution_instructions_if_needed"
+      ]
     }
   ],
   "routes": [
@@ -6090,6 +6172,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6113,6 +6196,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6141,6 +6225,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate: 3 transit days, 2 customs days; depot qualification/release buffer is 2 days via Amsterdam or 4 via Frankfurt.",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6169,6 +6254,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate: 3 transit days, 2 customs days; depot qualification/release buffer is 2 days via Amsterdam or 4 via Frankfurt.",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6192,6 +6278,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6215,6 +6302,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6238,6 +6326,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6261,6 +6350,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6284,6 +6374,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6307,6 +6398,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6330,6 +6422,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6353,6 +6446,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6376,6 +6470,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6399,6 +6494,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6422,6 +6518,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6445,6 +6542,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6468,6 +6566,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6491,6 +6590,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6514,6 +6614,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6537,6 +6638,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6560,6 +6662,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6583,6 +6686,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6606,6 +6710,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6629,6 +6734,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6652,6 +6758,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6675,6 +6782,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6698,6 +6806,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6721,6 +6830,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6744,6 +6854,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6767,6 +6878,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6790,6 +6902,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6813,6 +6926,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6836,6 +6950,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6859,6 +6974,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6882,6 +6998,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6905,6 +7022,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6928,6 +7046,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6951,6 +7070,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -6974,6 +7094,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -6997,6 +7118,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -7020,6 +7142,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -7043,6 +7166,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -7066,6 +7190,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -7089,6 +7214,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -7112,6 +7238,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -7135,6 +7262,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -7158,6 +7286,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -7181,23 +7310,26 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     }
   ],
   "events": [
     {
       "id": "jp-label-field",
-      "title": "Japan · additional label field",
-      "description": "A simulated local-contact field conflicts with the shared booklet; artwork review adds 5 business days.",
+      "title": "Japan GCP Ordinance, Article 16",
+      "description": "Anna's sample operational review found that the Japan kit artwork needs the applicable in-country sponsor/representative information before departure.",
       "event_type": "regulatory",
       "jurisdiction": "JP",
-      "synthetic": true,
+      "synthetic": false,
       "effective_from": "2026-10-19",
       "effective_to": null,
       "detected_at": "2026-10-19T10:00:00Z",
-      "review_status": "synthetic",
-      "source_url": "https://example.org/cleared-synthetic/events/jp-label-field",
-      "source_excerpt": "SIMULATED EVENT: A simulated local-contact field conflicts with the shared booklet; artwork review adds 5 business days.",
+      "review_status": "verified",
+      "source_url": "https://laws.e-gov.go.jp/law/409M50000100028",
+      "source_excerpt": "Article 16 requires specified investigational-drug information in Japanese, including sponsor information and an in-country representative when applicable.",
+      "source_tier": "official",
+      "operational_provenance": "anna_sample",
       "changes": [
         {
           "requirement_key": "label.mandatory_fields",
@@ -7227,7 +7359,8 @@
           "action": "expedite_review",
           "rework_days": 2
         }
-      ]
+      ],
+      "source_title": "Japan GCP Ordinance, Article 16"
     },
     {
       "id": "de-route-delay",
@@ -7242,6 +7375,8 @@
       "review_status": "synthetic",
       "source_url": "https://example.org/cleared-synthetic/events/de-route-delay",
       "source_excerpt": "SIMULATED EVENT: Simulated severe weather on the Boston–Frankfurt lane adds 4 business days to German shipments.",
+      "source_tier": "synthetic",
+      "operational_provenance": "sample",
       "transit_delay_days": 4,
       "repair_options": [
         {
@@ -7268,6 +7403,8 @@
       "review_status": "synthetic",
       "source_url": "https://example.org/cleared-synthetic/events/ca-permit-delay",
       "source_excerpt": "SIMULATED EVENT: Simulated permit processing increases by 7 business days.",
+      "source_tier": "synthetic",
+      "operational_provenance": "sample",
       "permit_delay_days": 7,
       "repair_options": [
         {
@@ -7571,5 +7708,776 @@
       "source_tier": "synthetic",
       "content": "Fictional research assumptions for China; not regulatory evidence."
     }
-  ]
+  ],
+  "inventory": [
+    {
+      "id": "inv-001",
+      "study": "NOVA-24",
+      "kit": "NV-118 / placebo kit",
+      "storage": "15-25C",
+      "country": "US",
+      "countryName": "United States",
+      "cadenceWeeks": 6,
+      "nextShipDate": "2026-11-03",
+      "onHand": 126,
+      "reorderLevel": 60,
+      "status": "on_track",
+      "runs": [
+        "late",
+        "on_time",
+        "on_time",
+        "late",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-002",
+      "study": "HALO-3",
+      "kit": "HL-40 inhaler",
+      "storage": "15-30C",
+      "country": "US",
+      "countryName": "United States",
+      "cadenceWeeks": 8,
+      "nextShipDate": "2026-10-08",
+      "onHand": 87,
+      "reorderLevel": 75,
+      "status": "on_track",
+      "runs": [
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-003",
+      "study": "NOVA-24",
+      "kit": "NV-118 / placebo kit",
+      "storage": "15-25C",
+      "country": "DE",
+      "countryName": "Germany",
+      "cadenceWeeks": 2,
+      "nextShipDate": "2026-11-18",
+      "onHand": 43,
+      "reorderLevel": 66,
+      "status": "at_risk",
+      "runs": [
+        "late",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-004",
+      "study": "ORION-7",
+      "kit": "ORX-2 IV vials",
+      "storage": "2-8C",
+      "country": "CA",
+      "countryName": "Canada",
+      "cadenceWeeks": 8,
+      "nextShipDate": "2026-10-11",
+      "onHand": 68,
+      "reorderLevel": 53,
+      "status": "on_track",
+      "runs": [
+        "on_time",
+        "late",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-005",
+      "study": "HALO-3",
+      "kit": "HL-40 inhaler",
+      "storage": "15-30C",
+      "country": "JP",
+      "countryName": "Japan",
+      "cadenceWeeks": 6,
+      "nextShipDate": "2026-10-03",
+      "onHand": 140,
+      "reorderLevel": 71,
+      "status": "at_risk",
+      "runs": [
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-006",
+      "study": "HALO-3",
+      "kit": "HL-40 inhaler",
+      "storage": "15-30C",
+      "country": "JP",
+      "countryName": "Japan",
+      "cadenceWeeks": 4,
+      "nextShipDate": "2026-10-12",
+      "onHand": 138,
+      "reorderLevel": 76,
+      "status": "on_track",
+      "runs": [
+        "on_time",
+        "on_time",
+        "on_time",
+        "late",
+        "missed",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-007",
+      "study": "NOVA-24",
+      "kit": "NV-118 / placebo kit",
+      "storage": "15-25C",
+      "country": "GB",
+      "countryName": "United Kingdom",
+      "cadenceWeeks": 8,
+      "nextShipDate": "2026-11-27",
+      "onHand": 80,
+      "reorderLevel": 84,
+      "status": "at_risk",
+      "runs": [
+        "on_time",
+        "on_time",
+        "late",
+        "on_time",
+        "missed",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-008",
+      "study": "ORION-7",
+      "kit": "ORX-2 IV vials",
+      "storage": "2-8C",
+      "country": "AU",
+      "countryName": "Australia",
+      "cadenceWeeks": 4,
+      "nextShipDate": "2026-11-13",
+      "onHand": 94,
+      "reorderLevel": 53,
+      "status": "on_track",
+      "runs": [
+        "on_time",
+        "late",
+        "on_time",
+        "on_time",
+        "on_time",
+        "late",
+        "late",
+        "late"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-009",
+      "study": "HALO-3",
+      "kit": "HL-40 inhaler",
+      "storage": "15-30C",
+      "country": "FR",
+      "countryName": "France",
+      "cadenceWeeks": 4,
+      "nextShipDate": "2026-11-13",
+      "onHand": 95,
+      "reorderLevel": 57,
+      "status": "on_track",
+      "runs": [
+        "missed",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-010",
+      "study": "ORION-7",
+      "kit": "ORX-2 IV vials",
+      "storage": "2-8C",
+      "country": "FR",
+      "countryName": "France",
+      "cadenceWeeks": 8,
+      "nextShipDate": "2026-10-19",
+      "onHand": 26,
+      "reorderLevel": 40,
+      "status": "at_risk",
+      "runs": [
+        "on_time",
+        "on_time",
+        "late",
+        "missed",
+        "on_time",
+        "on_time",
+        "on_time",
+        "late"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-011",
+      "study": "NOVA-24",
+      "kit": "NV-118 / placebo kit",
+      "storage": "15-25C",
+      "country": "ES",
+      "countryName": "Spain",
+      "cadenceWeeks": 8,
+      "nextShipDate": "2026-10-13",
+      "onHand": 197,
+      "reorderLevel": 100,
+      "status": "on_track",
+      "runs": [
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "missed",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-012",
+      "study": "NOVA-24",
+      "kit": "NV-118 / placebo kit",
+      "storage": "15-25C",
+      "country": "IT",
+      "countryName": "Italy",
+      "cadenceWeeks": 4,
+      "nextShipDate": "2026-11-12",
+      "onHand": 18,
+      "reorderLevel": 46,
+      "status": "at_risk",
+      "runs": [
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "missed",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-013",
+      "study": "ORION-7",
+      "kit": "ORX-2 IV vials",
+      "storage": "2-8C",
+      "country": "NL",
+      "countryName": "Netherlands",
+      "cadenceWeeks": 6,
+      "nextShipDate": "2026-10-10",
+      "onHand": 90,
+      "reorderLevel": 47,
+      "status": "on_track",
+      "runs": [
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "late",
+        "on_time",
+        "on_time",
+        "missed"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-014",
+      "study": "ORION-7",
+      "kit": "ORX-2 IV vials",
+      "storage": "2-8C",
+      "country": "NL",
+      "countryName": "Netherlands",
+      "cadenceWeeks": 8,
+      "nextShipDate": "2026-11-25",
+      "onHand": 76,
+      "reorderLevel": 73,
+      "status": "on_track",
+      "runs": [
+        "on_time",
+        "missed",
+        "late",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-015",
+      "study": "HALO-3",
+      "kit": "HL-40 inhaler",
+      "storage": "15-30C",
+      "country": "BE",
+      "countryName": "Belgium",
+      "cadenceWeeks": 8,
+      "nextShipDate": "2026-10-08",
+      "onHand": 101,
+      "reorderLevel": 74,
+      "status": "on_track",
+      "runs": [
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "late",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-016",
+      "study": "NOVA-24",
+      "kit": "NV-118 / placebo kit",
+      "storage": "15-25C",
+      "country": "AT",
+      "countryName": "Austria",
+      "cadenceWeeks": 2,
+      "nextShipDate": "2026-11-26",
+      "onHand": 73,
+      "reorderLevel": 71,
+      "status": "on_track",
+      "runs": [
+        "on_time",
+        "on_time",
+        "on_time",
+        "missed",
+        "on_time",
+        "late",
+        "missed",
+        "missed"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-017",
+      "study": "ORION-7",
+      "kit": "ORX-2 IV vials",
+      "storage": "2-8C",
+      "country": "CH",
+      "countryName": "Switzerland",
+      "cadenceWeeks": 2,
+      "nextShipDate": "2026-10-07",
+      "onHand": 34,
+      "reorderLevel": 63,
+      "status": "at_risk",
+      "runs": [
+        "on_time",
+        "on_time",
+        "missed",
+        "on_time",
+        "on_time",
+        "late",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-018",
+      "study": "NOVA-24",
+      "kit": "NV-118 / placebo kit",
+      "storage": "15-25C",
+      "country": "CH",
+      "countryName": "Switzerland",
+      "cadenceWeeks": 6,
+      "nextShipDate": "2026-11-25",
+      "onHand": 147,
+      "reorderLevel": 93,
+      "status": "on_track",
+      "runs": [
+        "on_time",
+        "late",
+        "on_time",
+        "on_time",
+        "on_time",
+        "missed",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-019",
+      "study": "HALO-3",
+      "kit": "HL-40 inhaler",
+      "storage": "15-30C",
+      "country": "DK",
+      "countryName": "Denmark",
+      "cadenceWeeks": 4,
+      "nextShipDate": "2026-10-05",
+      "onHand": 183,
+      "reorderLevel": 87,
+      "status": "on_track",
+      "runs": [
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "late"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-020",
+      "study": "NOVA-24",
+      "kit": "NV-118 / placebo kit",
+      "storage": "15-25C",
+      "country": "FI",
+      "countryName": "Finland",
+      "cadenceWeeks": 4,
+      "nextShipDate": "2026-10-26",
+      "onHand": 67,
+      "reorderLevel": 49,
+      "status": "on_track",
+      "runs": [
+        "missed",
+        "on_time",
+        "on_time",
+        "late",
+        "on_time",
+        "late",
+        "late",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-021",
+      "study": "NOVA-24",
+      "kit": "NV-118 / placebo kit",
+      "storage": "15-25C",
+      "country": "IE",
+      "countryName": "Ireland",
+      "cadenceWeeks": 8,
+      "nextShipDate": "2026-10-19",
+      "onHand": 43,
+      "reorderLevel": 56,
+      "status": "at_risk",
+      "runs": [
+        "on_time",
+        "on_time",
+        "late",
+        "on_time",
+        "on_time",
+        "late",
+        "on_time",
+        "late"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-022",
+      "study": "NOVA-24",
+      "kit": "NV-118 / placebo kit",
+      "storage": "15-25C",
+      "country": "IE",
+      "countryName": "Ireland",
+      "cadenceWeeks": 8,
+      "nextShipDate": "2026-10-05",
+      "onHand": 84,
+      "reorderLevel": 73,
+      "status": "on_track",
+      "runs": [
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-023",
+      "study": "ORION-7",
+      "kit": "ORX-2 IV vials",
+      "storage": "2-8C",
+      "country": "NZ",
+      "countryName": "New Zealand",
+      "cadenceWeeks": 2,
+      "nextShipDate": "2026-11-11",
+      "onHand": 0,
+      "reorderLevel": 86,
+      "status": "no_shipment",
+      "runs": [
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "late",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-024",
+      "study": "HALO-3",
+      "kit": "HL-40 inhaler",
+      "storage": "15-30C",
+      "country": "SG",
+      "countryName": "Singapore",
+      "cadenceWeeks": 8,
+      "nextShipDate": "2026-10-03",
+      "onHand": 60,
+      "reorderLevel": 46,
+      "status": "on_track",
+      "runs": [
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-025",
+      "study": "NOVA-24",
+      "kit": "NV-118 / placebo kit",
+      "storage": "15-25C",
+      "country": "KR",
+      "countryName": "South Korea",
+      "cadenceWeeks": 8,
+      "nextShipDate": "2026-11-09",
+      "onHand": 84,
+      "reorderLevel": 100,
+      "status": "at_risk",
+      "runs": [
+        "late",
+        "late",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-026",
+      "study": "NOVA-24",
+      "kit": "NV-118 / placebo kit",
+      "storage": "15-25C",
+      "country": "KR",
+      "countryName": "South Korea",
+      "cadenceWeeks": 4,
+      "nextShipDate": "2026-11-25",
+      "onHand": 35,
+      "reorderLevel": 67,
+      "status": "at_risk",
+      "runs": [
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "late",
+        "missed",
+        "on_time",
+        "missed"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-027",
+      "study": "ORION-7",
+      "kit": "ORX-2 IV vials",
+      "storage": "2-8C",
+      "country": "BR",
+      "countryName": "Brazil",
+      "cadenceWeeks": 4,
+      "nextShipDate": "2026-11-27",
+      "onHand": 129,
+      "reorderLevel": 65,
+      "status": "at_risk",
+      "runs": [
+        "on_time",
+        "on_time",
+        "missed",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-028",
+      "study": "HALO-3",
+      "kit": "HL-40 inhaler",
+      "storage": "15-30C",
+      "country": "MX",
+      "countryName": "Mexico",
+      "cadenceWeeks": 6,
+      "nextShipDate": "2026-11-13",
+      "onHand": 85,
+      "reorderLevel": 61,
+      "status": "on_track",
+      "runs": [
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "missed",
+        "on_time",
+        "missed",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-029",
+      "study": "NOVA-24",
+      "kit": "NV-118 / placebo kit",
+      "storage": "15-25C",
+      "country": "AR",
+      "countryName": "Argentina",
+      "cadenceWeeks": 4,
+      "nextShipDate": "2026-10-05",
+      "onHand": 49,
+      "reorderLevel": 56,
+      "status": "at_risk",
+      "runs": [
+        "late",
+        "late",
+        "on_time",
+        "missed",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-030",
+      "study": "HALO-3",
+      "kit": "HL-40 inhaler",
+      "storage": "15-30C",
+      "country": "AR",
+      "countryName": "Argentina",
+      "cadenceWeeks": 2,
+      "nextShipDate": "2026-11-06",
+      "onHand": 33,
+      "reorderLevel": 60,
+      "status": "at_risk",
+      "runs": [
+        "on_time",
+        "on_time",
+        "late",
+        "on_time",
+        "late",
+        "on_time",
+        "late",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-031",
+      "study": "NOVA-24",
+      "kit": "NV-118 / placebo kit",
+      "storage": "15-25C",
+      "country": "IN",
+      "countryName": "India",
+      "cadenceWeeks": 2,
+      "nextShipDate": "2026-10-11",
+      "onHand": 0,
+      "reorderLevel": 95,
+      "status": "no_shipment",
+      "runs": [
+        "missed",
+        "on_time",
+        "late",
+        "on_time",
+        "on_time",
+        "on_time",
+        "late",
+        "missed"
+      ],
+      "dataProvenance": "sample"
+    },
+    {
+      "id": "inv-032",
+      "study": "ORION-7",
+      "kit": "ORX-2 IV vials",
+      "storage": "2-8C",
+      "country": "CN",
+      "countryName": "China",
+      "cadenceWeeks": 4,
+      "nextShipDate": "2026-11-21",
+      "onHand": 27,
+      "reorderLevel": 56,
+      "status": "blocked",
+      "runs": [
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time",
+        "on_time"
+      ],
+      "dataProvenance": "sample"
+    }
+  ],
+  "inventory_provenance": "sample"
 }

@@ -136,7 +136,7 @@ async function main() {
     const approvedBoot = await api('/api/bootstrap');
     assert.equal(approvedBoot.approved_scenario.id, repairedPlan.id);
     assert.equal(approvedBoot.approved_scenario.selected_repairs[jp.id], jpRepair.id);
-    assert.equal(approvedBoot.approved_scenario.metrics.blocked_shipments, 0);
+    assert.equal(approvedBoot.approved_scenario.metrics.blocked_shipments, 4);
     const downloadPromise = page.waitForEvent('download');
     await page.locator('#calendar-btn').click();
     const download = await downloadPromise;

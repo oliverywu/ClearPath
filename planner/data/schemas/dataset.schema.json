@@ -15,6 +15,8 @@
     "rules": {"type": "array", "items": {"$ref": "research-rule.schema.json"}},
     "routes": {"type": "array", "items": {"$ref": "#/$defs/route"}},
     "events": {"type": "array", "items": {"$ref": "#/$defs/event"}},
+    "inventory": {"type": "array", "items": {"type": "object", "required": ["dataProvenance"], "properties": {"dataProvenance": {"enum": ["sample", "live"]}}}},
+    "inventory_provenance": {"enum": ["sample", "live"]},
     "sources": {"type": "array", "items": {"type": "object"}}
   },
   "$defs": {
@@ -35,20 +37,23 @@
       "low_slack_days": {"$ref": "#/$defs/days"}, "artwork_cost_proxy": {"type": "number", "minimum": 0},
       "risk_model": {"type": "object", "required": ["maximum", "blocked_base", "delay_cap", "delay_weight", "minimum", "base", "slack_weight", "synthetic_penalty", "readiness_maximum", "missing_requirement_penalty", "synthetic_readiness_penalty"], "additionalProperties": {"type": "number", "minimum": 0}}
     }},
-    "jurisdiction": {"type": "object", "required": ["id", "iso_code", "name", "regulator_name", "regulator_url"], "properties": {
-      "id": {"$ref": "#/$defs/text"}, "iso_code": {"$ref": "#/$defs/text"}, "name": {"$ref": "#/$defs/text"}, "regulator_name": {"$ref": "#/$defs/text"}, "regulator_url": {"type": "string", "format": "uri"}, "latitude": {"type": "number"}, "longitude": {"type": "number"}
+    "jurisdiction": {"type": "object", "required": ["id", "iso_code", "name", "regulator_name", "regulator_url", "source_tier"], "properties": {
+      "id": {"$ref": "#/$defs/text"}, "iso_code": {"$ref": "#/$defs/text"}, "name": {"$ref": "#/$defs/text"}, "regulator_name": {"$ref": "#/$defs/text"}, "regulator_url": {"type": "string", "format": "uri"}, "source_tier": {"enum": ["official", "authoritative_secondary", "sample", "modeled", "synthetic"]}, "latitude": {"type": "number"}, "longitude": {"type": "number"}
     }},
-    "country_plan": {"type": "object", "required": ["id", "jurisdiction", "target_delivery", "ready_date", "quantity"], "properties": {
+    "country_plan": {"type": "object", "required": ["id", "jurisdiction", "target_delivery", "ready_date", "quantity", "data_provenance"], "properties": {
       "id": {"$ref": "#/$defs/text"}, "jurisdiction": {"$ref": "#/$defs/text"}, "target_delivery": {"type": "string", "format": "date"}, "ready_date": {"type": "string", "format": "date"}, "quantity": {"type": "integer", "minimum": 1},
-      "holidays": {"type": "array", "items": {"type": "string", "format": "date"}}, "site": {"type": "string"}, "depot": {"type": "string"}
+      "holidays": {"type": "array", "items": {"type": "string", "format": "date"}}, "site": {"type": "string"}, "depot": {"type": "string"},
+      "source_shipment_id": {"type": "string"}, "drug_name": {"type": "string"}, "origin": {"type": "string"}, "destination": {"type": "string"},
+      "shipping_date": {"type": "string", "format": "date"}, "source_required_delivery_date": {"type": "string", "format": "date"},
+      "source_estimated_transit_days": {"type": "integer", "minimum": 0}, "data_provenance": {"enum": ["anna_sample", "planner_demo"]}
     }},
-    "route": {"type": "object", "required": ["id", "jurisdiction", "name", "mode", "transit_days", "customs_days", "depot_days", "last_mile_days", "cost_proxy", "storage_min_c", "storage_max_c", "source"], "properties": {
+    "route": {"type": "object", "required": ["id", "jurisdiction", "name", "mode", "transit_days", "customs_days", "depot_days", "last_mile_days", "cost_proxy", "storage_min_c", "storage_max_c", "source", "data_provenance"], "properties": {
       "id": {"$ref": "#/$defs/text"}, "jurisdiction": {"$ref": "#/$defs/text"}, "name": {"$ref": "#/$defs/text"}, "mode": {"$ref": "#/$defs/text"}, "source": {"$ref": "#/$defs/text"},
       "transit_days": {"$ref": "#/$defs/days"}, "customs_days": {"$ref": "#/$defs/days"}, "depot_days": {"$ref": "#/$defs/days"}, "last_mile_days": {"$ref": "#/$defs/days"}, "cost_proxy": {"type": "number", "minimum": 0},
-      "storage_min_c": {"type": "number"}, "storage_max_c": {"type": "number"}, "preferred": {"type": "boolean"}, "synthetic": {"type": "boolean"}
+      "storage_min_c": {"type": "number"}, "storage_max_c": {"type": "number"}, "preferred": {"type": "boolean"}, "synthetic": {"type": "boolean"}, "data_provenance": {"enum": ["modeled", "live"]}
     }},
-    "event": {"type": "object", "required": ["id", "jurisdiction", "title", "description", "event_type", "effective_from", "source_url", "source_excerpt"], "properties": {
-      "id": {"$ref": "#/$defs/text"}, "jurisdiction": {"$ref": "#/$defs/text"}, "title": {"$ref": "#/$defs/text"}, "description": {"$ref": "#/$defs/text"}, "event_type": {"$ref": "#/$defs/text"}, "synthetic": {"type": "boolean"},
+    "event": {"type": "object", "required": ["id", "jurisdiction", "title", "description", "event_type", "effective_from", "source_url", "source_excerpt", "source_tier", "operational_provenance"], "properties": {
+      "id": {"$ref": "#/$defs/text"}, "jurisdiction": {"$ref": "#/$defs/text"}, "title": {"$ref": "#/$defs/text"}, "description": {"$ref": "#/$defs/text"}, "event_type": {"$ref": "#/$defs/text"}, "synthetic": {"type": "boolean"}, "source_tier": {"enum": ["official", "authoritative_secondary", "sample", "synthetic"]}, "operational_provenance": {"enum": ["sample", "anna_sample", "live"]},
       "effective_from": {"type": "string", "format": "date"}, "effective_to": {"type": ["string", "null"], "format": "date"}, "source_url": {"type": "string", "format": "uri"}, "source_excerpt": {"$ref": "#/$defs/text"},
       "rework_days": {"$ref": "#/$defs/days"}, "permit_delay_days": {"$ref": "#/$defs/days"}, "transit_delay_days": {"$ref": "#/$defs/days"},
       "changes": {"type": "array", "items": {"type": "object", "required": ["requirement_key", "operator", "value"], "properties": {"requirement_key": {"$ref": "#/$defs/text"}, "operator": {"enum": ["equals", "contains_all", "contains", "excludes", "=", ">=", "<=", "in"]}, "value": {}}}},

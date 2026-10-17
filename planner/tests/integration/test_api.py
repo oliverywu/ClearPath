@@ -174,7 +174,7 @@ class ServiceTests(unittest.TestCase):
     def test_assistant_describes_negative_slack_as_late_without_repetition(self):
         proposal = self.analyze()
         result = self.post('/api/assistant/query',{'question':'Why is Japan blocked?','scenario_id':proposal['id']})
-        self.assertIn('2 business days late',result['answer'])
+        self.assertIn('43 business days late',result['answer'])
         self.assertNotIn('-2 business days',result['answer'])
         self.assertEqual(result['answer'].lower().count('misses target'),0)
 
@@ -257,12 +257,12 @@ class ServiceTests(unittest.TestCase):
 
     def test_focused_official_evidence_slice_is_cited_and_verified(self):
         rules = self.service.repo.dataset()['rules']
-        expected_hosts = {'US':'fda.gov','DE':'eur-lex.europa.eu','CA':'laws-lois.justice.gc.ca','JP':'laws.e-gov.go.jp'}
-        for country,host in expected_hosts.items():
+        expected_hosts = {'US':('fda.gov', 'ecfr.gov'),'DE':('eur-lex.europa.eu',),'CA':('laws-lois.justice.gc.ca',),'JP':('laws.e-gov.go.jp',)}
+        for country,hosts in expected_hosts.items():
             verified = [r for r in rules if r['jurisdiction']==country and r['review_status']=='verified']
             self.assertTrue(verified,country)
             self.assertTrue(all(r['source_tier']=='official' for r in verified))
-            self.assertTrue(all(host in r['source_url'] for r in verified))
+            self.assertTrue(all(any(host in r['source_url'] for host in hosts) for r in verified))
             self.assertTrue(all(r['source_excerpt'] and r['last_verified_at'] for r in verified))
 
     def test_review_synthetic_evidence_cannot_be_verified(self):

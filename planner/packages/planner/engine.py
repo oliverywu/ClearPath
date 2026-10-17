@@ -337,13 +337,18 @@ def generate_plan(dataset, *, parent=None, event=None, repair=None):
                     "dispatch_date": dispatch_date, "gateway_airport": route.get("gateway_airport", ""),
                     "customs_source": customs_source(route),
                     "leg_ranges_json": json.dumps([leg_range(route, f) for f in ("transit_days", "customs_days", "depot_days", "last_mile_days")])}
-        shipment = {"id": "shipment-" + cp["id"], "country_code": code, "country_name": countries[code]["name"],
+        shipment = {"id": cp.get("source_shipment_id", "shipment-" + cp["id"]), "country_code": code, "country_name": countries[code]["name"],
                     "target_delivery": cp["target_delivery"], "projected_delivery": projected, "slack_days": slack,
                     "risk_band": risk_band, "risk_score": risk_score, "route_id": route["id"], "route_name": route["name"],
                     "route_options": routes, "cost_proxy": route["cost_proxy"], "label_group_id": group["id"], "quantity": cp["quantity"],
                     "milestones": milestones, "reasons": reasons, "evidence_refs": evidence, "features": features,
                     "verification_status": "synthetic" if synthetic_count else "verified" if coverage == 1 else "needs_review",
-                    "site": cp.get("site"), "depot": cp.get("depot"),
+                    "site": cp.get("site"), "depot": cp.get("depot"), "drug_name": cp.get("drug_name"),
+                    "origin": cp.get("origin"), "destination": cp.get("destination"),
+                    "shipping_date": cp.get("shipping_date"), "source_shipment_id": cp.get("source_shipment_id"),
+                    "source_required_delivery_date": cp.get("source_required_delivery_date"),
+                    "source_estimated_transit_days": cp.get("source_estimated_transit_days"),
+                    "data_provenance": cp.get("data_provenance", "planner_demo"),
                     "delivery_range": uncertainty["delivery"], "ship_by": uncertainty["ship_by"],
                     "worst_case_slack_days": uncertainty["worst_case_slack_days"], "gateway_airport": route.get("gateway_airport")}
         shipments.append(shipment)

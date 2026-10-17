@@ -37,7 +37,7 @@ planner's own web UI (`planner/apps/web`) are kept as standalone tools with thei
 | `GET /api/warnings/:id` | – | `Warning` + `evidence[]`, `options[]`, `currentPlan`, `audit[]` | same + audit | `Frontend.warning(detail)` | done |
 | `GET /api/warnings/:id/options` | – | `Option[]` (remediation options with before/after) | `Governance.option_views` | `Frontend.option` | done |
 | `GET /api/shipments` | – | `Shipment[]` | current plan (`settings.approved_scenario_id`) | `Frontend.shipment` | done |
-| `GET /api/inventory` | – | `{configured:false, items:[], message, provenance}` | none (no inventory source) | – | intentional empty state |
+| `GET /api/inventory` | – | `{configured:true, items[], message, provenance:"sample"}` | integrated frontend inventory seed | passthrough | done; explicitly sample, not live telemetry |
 | `GET /api/photon/chats` | – | `Chat[]` most recent first | `chats` + `chat_messages` tables | `Frontend.chats` | done |
 | `GET /api/photon/chats/:id/messages` | – | `Message[]` oldest first | `chat_messages` | stored in frontend shape | done |
 | `POST /api/photon/chats/:id/messages` | `{text, clientMessageId}` | `{message, replies[], replayed}` | Anna's `planner_conversation` → governance | `MessagingLink.receive` | done (scripted replies removed from real path) |
@@ -161,9 +161,9 @@ results), planner `test_chalk_outlook.py`, and the insights contract/provenance 
   is **synthetic** except Chihiro's public logistics benchmarks (World Bank LPI 2023 customs dwell,
   OurAirports gateways) and the few official/needs-review rules. Responses carry `provenance`
   (`synthetic`, `modeled`, `needs_review`, `live`) and `evidenceStatus`; nothing synthetic is labeled live.
-* **Inventory: honest empty state (decision).** No inventory records exist in any component, so
-  `/api/inventory` returns `configured:false` with an explanation and the UI shows it. Shipment
-  schedules are not presented as stock. Adding a labeled modeled dataset is deferred.
+* **Inventory: labeled sample data.** The frontend's 32 recurring-inventory seed rows are part of
+  the canonical fixture and served by `/api/inventory` with `provenance: "sample"`. They provide
+  the designed inventory experience without being represented as live stock or telemetry.
 * **Tracking: modeled.** Position/progress is derived from current-plan milestones vs the planning
   date (`telemetry: "none"`, `temperatureC: null`, `statusLabel` starts with "Planned").
 * "Today" in the UI is the dataset's planning date (`as_of`, 2026-10-19), from `/api/context`.

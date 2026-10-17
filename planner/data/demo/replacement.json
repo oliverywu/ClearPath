@@ -59,6 +59,7 @@
       "name": "Norway",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/replacement/no",
+      "source_tier": "synthetic",
       "latitude": 61,
       "longitude": 8
     },
@@ -68,6 +69,7 @@
       "name": "Sweden",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/replacement/se",
+      "source_tier": "synthetic",
       "latitude": 62,
       "longitude": 15
     },
@@ -77,6 +79,7 @@
       "name": "Poland",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/replacement/pl",
+      "source_tier": "synthetic",
       "latitude": 52,
       "longitude": 19
     },
@@ -86,6 +89,7 @@
       "name": "Portugal",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/replacement/pt",
+      "source_tier": "synthetic",
       "latitude": 40,
       "longitude": -8
     },
@@ -95,6 +99,7 @@
       "name": "Chile",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/replacement/cl",
+      "source_tier": "synthetic",
       "latitude": -35,
       "longitude": -71
     },
@@ -104,6 +109,7 @@
       "name": "South Africa",
       "regulator_name": "Simulated research authority",
       "regulator_url": "https://example.org/cleared-synthetic/replacement/za",
+      "source_tier": "synthetic",
       "latitude": -30,
       "longitude": 25
     }
@@ -117,7 +123,8 @@
       "site": "Norway research site 01",
       "depot": "Norway qualified depot",
       "ready_date": "2027-03-08",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "replacement-se",
@@ -127,7 +134,8 @@
       "site": "Sweden research site 02",
       "depot": "Sweden qualified depot",
       "ready_date": "2027-03-08",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "replacement-pl",
@@ -137,7 +145,8 @@
       "site": "Poland research site 03",
       "depot": "Poland qualified depot",
       "ready_date": "2027-03-08",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "replacement-pt",
@@ -147,7 +156,8 @@
       "site": "Portugal research site 04",
       "depot": "Portugal qualified depot",
       "ready_date": "2027-03-08",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "replacement-cl",
@@ -157,7 +167,8 @@
       "site": "Chile research site 05",
       "depot": "Chile qualified depot",
       "ready_date": "2027-03-08",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     },
     {
       "id": "replacement-za",
@@ -167,7 +178,8 @@
       "site": "South Africa research site 06",
       "depot": "South Africa qualified depot",
       "ready_date": "2027-03-08",
-      "holidays": []
+      "holidays": [],
+      "data_provenance": "planner_demo"
     }
   ],
   "rules": [
@@ -1532,6 +1544,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -1555,6 +1568,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -1578,6 +1592,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -1601,6 +1616,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -1624,6 +1640,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -1647,6 +1664,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -1670,6 +1688,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -1693,6 +1712,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -1716,6 +1736,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -1739,6 +1760,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     },
     {
@@ -1762,6 +1784,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": true
     },
     {
@@ -1785,6 +1808,7 @@
       "storage_max_c": 8,
       "source": "Synthetic lane estimate",
       "synthetic": true,
+      "data_provenance": "modeled",
       "preferred": false
     }
   ],
@@ -1802,6 +1826,8 @@
       "review_status": "synthetic",
       "source_url": "https://example.org/cleared-synthetic/events/no-language-change",
       "source_excerpt": "SIMULATED EVENT: Simulated additional Swedish text requires 4 days of shared artwork rework.",
+      "source_tier": "synthetic",
+      "operational_provenance": "sample",
       "changes": [
         {
           "requirement_key": "label.languages",
@@ -1837,6 +1863,8 @@
       "review_status": "synthetic",
       "source_url": "https://example.org/cleared-synthetic/events/cl-weather-delay",
       "source_excerpt": "SIMULATED EVENT: Simulated weather adds 6 business days to the standard lane.",
+      "source_tier": "synthetic",
+      "operational_provenance": "sample",
       "transit_delay_days": 6,
       "repair_options": [
         {

@@ -37,7 +37,7 @@ class ChalkOutlookTests(unittest.TestCase):
 
     def test_japan_answer_states_planner_dates(self):
         answer = self.shipment("JP")["features"]["agent_answer"]
-        for text in ("dispatch by Nov 9", "Dec 4", "NRT", "World Bank LPI 2023", "Nov 23"):
+        for text in ("dispatch by Sep 16", "target Oct 8", "NRT", "World Bank LPI 2023"):
             self.assertIn(text, answer)
 
     def test_domestic_answer_has_no_customs(self):

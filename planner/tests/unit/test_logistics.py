@@ -53,7 +53,7 @@ class LogisticsRangeTests(unittest.TestCase):
     def test_worst_case_risk_is_explained(self):
         de = self.shipment(self.plan, "DE")
         self.assertLess(de["worst_case_slack_days"], 0)
-        self.assertTrue(any("Worst case" in reason for reason in de["reasons"]))
+        self.assertTrue(any("Projected delivery misses target" in reason for reason in de["reasons"]))
 
     def test_base_demo_dates_are_unchanged(self):
         base_plan = generate_plan(self.base)

@@ -72,7 +72,7 @@ class ContractTests(IntegratedCase):
         ('/api/photon/chats', schemas.list_of(schemas.CHAT)), ('/api/photon/chats/max-maya/messages', schemas.list_of(schemas.MESSAGE)),
         ('/api/calendar?month=2026-11', schemas.CALENDAR), ('/api/schedule/2026-11-17', schemas.SCHEDULE),
         ('/api/chalk/insights?date=2026-11-17', schemas.INSIGHT), ('/api/tracking', schemas.list_of(schemas.TRACKING)),
-        ('/api/tracking/shipment-demo-jp', schemas.TRACKING), ('/api/proposals', schemas.list_of(schemas.PROPOSAL)),
+        ('/api/tracking/SHIP-002', schemas.TRACKING), ('/api/proposals', schemas.list_of(schemas.PROPOSAL)),
         ('/api/current-plan', schemas.CURRENT_PLAN), ('/api/audit-history', schemas.list_of(schemas.AUDIT_ENTRY)),
         ('/api/evidence?warningId=wrn-jp-label-field', schemas.list_of(schemas.EVIDENCE)),
         ('/api/evidence?country=JP', schemas.list_of(schemas.EVIDENCE)),
@@ -288,7 +288,7 @@ class MessagingTests(IntegratedCase):
         after = self.current()
         self.assertEqual(after['planId'], warning['proposalIds'][0])
         self.assertEqual(self.get('/api/warnings/wrn-jp-port-closure')['status'], 'resolved')
-        shipment = next(s for s in self.get('/api/shipments') if s['id'] == 'shipment-demo-jp')
+        shipment = next(s for s in self.get('/api/shipments') if s['id'] == 'SHIP-002')
         self.assertEqual(shipment['currentPlanId'], after['planId'])
         # Post-approval notification to the other chat, and once via the notification provider.
         self.assertIn('Plan update: Maya approved option 1', self.get('/api/photon/chats/max-kenji/messages')[-1]['text'])
@@ -339,15 +339,16 @@ class MessagingTests(IntegratedCase):
 
 class ProvenanceTests(IntegratedCase):
     def test_synthetic_and_modeled_data_stay_labeled(self):
-        for warning in self.get('/api/warnings'):
-            self.assertEqual(warning['provenance'], 'synthetic')
-            self.assertTrue(warning['source'].startswith('Synthetic demo event'))
+        warnings = self.get('/api/warnings')
+        japan = next(w for w in warnings if w['country'] == 'JP')
+        self.assertEqual((japan['provenance'], japan['source']), ('sample', 'Japan GCP Ordinance, Article 16'))
+        self.assertTrue(all(w['provenance'] == 'synthetic' for w in warnings if w['country'] != 'JP'))
         self.assertTrue(all(s['provenance'] == 'synthetic' for s in self.get('/api/shipments')))
         for row in self.get('/api/tracking'):
             self.assertEqual((row['telemetry'], row['temperatureC'], row['synthetic']), ('none', None, True))
             self.assertTrue(row['statusLabel'].startswith('Planned'))
         inventory = self.get('/api/inventory')
-        self.assertEqual((inventory['configured'], inventory['items'], inventory['provenance']), (False, [], 'not_configured'))
+        self.assertEqual((inventory['configured'], len(inventory['items']), inventory['provenance']), (True, 32, 'sample'))
         insight = self.get('/api/chalk/insights?date=2026-11-17')
         self.assertEqual(insight['source']['provider'], 'local')
         self.assertIn('fallback', insight['source']['label'].lower())

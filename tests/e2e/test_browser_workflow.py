@@ -178,7 +178,7 @@ class BrowserWorkflow(unittest.TestCase):
             page.goto(web + '/#/')
             page.locator('.foot span', has_text='current plan v2').wait_for()
             page.locator('#inventory').scroll_into_view_if_needed()
-            page.locator('#grid .state', has_text='Inventory data is not configured').wait_for()
+            page.locator('#grid .tile').first.wait_for()
             page.locator('#calg .cd.has').first.click()
             page.locator('#dai .chalk .cap').wait_for()
             self.assertIn('Local deterministic fallback', page.locator('#dai .chalk .cap').inner_text())
