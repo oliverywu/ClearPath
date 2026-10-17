@@ -69,7 +69,7 @@ The **Source registry** records official HTTPS pages and supports generic-page, 
 
 ## Optional OpenAI planner assistant
 
-The planner assistant works offline by default. Its deterministic answers cite the selected immutable scenario and source records. Ask with a full country name (`Why is Argentina at risk?`) or an uppercase two-letter code (`Why is DE at risk?`). Full names take priority, so ordinary words such as “at” are never interpreted as country codes. Answers lead with the direct cause, dates, slack, and scenario impact; repeated causal text is removed. To enable a model-written answer, copy `.env.example` to `.env` and set:
+The planner assistant works offline by default. Its deterministic answers cite the selected immutable scenario and source records. Ask with a full country name (`Why is Argentina at risk?`) or an uppercase two-letter code (`Why is DE at risk?`). Full names take priority, so ordinary words such as “at” are never interpreted as country codes. Answers lead with the direct cause, dates, slack, and scenario impact; repeated causal text is removed. Negative slack is expressed as business days late rather than a negative number. To enable a model-written answer, copy `.env.example` to `.env` and set:
 
 ```dotenv
 ASSISTANT_PROVIDER=openai
@@ -81,25 +81,28 @@ The integration uses the OpenAI Responses API with one allowlisted, read-only pl
 
 ## Teammate handoff checklist
 
-The application is complete and testable without external credentials. Teammates can contribute:
-
-- official or authoritative country research as JSON/CSV, with exact excerpts and effective dates;
-- a reviewed complete dataset if the trial, routes, demand, dates, or product differ from the demo;
-- an OpenAI API key/model only if model-written assistant prose is wanted;
-- Chalk credentials and matching deployed resolvers only if the team wants remote feature computation;
-- confirmed Photon credentials/contract only if external notifications become a requirement.
+**The complete demo runs without ChatGPT, OpenAI, Chalk, Photon, Google, or Microsoft credentials.** Planning, risk calculation, scenarios, approvals, audit history, the dashboard calendar, `.ics` export, and the offline planner assistant are deterministic local features. External services are optional enhancements.
 
 Every imported rule should begin as `needs_review`. A qualified reviewer must inspect evidence in the UI. Dataset and rule commits generate proposals; a separate named plan approval is still required.
 
-### What to do next
+### Required before using real trial data
 
-- [ ] Each country researcher downloads the CSV template from **Data & research**, adds exact official-source excerpts and effective dates, and submits one or more files.
-- [ ] A qualified reviewer imports those files, resolves any duplicate conflicts, and records **Verify**, **Keep in review**, or **Retire** for each rule.
-- [ ] The supply-planning teammate replaces demo demand, route, depot, target-date, and product fields in a complete dataset JSON.
-- [ ] The team reviews every generated proposal in **Scenarios** and records a named approval or rejection with a decision note.
-- [ ] If model-written assistant responses are desired, one teammate creates a local `.env` with the OpenAI settings below. Do not share or commit that file.
-- [ ] If remote Chalk calculations are desired, deploy the matching resolvers first, then add Chalk credentials locally.
-- [ ] Before a demo or handoff, run `python -m unittest discover -v`; optionally run `npm install`, `npx playwright install chromium`, and `npm run test:browser` for the browser suite.
+- [ ] Country researchers replace synthetic rules with official or authoritative research using the CSV/JSON templates in **Data & research**. Every record needs an exact excerpt, source URL, retrieval date, and effective date.
+- [ ] A qualified reviewer imports the research, resolves duplicate conflicts, and records **Verify**, **Keep in review**, or **Retire** for every rule used operationally.
+- [ ] The supply-planning owner replaces demo product, demand, quantities, sites, depots, routes, ready dates, delivery targets, holidays, and risk settings in one complete dataset JSON.
+- [ ] The team validates the full dataset in **Data & research**, commits it with reviewer attribution, and checks every country for missing or blocked inputs.
+- [ ] The team reviews generated proposals in **Scenarios** and records a named approval or rejection with a decision note. Confirm that the dashboard calendar and country progress dates match the approved plan.
+- [ ] Before a demo or handoff, run `python -m unittest discover -v`. For full UI verification, also run `npm install`, `npx playwright install chromium`, and `npm run test:browser`.
+
+### Optional integrations — do only if the team wants them
+
+- [ ] **OpenAI:** add `ASSISTANT_PROVIDER`, `OPENAI_API_KEY`, and `OPENAI_MODEL` to a local `.env` if model-written assistant prose is wanted. The offline assistant already works without it.
+- [ ] **Chalk:** deploy the matching feature resolvers, confirm remote/local parity, then add Chalk credentials if hosted feature computation is wanted. Local calculations already work.
+- [ ] **Google Calendar / Outlook:** the app already opens individual milestones in either service and exports the complete approved timeline as `.ics`. Implement OAuth account synchronization only if automatic background updates to a shared calendar are required.
+- [ ] **Photon:** obtain the confirmed Photon API contract and credentials, implement `NotificationProvider.send`, and test delivery if external alerts are required. Dashboard alerts already work locally.
+- [ ] **Hosting:** choose a deployment host and production data/security approach only if teammates need the app while the host laptop is off. The current app intentionally runs on one laptop with SQLite and local reviewer attribution.
+
+Never share or commit `.env`, API keys, client secrets, or the local `.local/cleared.sqlite3` database.
 
 ### Daily teammate workflow
 

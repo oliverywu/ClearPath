@@ -148,11 +148,18 @@ class ServiceTests(unittest.TestCase):
         self.assertIn('Argentina is',result['answer'])
         self.assertNotIn('Austria is',result['answer'])
         self.assertNotIn('1 business days',result['answer'])
-        self.assertEqual(result['answer'].count('Current scenario impact:'),1)
+        self.assertEqual(result['answer'].count('Primary scenario drivers:'),1)
 
     def test_assistant_accepts_explicit_uppercase_country_code(self):
         result = self.post('/api/assistant/query',{'question':'Why is DE at risk?','scenario_id':self.base['id']})
         self.assertIn('Germany is',result['answer'])
+
+    def test_assistant_describes_negative_slack_as_late_without_repetition(self):
+        proposal = self.analyze()
+        result = self.post('/api/assistant/query',{'question':'Why is Japan blocked?','scenario_id':proposal['id']})
+        self.assertIn('2 business days late',result['answer'])
+        self.assertNotIn('-2 business days',result['answer'])
+        self.assertEqual(result['answer'].lower().count('misses target'),0)
 
     def test_invalid_import_and_verified_synthetic_rejected(self):
         row = copy.deepcopy(self.service.repo.dataset()['rules'][0])

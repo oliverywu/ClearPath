@@ -53,6 +53,8 @@ async function main() {
     fs.mkdirSync(path.join(root, 'test-results'), {recursive:true});
     await page.screenshot({path:path.join(root,'test-results/control-tower.png'),fullPage:true});
     await page.locator('[data-country="DE"]').click();
+    await page.locator('.country-context-card').waitFor();
+    assert.match(await page.locator('.country-context-card').innerText(), /Germany[\s\S]*Rules active as of[\s\S]*Projected delivery[\s\S]*Target delivery/i);
     await page.locator('.rule-select').first().waitFor();
     await page.locator('.rule-select').first().click();
     assert.match(await page.locator('#evidence-content').innerText(), /Synthetic/i);

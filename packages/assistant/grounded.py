@@ -39,11 +39,18 @@ def answer_question(question, scenario, dataset, comparison=None):
     lines = []
     for shipment in selected:
         risk = shipment['risk_band'].replace('_',' ')
-        slack = _days(shipment['slack_days'])
+        slack_days = shipment['slack_days']
         reason = _reason_text(shipment.get('reasons',[]))
-        lead = f"{shipment['country_name']} is {risk} because it has {slack} of delivery slack."
+        if slack_days < 0:
+            timing = f"it is projected to arrive {_days(abs(slack_days))} late"
+        elif slack_days == 0:
+            timing = "it has no delivery slack"
+        else:
+            timing = f"it has {_days(slack_days)} of delivery slack"
+        lead = f"{shipment['country_name']} is {risk} because {timing}."
         schedule = f"Projected delivery is {shipment['projected_delivery']}, against a target of {shipment['target_delivery']}, via {shipment.get('route_name','an unassigned route')}."
-        cause = f"Current scenario impact: {reason}." if reason else ''
+        reason_parts = [part for part in reason.split('; ') if not (slack_days < 0 and ('misses target' in part.lower() or 'delivery slack' in part.lower()))]
+        cause = f"Primary scenario drivers: {'; '.join(reason_parts)}." if reason_parts else ''
         lines.append(' '.join(part for part in (lead,schedule,cause) if part))
     lines.append(f"Scenario: {scenario['name']} ({scenario.get('status','proposed')}), calculated as of {scenario['as_of']}.")
     if any(word in low for word in ('split','repair','what if','alternative','expedite')):
