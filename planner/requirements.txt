@@ -1,0 +1,2 @@
+# Runtime and unit/integration/E2E HTTP tests use only Python 3.11+ standard library.
+# No installation is necessary. Optional browser tests: npm install, then npm run test:browser.

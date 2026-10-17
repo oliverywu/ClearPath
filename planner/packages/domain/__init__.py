@@ -1,0 +1,1 @@
+"""Canonical validated planning inputs."""

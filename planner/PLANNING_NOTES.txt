@@ -1,0 +1,118 @@
+CLEARED FOR TAKEOFF PLANNING NOTES
+
+Purpose
+
+This is the single planning handoff for the repository. It records the product boundary, what is implemented, the remaining hackathon work, and what should be deferred. Product behavior and startup instructions belong in README.md. Stable API and module ownership details belong in CONTRACT.md. Focused technical references belong in docs/.
+
+
+PRODUCT PRINCIPLE
+
+Cleared for Takeoff has two complementary parts:
+
+1. Deterministic decision support
+   Rule selection, label compatibility, business-day schedules, shipment slack, risk bands, repair calculations, scenario comparisons, approvals, and audit history must be reproducible. The same reviewed inputs must produce the same result without an AI service.
+
+2. AI for uncertain and high-judgment work
+   AI should help people interpret long or changing source documents, translate and normalize candidate requirements, identify meaningful semantic changes, ask natural-language scenario questions, and explain trade-offs. AI proposes; deterministic validation and planning calculate; a named person verifies evidence and approves plans.
+
+Photon is the coordination surface. It should deliver important scenario alerts and let users ask follow-up questions, but it must not become the system of record or bypass approval controls.
+
+
+OPERATING LOOP
+
+Requirements → Check sources & recalculate → See what changed → named human chooses Use as current plan or Keep current plan → a regulatory/logistics disruption occurs → Calculate impact → See what changed → named human decides again.
+
+Every calculation produces an immutable proposal. Only a named Use as current plan decision changes the current working plan; the same comparison and decision gate repeats after every disruption.
+
+WEBSITE WAYFINDING
+
+- Control tower: start here; follow the four-step Evidence → proposal → decision guide. Recalculate creates a proposal and does not silently replace the current plan.
+- Requirements & evidence: inspect dated country rules, exact source excerpts and links, evidence tier, and review status.
+- Plans & decisions: compare the proposal with the current plan, calculate a disruption's impact, then record a named decision.
+- Data & sources: import evidence, inspect the citation/source registry, and manage source snapshots.
+- Source freshness: **Check sources & recalculate** and individual **Check now** buttons fetch every registered, enabled, non-synthetic HTTPS source on demand. A detected change stops proposal creation; a failed fetch pauses and offers an explicit saved-evidence override. Blocked pages need manual snapshots. This is user-triggered, not continuous monitoring.
+- Planner assistant: ask for a grounded explanation or try a non-persistent what-if question.
+- Audit history: inspect recorded evidence and plan decisions.
+
+README.md mirrors this workflow and maps each user intent to its website location. Architecture diagrams distinguish optional AI suggestions from human-reviewed evidence and deterministic calculations.
+
+
+IMPLEMENTED FOUNDATION
+
+- Data-driven 24-country synthetic trial plus a disjoint replacement dataset.
+- Versioned regulatory requirements with sources, excerpts, effective dates, confidence, and review status.
+- Dataset and atomic-rule validation, preview, import, supersession, and review workflows.
+- Deterministic label grouping, milestone dependencies, business-day scheduling, route selection, temperature checks, slack, risk, and repair scenarios.
+- Immutable scenarios, before/after comparisons, named approvals and rejections, and audit history.
+- Local feature calculations with optional Chalk parity checks and fallback.
+- Offline grounded planner assistant plus an optional read-only OpenAI response provider.
+- Optional AI research copilot with strict structured output, exact-quotation checks, forced needs-review status, and normal import validation.
+- Optional AI change analyst with immutable snapshot comparison, retained raw diff/citations, and named confirmation before deterministic analysis.
+- Allowlisted conversational what-if simulations calculated by the deterministic planner without persistence or approval.
+- Focused official evidence records for the United States, EU/Germany, Canada, and Japan, alongside the clearly synthetic wider footprint.
+- Photon 2.0 User, Space, and Message integration for scenario alerts and grounded follow-up replies, with audited failure handling.
+- Checked-in agent gold set with deterministic scoring, abstention cases, citation checks, and Chalk Agent Evals handoff.
+- Changed-only scenario review by default, with the complete plan available through an explicit control.
+- Credential-ready Google Calendar and Microsoft Graph milestone synchronization for approved scenarios.
+- Dashboard alerts, country progress, calendar display, and approved ICS export.
+- SQLite-backed canonical source registry that automatically indexes every dataset rule/event citation; documentation does not duplicate the live link inventory.
+- Responsive, no-horizontal-scroll requirements table with wrapped values and sortable requirement, type, date, scope, evidence, and review columns.
+- Plain-language operational UI: Plans & decisions, Calculate impact, See what changed, Preview this response, Use as current plan, and Keep current plan; larger text, stronger contrast, visible focus states, and clearer action hierarchy.
+- One-command local startup, API/integration/unit tests, and browser acceptance coverage.
+
+
+REMAINING PRIORITIZED HACKATHON WORK
+
+P1  Live Provider Smoke Tests
+
+Before the demo, run one real OpenAI research or assistant request and one real Photon notification. If Chalk is part of the submission category, deploy the matching resolvers and verify one live query against the local result. Capture only non-secret diagnostics and never commit credentials.
+
+Definition of done: the team has a written pass/fail record for each live service and has rehearsed the local fallback for an outage.
+
+
+TEAM HANDOFF
+
+- Evidence owner: official-source collection, exact quotations, translations, verified evidence slice, and gold evaluation records.
+- AI owner: research extraction, semantic change analysis, tool constraints, prompts, structured outputs, and evaluation runs.
+- Photon owner: provider implementation, authentication, alert formatting, follow-up interaction, and failure handling.
+- Planner owner: deterministic calculations, new simulation inputs, invariant tests, and local/Chalk parity.
+- Experience owner: changed-only scenario view, three-minute demo flow, accessibility, screenshots, and final rehearsal.
+
+Each owner should document environment variables without committing values, add automated tests for new behavior, and preserve the rule that AI cannot verify evidence or approve a plan.
+
+
+DEFER UNTIL THE CORE DEMO IS COMPLETE
+
+- PostgreSQL migration and multi-user hosting.
+- Production authentication and role-based authorization.
+- Scheduled monitoring of registered official sources (not every regulator): requires an always-on worker, source-specific retry/rate limits, failure reporting, change notifications, and the existing human-review gate. The current laptop workflow checks sources only when the user requests recalculation or clicks **Check now**.
+- A predictive risk model without historical shipment outcomes and calibration data.
+- Replacing deterministic planning calculations with an LLM.
+
+
+DEMO NARRATIVE
+
+1. Open a reviewed official source and show the AI Research Copilot extracting cited candidate requirements.
+2. Confirm the candidates through human evidence review.
+3. Introduce a changed regulation or logistics report and show the AI Change Analyst identifying the material change.
+4. Run the deterministic impact calculation and compare the immutable proposed scenario with the approved baseline.
+5. Ask a conversational what-if question and show a calculated temporary repair.
+6. Deliver the alert through Photon and follow its link back to the review screen.
+7. Record a named human approval, inspect the audit event, and export the approved calendar.
+
+This sequence demonstrates useful AI judgment while keeping regulated decisions, calculations, and approvals controlled and auditable.
+
+
+VERIFIED OFFICIAL EVIDENCE SLICE
+
+This mapping was discovered and source-checked during implementation; it was not supplied as a completed mapping in the original brief:
+
+- United States — FDA, 21 CFR 312.6 investigational-drug labeling: https://www.fda.gov/science-research/clinical-trials-and-human-subject-protection/new-drug-antibiotic-and-biologic-drug-product-regulations-part-3
+- EU/Germany — Regulation (EU) No 536/2014, Annex VI: https://eur-lex.europa.eu/legal-content/EN-DE/TXT/?uri=CELEX%3A32014R0536
+- Canada — Food and Drug Regulations C.05.011, official Justice Laws HTML (GUI-0100 remains a useful interpretation source): https://laws-lois.justice.gc.ca/eng/regulations/c.r.c.%2C_c._870/section-C.05.011.html?wbdisable=true
+- Japan — current official e-Gov GCP Ordinance page; the checker fetches current law data through e-Gov API v2: https://laws.e-gov.go.jp/law/409M50000100028
+- Japan Article 16 expansion — same current official e-Gov Japanese ordinance text (six atomic candidates are linked per rule and remain `needs_review` pending qualified translation, scope, and effective-date review)
+
+The earlier GUI-0100 and MHLW URLs are retained as disabled, superseded source-registry rows in existing installations. Their replacement URLs point to the current controlling primary legal texts that were successfully fetched through the app checker. The broken MHLW English-PDF citation was replaced with Japanese primary text rather than synthetic evidence.
+
+The source excerpt and normalized requirement are stored in data/demo/trial.json. This is a focused demonstration slice, not a substitute for qualified regulatory review.
