@@ -72,6 +72,21 @@ def save_state(state: dict, path: Path = STATE_PATH) -> None:
     path.write_text(json.dumps(trimmed), encoding="utf-8")
 
 
+def _unwrap(obj: Any) -> Any:
+    """Unwrap a Pydantic RootModel (possibly nested) to the underlying value.
+
+    The generated Photon client wraps list_messages items in nested
+    RootModels (e.g. PlatformMessage -> Message -> the actual typed message),
+    and some nested snapshot fields (space, sentBy, receivedBy) are wrapped
+    one level deep too. This is a no-op for plain objects (including the
+    SimpleNamespace fixtures used in tests), so it is safe to apply
+    unconditionally.
+    """
+    while hasattr(obj, "root"):
+        obj = obj.root
+    return obj
+
+
 def is_from_agent(message: Any) -> bool:
     """True if this message was sent by our own agent identity.
 
@@ -81,7 +96,7 @@ def is_from_agent(message: Any) -> bool:
     the bridge never replies to itself even if the query filter is ever
     loosened.
     """
-    sent_by = getattr(message, "sentBy", None)
+    sent_by = _unwrap(getattr(message, "sentBy", None))
     return bool(sent_by) and getattr(sent_by, "kind", None) == "agent"
 
 
@@ -102,10 +117,10 @@ def _reply_identity(message: Any) -> Optional[str]:
     this; `addressedTo` is used as a fallback since `receivedBy` is not
     guaranteed present on every message shape.
     """
-    received_by = getattr(message, "receivedBy", None)
+    received_by = _unwrap(getattr(message, "receivedBy", None))
     if received_by is not None:
         return received_by.id
-    addressed_to = getattr(message, "addressedTo", None)
+    addressed_to = _unwrap(getattr(message, "addressedTo", None))
     if addressed_to is not None:
         return addressed_to.id
     return None
@@ -136,7 +151,7 @@ def poll_once(
         print(f"[photon_bridge] list_messages failed: {exc}", file=sys.stderr)
         return state
 
-    messages = sorted(page.items, key=lambda m: m.createdAt)
+    messages = sorted((_unwrap(m) for m in page.items), key=lambda m: m.createdAt)
 
     processed_ids = set(state.get("processed_ids", []))
     latest_created_at = state.get("cursor")
@@ -178,9 +193,13 @@ def poll_once(
                         "path": {"id": project_id},
                         "headers": {"idempotency-key": f"reply:{message.id}"},
                         "body": {
-                            "spaceId": message.space.id,
+                            # Not all space kinds support threaded replies
+                            # (iMessage's shared-line "direct" space rejects
+                            # parentMessageId with "Replies are not
+                            # supported for this Space" -- confirmed live).
+                            # It's optional in the schema, so omit it.
+                            "spaceId": _unwrap(message.space).id,
                             "senderId": sender_id,
-                            "parentMessageId": message.id,
                             "content": {"type": "text", "format": "plain", "text": answer},
                         },
                     }
@@ -195,7 +214,9 @@ def poll_once(
 
         try:
             client.projects.mark_message_read(
-                MarkMessageReadInput.model_validate({"path": {"id": project_id, "messageId": message.id}})
+                MarkMessageReadInput.model_validate(
+                    {"path": {"id": project_id, "messageId": message.id}, "headers": {}}
+                )
             )
         except Exception as exc:
             # Non-critical -- the reply already went out successfully.

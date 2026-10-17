@@ -199,6 +199,25 @@ def test_reply_text_is_passed_through_unmodified(monkeypatch):
     assert dumped["body"]["content"]["text"] == full_answer
 
 
+# --- RootModel unwrapping (real SDK responses wrap items in nested RootModels) --
+
+
+def test_unwrap_passes_through_plain_objects():
+    plain = SimpleNamespace(id="x")
+    assert photon_bridge._unwrap(plain) is plain
+
+
+def test_unwrap_strips_nested_root_wrappers():
+    inner = SimpleNamespace(id="pho_msg_1")
+    wrapped_once = SimpleNamespace(root=inner)
+    wrapped_twice = SimpleNamespace(root=wrapped_once)
+    assert photon_bridge._unwrap(wrapped_twice) is inner
+
+
+def test_unwrap_handles_none():
+    assert photon_bridge._unwrap(None) is None
+
+
 # --- Extraction helpers -----------------------------------------------------
 
 
