@@ -27,11 +27,13 @@ IMPLEMENTED FOUNDATION
 - Immutable scenarios, before/after comparisons, named approvals and rejections, and audit history.
 - Local feature calculations with optional Chalk parity checks and fallback.
 - Offline grounded planner assistant plus an optional read-only OpenAI response provider.
+- Optional AI research copilot with strict structured output, exact-quotation checks, forced needs-review status, and normal import validation.
+- Optional AI change analyst with immutable snapshot comparison, retained raw diff/citations, and named confirmation before deterministic analysis.
 - Dashboard alerts, country progress, calendar display, and approved ICS export.
 - One-command local startup, API/integration/unit tests, and browser acceptance coverage.
 
 
-PRIORITIZED HACKATHON WORK
+COMPLETED P0 WORK
 
 P0  AI Research Copilot
 
@@ -45,6 +47,9 @@ P0  AI Change Analyst
 Compare a new source snapshot with its previous version. Preserve the raw textual diff, then use AI to explain the semantic change, identify likely affected requirement keys and jurisdictions, distinguish editorial wording from operational changes, and prepare a proposed normalized change event. The user must confirm or edit the event before the deterministic planner calculates downstream impact.
 
 Definition of done: the demo shows an old and new passage, an AI-produced material-change summary with citations, a reviewer confirmation step, and then a deterministic before/after shipment scenario.
+
+
+REMAINING PRIORITIZED HACKATHON WORK
 
 
 P0  Live Photon Integration

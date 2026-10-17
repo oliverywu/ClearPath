@@ -43,5 +43,8 @@ All errors `{error: string, details?: any}`. JSON bodies. All non-API static fil
 - GET /api/health => {status,provider,calculation_version}
 - GET /api/dataset => full loaded dataset
 - POST /api/sources/snapshot body {source_id,content} => snapshot/hash/change diff (no network required)
+- POST /api/research/extract body {source_id?,content?,source_title?,source_url?,jurisdiction} => exact-quote checked, schema-valid candidate rules forced to needs_review
+- POST /api/sources/{id}/analyze-change => stored semantic analysis of latest two snapshots with raw diff, citations, proposed materiality and normalized event
+- POST /api/change-analyses/{id}/confirm body {reviewer,note,event?} => human-confirmed change event eligible for deterministic impact analysis
 
 Events list must include `id,title,description,event_type,jurisdiction,synthetic` so UI renders dynamically; all product/country/event content comes from API.

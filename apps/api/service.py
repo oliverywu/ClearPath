@@ -11,6 +11,7 @@ from packages.planner.engine import generate_plan, compare_plans, select_rules, 
 from packages.feature_provider import configured_provider
 from packages.ingestion.adapters import GenericPageAdapter, ECFRAdapter, EURLexAdapter, parse_records, field_diff, CachedGeographyProvider
 from packages.assistant import configured_assistant
+from packages.research import configured_research, ResearchUnavailable
 from packages.calendar import ICSCalendarProvider
 from packages.notifications import configured_notifications
 from .repository import Repository, identifier, encode, now
@@ -30,6 +31,7 @@ class Service:
         self.provider = configured_provider()
         self.notifications = configured_notifications()
         self.assistant = configured_assistant()
+        self.research = configured_research()
         if self.repo.dataset() is None:
             path = Path(fixture) if fixture else ROOT / 'data/demo/trial.json'
             self.reset(json.loads(path.read_text(encoding='utf-8')))
@@ -105,7 +107,7 @@ class Service:
         dataset = self.repo.dataset()
         approved = self.repo.setting('approved_scenario_id')
         plan = self.repo.plan(approved) if approved else None
-        return {'trial':dataset['trial'],'dataset_summary':{'id':dataset['id'],'as_of':dataset['as_of'],'countries':len(dataset['jurisdictions']),'rules':len(dataset['rules']),'routes':len(dataset['routes']),'synthetic_rules':sum(r['review_status']=='synthetic' for r in dataset['rules'])},'approved_scenario':plan,'scenarios':self.summaries(),'events':self.repo.events(),'alerts':self.alerts(),'provider':plan.get('provider') if plan else {'active':self.provider.name},'assistant_provider':self.assistant.name,'jurisdictions':dataset['jurisdictions']}
+        return {'trial':dataset['trial'],'dataset_summary':{'id':dataset['id'],'as_of':dataset['as_of'],'countries':len(dataset['jurisdictions']),'rules':len(dataset['rules']),'routes':len(dataset['routes']),'synthetic_rules':sum(r['review_status']=='synthetic' for r in dataset['rules'])},'approved_scenario':plan,'scenarios':self.summaries(),'events':self.repo.events(),'alerts':self.alerts(),'provider':plan.get('provider') if plan else {'active':self.provider.name},'assistant_provider':self.assistant.name,'research_provider':self.research.name,'jurisdictions':dataset['jurisdictions']}
 
     def preview(self, body, kind):
         dataset = self.repo.dataset()
@@ -246,12 +248,148 @@ class Service:
     def check_source(self, source):
         return self.snapshot({'source_id':source['id'],'url':source['url'],'adapter':source.get('adapter','generic'),'jurisdiction':source.get('jurisdiction')})
 
+    def research_extract(self, body):
+        dataset = self.repo.dataset()
+        source_id = str(body.get('source_id','')).strip()
+        source = next((s for s in self.repo.sources() if s['id']==source_id),None)
+        content = body.get('content')
+        if source:
+            if content is None:
+                row = self.repo.db.execute('SELECT * FROM snapshots WHERE source_id=? ORDER BY rowid DESC LIMIT 1',(source_id,)).fetchone()
+                if not row:
+                    raise APIError('Collect or paste a source snapshot before AI extraction',409)
+                content, retrieved_at = row['content'], row['created_at']
+            else:
+                result = self.snapshot({'source_id':source_id,'content':content,'url':source['url'],'adapter':source.get('adapter','generic'),'jurisdiction':source.get('jurisdiction')})
+                retrieved_at = now()
+        else:
+            title = str(body.get('source_title','')).strip()
+            url = str(body.get('source_url','')).strip()
+            if not title or not url.startswith(('https://','http://')):
+                raise APIError('A registered source or pasted source title and HTTP(S) URL is required')
+            if not isinstance(content,str) or not content.strip():
+                raise APIError('Pasted source text is required')
+            source = {'id':source_id or identifier('source'),'title':title,'url':url,'adapter':'generic',
+                      'jurisdiction':body.get('jurisdiction'),'enabled':True,'source_tier':body.get('source_tier','authoritative_secondary')}
+            self.repo.save_source(source)
+            source_id = source['id']
+            result = self.snapshot({'source_id':source_id,'content':content,'url':url,'adapter':'generic','jurisdiction':source.get('jurisdiction')})
+            retrieved_at = now()
+        jurisdiction = str(body.get('jurisdiction') or source.get('jurisdiction') or '').upper()
+        if jurisdiction not in {j['iso_code'] for j in dataset['jurisdictions']}:
+            raise APIError('Choose a jurisdiction in the active trial')
+        if not isinstance(content,str) or not content.strip():
+            raise APIError('Source content is required')
+        tier = source.get('source_tier') or ('official' if source.get('adapter') in ('ecfr','eurlex') else 'authoritative_secondary')
+        try:
+            output = self.research.extract(content=content,jurisdiction=jurisdiction,source=source,
+                                           requirement_keys={r['requirement_key'] for r in dataset['rules']})
+        except ResearchUnavailable as exc:
+            raise APIError(str(exc),503)
+        candidates, errors = [], []
+        for index, item in enumerate(output.get('candidates',[])):
+            candidate = {**item,'id':identifier('rule'),'jurisdiction':jurisdiction,
+                         'source_url':source['url'],'source_title':source['title'],
+                         'retrieved_at':retrieved_at,'source_tier':tier,
+                         'review_status':'needs_review','last_verified_at':None,
+                         'source_document_id':source_id}
+            if candidate.get('source_excerpt') not in content:
+                errors.append({'candidate':index,'message':'Supporting quotation was not found verbatim in the source snapshot'})
+                continue
+            candidate_errors = validate_rule(candidate)
+            if candidate_errors:
+                errors.extend({'candidate':index,'message':message} for message in candidate_errors)
+                continue
+            candidates.append(candidate)
+        result = {'source_id':source_id,'provider':self.research.name,'model':getattr(self.research,'model',None),
+                  'review_status':'needs_review','candidates':candidates,'errors':errors,
+                  'document_note':output.get('document_note',''),'valid':bool(candidates) and not errors}
+        self.repo.audit('ai.research.extracted',source_id,payload={'candidates':len(candidates),'errors':errors,'provider':self.research.name})
+        return result
+
+    def analyze_source_change(self, source_id):
+        dataset = self.repo.dataset()
+        source = next((s for s in self.repo.sources() if s['id']==source_id),None)
+        if not source:
+            raise KeyError('Source not found')
+        rows = self.repo.db.execute('SELECT * FROM snapshots WHERE source_id=? ORDER BY rowid DESC LIMIT 2',(source_id,)).fetchall()
+        if len(rows)<2:
+            raise APIError('Two source snapshots are required for change analysis',409)
+        new, old = rows[0], rows[1]
+        if new['content_hash']==old['content_hash']:
+            raise APIError('The latest source snapshot has not changed',409)
+        jurisdiction = str(source.get('jurisdiction') or '').upper()
+        if jurisdiction not in {j['iso_code'] for j in dataset['jurisdictions']}:
+            raise APIError('The registered source needs a jurisdiction from the active trial',422)
+        try:
+            output = self.research.compare(old_content=old['content'],new_content=new['content'],jurisdiction=jurisdiction,
+                                           source=source,requirement_keys={r['requirement_key'] for r in dataset['rules']})
+        except ResearchUnavailable as exc:
+            raise APIError(str(exc),503)
+        quote_errors = []
+        if output.get('old_excerpt') not in old['content']:
+            quote_errors.append('Previous-version quotation was not found verbatim')
+        if output.get('new_excerpt') not in new['content']:
+            quote_errors.append('New-version quotation was not found verbatim')
+        affected = [code for code in output.get('affected_jurisdictions',[]) if code in {j['iso_code'] for j in dataset['jurisdictions']}]
+        event_data = output.get('event',{})
+        event = {**event_data,'id':identifier('event'),'event_type':'regulatory','jurisdiction':jurisdiction,
+                 'synthetic':False,'source_id':source_id,'source_url':source['url'],'source_excerpt':output.get('new_excerpt',''),
+                 'source_tier':source.get('source_tier') or ('official' if source.get('adapter') in ('ecfr','eurlex') else 'authoritative_secondary'),
+                 'review_status':'needs_review','materiality':output.get('materiality'),'ambiguity_note':output.get('ambiguity_note',''),
+                 'likely_requirement_keys':output.get('likely_requirement_keys',[]),'affected_jurisdictions':affected,
+                 'old_snapshot_id':old['id'],'new_snapshot_id':new['id']}
+        raw_diff = list(difflib.unified_diff(old['content'].splitlines(),new['content'].splitlines(),fromfile=old['id'],tofile=new['id'],lineterm=''))[:500]
+        data = {'source_id':source_id,'provider':self.research.name,'model':getattr(self.research,'model',None),
+                'summary':output.get('summary',''),'materiality':output.get('materiality'),'ambiguity_note':output.get('ambiguity_note',''),
+                'likely_requirement_keys':output.get('likely_requirement_keys',[]),'affected_jurisdictions':affected,
+                'citations':[{'snapshot_id':old['id'],'label':'previous','excerpt':output.get('old_excerpt','')},
+                             {'snapshot_id':new['id'],'label':'new','excerpt':output.get('new_excerpt','')}],
+                'raw_diff':raw_diff,'event':event,'errors':quote_errors,'valid':not quote_errors}
+        key = identifier('analysis')
+        self.repo.db.execute('INSERT INTO previews VALUES(?,?,?,?,0,?)',(key,'change_event',encode(data),self.repo.setting('dataset_id'),now()))
+        self.repo.audit('ai.change.analyzed',key,payload={'source_id':source_id,'materiality':data['materiality'],'valid':data['valid'],'provider':self.research.name})
+        return {'analysis_id':key,**data}
+
+    def confirm_source_change(self, analysis_id, body):
+        reviewer, note = str(body.get('reviewer','')).strip(),str(body.get('note','')).strip()
+        if not reviewer or not note:
+            raise APIError('A named reviewer and confirmation note are required')
+        row = self.repo.db.execute('SELECT * FROM previews WHERE id=?',(analysis_id,)).fetchone()
+        if not row or row['kind']!='change_event':
+            raise APIError('Change analysis not found',404)
+        if row['consumed']:
+            raise APIError('Change analysis has already been confirmed',409)
+        if row['dataset_id'] != self.repo.setting('dataset_id'):
+            raise APIError('Dataset changed since analysis; create a fresh analysis',409)
+        data = json.loads(row['payload'])
+        if not data.get('valid'):
+            raise APIError('An analysis with invalid citations cannot be confirmed',422,data.get('errors'))
+        event = copy.deepcopy(data['event'])
+        edits = body.get('event')
+        if edits is not None:
+            if not isinstance(edits,dict):
+                raise APIError('Normalized event edits must be an object')
+            for key in ('title','description','effective_from','changes'):
+                if key in edits:
+                    event[key] = edits[key]
+        event.update(review_status='confirmed',confirmed_by=reviewer,confirmation_note=note,
+                     source_analysis_id=analysis_id,raw_diff=data['raw_diff'],citations=data['citations'])
+        dataset = self.repo.dataset()
+        candidate = copy.deepcopy(dataset)
+        candidate['events'] = [e for e in self.repo.events() if e.get('event_type')!='source_snapshot'] + [event]
+        self.validate(candidate)
+        self.repo.save_event(event)
+        self.repo.db.execute('UPDATE previews SET consumed=1 WHERE id=?',(analysis_id,))
+        self.repo.audit('ai.change.confirmed',event['id'],reviewer,{'analysis_id':analysis_id,'note':note})
+        return event
+
     def dispatch(self, method, path, query, body):
         parts = path.strip('/').split('/')
         dataset = self.repo.dataset()
         if method == 'GET':
             if path == '/api/health':
-                return {'status':'ok','provider':self.provider.name,'calculation_version':CALCULATION_VERSION}
+                return {'status':'ok','provider':self.provider.name,'research_provider':self.research.name,'calculation_version':CALCULATION_VERSION}
             if path == '/api/bootstrap':
                 return self.bootstrap()
             if path == '/api/dataset':
@@ -322,6 +460,8 @@ class Service:
                 return self.commit(body,'rules' if parts[1]=='rules' else 'dataset')
             if path == '/api/sources/snapshot':
                 return self.snapshot(body)
+            if path == '/api/research/extract':
+                return self.research_extract(body)
             if path == '/api/sources':
                 source = {k:body.get(k) for k in ('id','title','url','adapter','jurisdiction','enabled')}
                 source['id'], source['title'], source['url'] = str(source.get('id') or identifier('source')).strip(),str(source.get('title') or '').strip(),str(source.get('url') or '').strip()
@@ -334,6 +474,10 @@ class Service:
                 source = next((s for s in self.repo.sources() if s['id']==parts[2]),None)
                 if not source: raise KeyError('Source not found')
                 return self.check_source(source)
+            if len(parts)==4 and parts[1]=='sources' and parts[3]=='analyze-change':
+                return self.analyze_source_change(parts[2])
+            if len(parts)==4 and parts[1]=='change-analyses' and parts[3]=='confirm':
+                return self.confirm_source_change(parts[2],body)
             if len(parts)==4 and parts[1]=='rules' and parts[3]=='review':
                 reviewer, note = str(body.get('reviewer','')).strip(),str(body.get('note','')).strip()
                 status = body.get('status')

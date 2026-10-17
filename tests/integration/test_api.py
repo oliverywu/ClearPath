@@ -16,6 +16,7 @@ from packages.feature_provider.formulas import effective_transit, projected_deli
 from packages.ingestion.adapters import GenericPageAdapter, parse_records
 from packages.notifications.providers import PhotonNotificationProvider
 from packages.assistant.providers import OpenAIAssistantProvider
+from packages.research.providers import OpenAIResearchProvider
 
 
 class ServiceTests(unittest.TestCase):
@@ -248,6 +249,65 @@ class ServiceTests(unittest.TestCase):
         self.assertFalse(checked['changed'])
         self.assertEqual(checked['review_status'],'needs_review')
 
+    def test_ai_research_extracts_exact_quote_needs_review_candidates(self):
+        source = self.post('/api/sources',{'title':'Official regulation','url':'https://official.example/rule','adapter':'generic','jurisdiction':'DE'})
+        text = 'Sponsors must include the protocol number on the outer label.'
+        self.post('/api/sources/snapshot',{'source_id':source['id'],'content':text,'jurisdiction':'DE'})
+        class FakeResearch:
+            name, model = 'test-ai', 'test-model'
+            def extract(self, **kwargs):
+                return {'document_note':'One supported rule','candidates':[{
+                    'rule_type':'label','requirement_key':'label.mandatory_fields','operator':'contains_all',
+                    'value':['protocol_number'],'effective_from':'2026-10-17','effective_to':None,
+                    'source_excerpt':text,'confidence':0.91,'ambiguity_note':'None',
+                }]}
+        self.service.research = FakeResearch()
+        result = self.post('/api/research/extract',{'source_id':source['id']})
+        self.assertTrue(result['valid'],result['errors'])
+        self.assertEqual(result['candidates'][0]['review_status'],'needs_review')
+        self.assertEqual(result['candidates'][0]['source_excerpt'],text)
+        preview = self.post('/api/rules/import/preview',{'records':result['candidates']})
+        self.assertTrue(preview['valid'],preview['errors'])
+
+    def test_ai_research_rejects_hallucinated_quote(self):
+        source = self.post('/api/sources',{'title':'Official regulation','url':'https://official.example/rule','adapter':'generic','jurisdiction':'DE'})
+        self.post('/api/sources/snapshot',{'source_id':source['id'],'content':'Actual text','jurisdiction':'DE'})
+        class FakeResearch:
+            name = 'test-ai'
+            def extract(self, **kwargs):
+                return {'document_note':'','candidates':[{'rule_type':'label','requirement_key':'label.expiry_format','operator':'equals','value':'YYYY-MM','effective_from':'2026-10-17','effective_to':None,'source_excerpt':'Invented quote','confidence':0.5,'ambiguity_note':'uncertain'}]}
+        self.service.research = FakeResearch()
+        result = self.post('/api/research/extract',{'source_id':source['id']})
+        self.assertFalse(result['valid'])
+        self.assertFalse(result['candidates'])
+        self.assertIn('verbatim',result['errors'][0]['message'])
+
+    def test_ai_change_analysis_requires_human_confirmation(self):
+        source = self.post('/api/sources',{'title':'Official regulation','url':'https://official.example/rule','adapter':'generic','jurisdiction':'DE'})
+        self.post('/api/sources/snapshot',{'source_id':source['id'],'content':'Permit review takes 10 business days.','jurisdiction':'DE'})
+        self.post('/api/sources/snapshot',{'source_id':source['id'],'content':'Permit review takes 20 business days.','jurisdiction':'DE'})
+        class FakeResearch:
+            name, model = 'test-ai', 'test-model'
+            def compare(self, **kwargs):
+                return {'summary':'Permit review increased by ten business days.','materiality':'material',
+                        'affected_jurisdictions':['DE'],'likely_requirement_keys':['permit.lead_time_business_days'],
+                        'old_excerpt':'Permit review takes 10 business days.','new_excerpt':'Permit review takes 20 business days.',
+                        'ambiguity_note':'Human must confirm applicability.','event':{
+                            'title':'German permit review extension','description':'Permit review lead time increased.',
+                            'effective_from':'2026-10-17','changes':[{'requirement_key':'permit.lead_time_business_days','operator':'equals','value':20}]}}
+        self.service.research = FakeResearch()
+        analysis = self.post('/api/sources/'+source['id']+'/analyze-change')
+        self.assertTrue(analysis['valid'])
+        self.assertTrue(analysis['raw_diff'])
+        self.assertFalse(any(e.get('source_analysis_id')==analysis['analysis_id'] for e in self.service.repo.events()))
+        with self.assertRaises(APIError):
+            self.post('/api/change-analyses/'+analysis['analysis_id']+'/confirm',{'reviewer':'Reviewer'})
+        event = self.post('/api/change-analyses/'+analysis['analysis_id']+'/confirm',{'reviewer':'Reviewer','note':'Confirmed against both cited snapshots'})
+        self.assertEqual(event['review_status'],'confirmed')
+        self.assertEqual(event['raw_diff'],analysis['raw_diff'])
+        proposal = self.post('/api/change-events/'+event['id']+'/analyze')
+        self.assertEqual(proposal['trigger_event_id'],event['id'])
+
 
 class ProviderTests(unittest.TestCase):
     def setUp(self):
@@ -297,6 +357,18 @@ class ProviderTests(unittest.TestCase):
         self.assertIn('Grounded model answer',result['answer'])
         self.assertEqual(post.call_args_list[0].args[0]['tool_choice']['name'],'get_planning_context')
         self.assertEqual(post.call_args_list[1].args[0]['input'][0]['type'],'function_call_output')
+
+    def test_openai_research_uses_strict_structured_output(self):
+        provider = OpenAIResearchProvider(api_key='test',model='test-model')
+        response = {'output':[{'type':'message','content':[{'type':'output_text','text':json.dumps({'candidates':[],'document_note':'No supported rules'})}]}]}
+        with patch.object(provider,'_post',return_value=response) as post:
+            result = provider.extract(content='No operative requirement.',jurisdiction='DE',source={'title':'Test'},requirement_keys=set())
+        self.assertEqual(result['candidates'],[])
+        format_config = post.call_args.args[0]['text']['format']
+        self.assertEqual(format_config['type'],'json_schema')
+        self.assertTrue(format_config['strict'])
+        self.assertFalse(post.call_args.args[0]['store'])
+        self.assertIn('untrusted evidence',post.call_args.args[0]['instructions'])
 
 
 class HTTPTests(unittest.TestCase):

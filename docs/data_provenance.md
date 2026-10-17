@@ -13,6 +13,6 @@ Four visible evidence distinctions are preserved:
 
 Every atomic rule retains its jurisdiction, rule type, requirement key, operator, value, effective interval, source URL, title, exact excerpt, retrieval timestamp, confidence, source tier and review status. An import cannot label a synthetic source as verified. Current and future versions are retained rather than overwriting historical scenario inputs.
 
-Teammates should provide exact source excerpts and complete citations, default new research to `needs_review`, and have a qualified reviewer validate translations and interpretation before marking a record `verified`. Source snapshots retain a content hash and change diff; a text change alone does not establish an effective regulatory change.
+Teammates should provide exact source excerpts and complete citations, default new research to `needs_review`, and have a qualified reviewer validate translations and interpretation before marking a record `verified`. AI-extracted candidates are always forced to `needs_review`, and their quotations must occur verbatim in the saved snapshot before import preview. Source snapshots retain a content hash and raw diff; semantic change analysis preserves exact before/after citations. Neither a text diff nor AI-proposed materiality establishes an effective regulatory change. A named reviewer must confirm the normalized event before deterministic impact analysis.
 
 No application output is regulatory or legal advice. The local app supports review and planning decisions by qualified users.

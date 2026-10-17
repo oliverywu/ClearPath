@@ -9,7 +9,7 @@ The product deliberately combines two kinds of intelligence. Deterministic code 
 ```mermaid
 flowchart TB
     L1["Level 1: Evidence and inputs<br/>Regulations, routes, product data, disruptions"]
-    L2["Level 2: AI research and analysis<br/>Extract, compare, translate, classify, explain<br/>Partially implemented"]
+    L2["Level 2: AI research and analysis<br/>Extract, compare, classify, explain<br/>Implemented with optional OpenAI provider"]
     L3["Level 3: Deterministic planning<br/>Rule selection, label grouping, dates, slack, risk, repairs<br/>Implemented"]
     L4["Level 4: Human governance<br/>Verify evidence, review trade-offs, approve or reject<br/>Implemented"]
     L5["Level 5: Coordination<br/>Dashboard, calendar, Photon alerts and follow-up<br/>Photon remaining"]
@@ -27,7 +27,7 @@ flowchart LR
     B["Weather and logistics reports"] --> I
     C["Trial and product data"] --> V["Schema validation"]
 
-    I --> R["AI Research Copilot<br/>planned"]
+    I --> R["AI Research Copilot<br/>structured extraction + change analysis"]
     R -->|candidate rules and change events| V
     I -->|manual structured import| V
     V --> H["Human evidence review"]
@@ -43,7 +43,7 @@ flowchart LR
     Q --> N["Photon notification and follow-up<br/>planned"]
 ```
 
-The current implementation is complete from validated structured inputs through planning, comparison, approval, audit, and calendar export. AI-assisted research/change analysis and live Photon delivery are the main remaining hackathon features. Detailed product decisions and the prioritized work list are in [`PLANNING_NOTES.txt`](PLANNING_NOTES.txt).
+The current implementation is complete from AI-assisted candidate extraction and semantic source-change analysis through validated structured inputs, planning, comparison, approval, audit, and calendar export. AI research is optional and fails closed when it is not configured; live Photon delivery and conversational what-if tools remain. Detailed product decisions and the prioritized work list are in [`PLANNING_NOTES.txt`](PLANNING_NOTES.txt).
 
 ## Start
 
@@ -122,7 +122,17 @@ OPENAI_MODEL=gpt-5.4-mini
 
 The integration uses the OpenAI Responses API with one allowlisted, read-only planning-context tool. It cannot approve, reject, or modify plans. Citations still come from stored evidence, API failures fall back visibly to the local assistant, and responses are sent with storage disabled. Never commit `.env` or an API key.
 
-The current model integration improves explanation, not the underlying calculation. The next AI work should add a research copilot, semantic change analysis, and constrained conversational what-if tools. Those features must produce reviewable candidates or temporary simulations; deterministic code and human approval remain authoritative.
+The model integration improves explanation and prepares research candidates; it never owns an authoritative calculation or decision. The research copilot uses strict structured output to extract atomic requirements, then checks every supporting quotation verbatim against the saved source snapshot and forces every accepted candidate to `needs_review`. The change analyst compares the latest two snapshots, retains the raw diff and exact before/after citations, proposes materiality and a normalized event, and requires a named reviewer confirmation before deterministic impact analysis is enabled.
+
+To enable both AI research flows, use the same OpenAI configuration as the planner assistant and set:
+
+```dotenv
+AI_RESEARCH_PROVIDER=openai
+```
+
+In **Data & research**, register a source with its jurisdiction, collect or paste a snapshot, and choose **Extract candidate requirements**. Candidates then pass through the existing validation/import preview and separate evidence-review workflow. After two changed snapshots exist, choose **Analyze latest change**, inspect the semantic summary, quotations, raw diff and proposed event, then record a named confirmation. OpenAI requests use the Responses API with strict JSON Schema output and storage disabled. Provider failures do not create rules or events.
+
+The next AI work is the constrained conversational what-if tool. It must produce temporary simulations only; deterministic code and human approval remain authoritative.
 
 ## Teammate handoff checklist
 
@@ -132,8 +142,8 @@ Every imported rule should begin as `needs_review`. A qualified reviewer must in
 
 ### Required hackathon completion work
 
-- [ ] **AI Research Copilot:** accept a registered regulator page or pasted source text and extract candidate atomic requirements into the existing schema. Each candidate must include an exact supporting quotation, jurisdiction, effective interval, requirement key, value, confidence, and ambiguity note. AI output must remain `needs_review`; schema validation and a named human review are required before planning can use it.
-- [ ] **AI Change Analyst:** compare a new source snapshot with its predecessor, summarize the meaningful semantic change, identify likely requirement keys and affected jurisdictions, and prepare a proposed change event. Preserve the raw diff and citations. The AI may propose materiality, but a reviewer must confirm the normalized change before the deterministic impact calculation runs.
+- [x] **AI Research Copilot:** accepts a registered regulator snapshot or pasted source text and extracts candidate atomic requirements into the existing schema. Each candidate includes an exact supporting quotation, jurisdiction, effective interval, requirement key, value, confidence, and ambiguity note. AI output remains `needs_review`; verbatim citation checking, schema validation, import preview, and a named human evidence review precede planning use.
+- [x] **AI Change Analyst:** compares the newest source snapshot with its predecessor, summarizes the meaningful semantic change, identifies likely requirement keys and affected jurisdictions, and prepares a proposed change event. The stored analysis preserves the raw diff and before/after citations. Materiality remains an AI proposal, and a named reviewer must confirm the normalized event before deterministic impact calculation is available.
 - [ ] **Conversational what-if tool:** allow questions such as “What if Japan receives a separate label?” or “What if Germany uses the Amsterdam route?” The assistant should translate the request into an allowlisted temporary scenario input, call the deterministic planner, and explain the returned comparison. It must never approve, persist, or silently apply the result.
 - [ ] **Verified evidence slice:** replace a focused subset of synthetic rules with official or authoritative records for at least the United States, EU/Germany, Canada, and Japan. Prefer a small number of deeply sourced, human-reviewed requirements over superficial coverage. Retain synthetic records for the wider 24-country demonstration and label them clearly.
 - [ ] **Live Photon integration:** implement authenticated `NotificationProvider.send`, deliver a scenario alert with its cause and deep link, and support the intended Photon follow-up interaction. A failed delivery must remain visible in diagnostics and must never affect scenario state. Photon is part of the primary hackathon story, not an optional production enhancement.
@@ -213,4 +223,4 @@ The standard-library API, SQLite and buildless browser app keep offline startup 
 
 This is a single-user local tool. Reviewer names are attribution, not production authentication. Holiday calendars, route estimates and evidence quality depend on imported records. The assistant remains usable without a model-service dependency. Source checks are user-triggered and only run while the application and laptop are on.
 
-AI-assisted research/change analysis and Photon are the main unfinished hackathon features. Live Chalk and direct calendar-account synchronization need external setup; complete local planning, governance, and ICS export work now. See [planning notes](PLANNING_NOTES.txt), [architecture](docs/architecture.md), [provenance](docs/data_provenance.md), [demo script](docs/demo_script.md), and the original [challenge brief](CHALLENGE_BRIEF.txt).
+Conversational what-if analysis and Photon are the main unfinished hackathon features. Live Chalk and direct calendar-account synchronization need external setup; local AI research candidates, semantic change analysis, planning, governance, and ICS export are implemented now. See [planning notes](PLANNING_NOTES.txt), [architecture](docs/architecture.md), [provenance](docs/data_provenance.md), [demo script](docs/demo_script.md), and the original [challenge brief](CHALLENGE_BRIEF.txt).
