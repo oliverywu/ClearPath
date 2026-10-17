@@ -23,7 +23,7 @@ AI may propose structured candidates and scenario questions, but it may not veri
 
 ```mermaid
 flowchart LR
-    A["Official regulatory sources"] --> I["Source ingestion and snapshots"]
+    A["Official regulatory sources"] --> I["Source ingestion + SQLite citation registry<br/>links, snapshots, hashes, affected rule keys"]
     B["Weather and logistics reports"] --> I
     C["Trial and product data"] --> V["Schema validation"]
 
@@ -31,7 +31,7 @@ flowchart LR
     R -->|candidate rules and change events| V
     I -->|manual structured import| V
     V --> H["Human evidence review"]
-    H --> S["Versioned SQLite store"]
+    H --> S["Versioned SQLite planning store<br/>rules, scenarios, decisions, audit"]
 
     S --> P["Deterministic planner"]
     P --> F["Local or Chalk feature provider"]
