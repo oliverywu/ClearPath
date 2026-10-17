@@ -1,0 +1,25 @@
+iso2,iata,airport,latitude,longitude,selection_basis,evidence_url
+US,BOS,Boston Logan International Airport,42.362,-71.0079,Origin airport; US sites are domestic shipments with no import clearance,https://ourairports.com/data/
+DE,FRA,Frankfurt Main Airport,50.0267,8.5584,Largest German cargo airport (Eurostat avia_gooa; picked by hand),https://ec.europa.eu/eurostat/databrowser/view/avia_gooa/default/table
+NL,AMS,Amsterdam Airport Schiphol,52.3086,4.7639,Largest Dutch cargo airport (Eurostat avia_gooa; picked by hand),https://ec.europa.eu/eurostat/databrowser/view/avia_gooa/default/table
+CA,YYZ,Toronto Pearson International Airport,43.6759,-79.6294,CBSA airport of entry for commercial cargo,https://cbsa-asfc.gc.ca/do-rb/services/aoecargo-eng.html
+JP,NRT,Narita International Airport,35.7686,140.3887,Largest international cargo volume in East Japan (MLIT Tokyo bureau monthly figures),https://www.cab.mlit.go.jp/tcab/statistics/01.html
+GB,LHR,London Heathrow Airport,51.4707,-0.4599,Largest UK cargo airport (picked by hand),https://ourairports.com/data/
+AU,SYD,Sydney Kingsford Smith International Airport,-33.9461,151.177,Largest Australian international gateway (picked by hand),https://ourairports.com/data/
+FR,CDG,Charles de Gaulle International Airport,49.009,2.5541,Largest French cargo airport (Eurostat avia_gooa; picked by hand),https://ec.europa.eu/eurostat/databrowser/view/avia_gooa/default/table
+ES,MAD,Adolfo Suárez Madrid–Barajas Airport,40.4934,-3.5722,Largest Spanish cargo airport (Eurostat avia_gooa; picked by hand),https://ec.europa.eu/eurostat/databrowser/view/avia_gooa/default/table
+IT,MXP,Milan Malpensa International Airport,45.6306,8.7281,Largest Italian cargo airport (Eurostat avia_gooa; picked by hand),https://ec.europa.eu/eurostat/databrowser/view/avia_gooa/default/table
+BE,BRU,Brussels Airport,50.9014,4.4844,Main Belgian pharma gateway (Eurostat avia_gooa; picked by hand),https://ec.europa.eu/eurostat/databrowser/view/avia_gooa/default/table
+AT,VIE,Vienna International Airport,48.1103,16.5697,Largest Austrian cargo airport (Eurostat avia_gooa; picked by hand),https://ec.europa.eu/eurostat/databrowser/view/avia_gooa/default/table
+CH,ZRH,Zürich Airport,47.4581,8.5481,Largest Swiss cargo airport (picked by hand),https://ourairports.com/data/
+DK,CPH,Copenhagen Kastrup Airport,55.6179,12.656,Largest Danish cargo airport (Eurostat avia_gooa; picked by hand),https://ec.europa.eu/eurostat/databrowser/view/avia_gooa/default/table
+FI,HEL,Helsinki Vantaa Airport,60.3184,24.9633,Largest Finnish cargo airport (Eurostat avia_gooa; picked by hand),https://ec.europa.eu/eurostat/databrowser/view/avia_gooa/default/table
+IE,DUB,Dublin Airport,53.4287,-6.2621,Largest Irish cargo airport (Eurostat avia_gooa; picked by hand),https://ec.europa.eu/eurostat/databrowser/view/avia_gooa/default/table
+NZ,AKL,Auckland International Airport,-37.012,174.7863,Largest New Zealand international gateway (picked by hand),https://ourairports.com/data/
+SG,SIN,Singapore Changi Airport,1.3502,103.994,Only Singapore international cargo airport,https://ourairports.com/data/
+KR,ICN,Incheon International Airport,37.4691,126.451,Largest Korean cargo airport (picked by hand),https://ourairports.com/data/
+BR,GRU,São Paulo/Guarulhos International Airport,-23.4313,-46.47,Largest Brazilian cargo airport (picked by hand),https://ourairports.com/data/
+MX,MEX,Mexico City Benito Juárez International Airport,19.4358,-99.0703,Largest Mexican cargo airport (picked by hand),https://ourairports.com/data/
+AR,EZE,Ezeiza International Airport,-34.8222,-58.5358,Main Argentine international cargo airport (picked by hand),https://ourairports.com/data/
+IN,BOM,Chhatrapati Shivaji Maharaj International Airport,19.0887,72.8679,Major Indian pharma gateway (picked by hand),https://ourairports.com/data/
+CN,PVG,Shanghai Pudong International Airport,31.1434,121.805,Largest Chinese international cargo airport (picked by hand),https://ourairports.com/data/

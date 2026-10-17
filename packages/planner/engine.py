@@ -38,6 +38,28 @@ def business_diff(start, end, holidays=()):
     return result
 
 
+def leg_range(route, field):
+    """Best / likely / worst business days for one route leg. A route without a range is exact."""
+    likely = route.get(field, 0)
+    given = route.get(field + "_range") or {}
+    best, worst = given.get("best", likely), given.get("worst", likely)
+    return {"best": min(best, likely), "likely": likely, "worst": max(worst, likely)}
+
+
+def delivery_range(route, transit_delay, dispatch_date, target, holidays=()):
+    """Delivery dates and ship-by dates when transit and customs vary within their ranges.
+
+    The likely case matches the main schedule. The safe ship-by date is the latest dispatch
+    that still meets the target if every post-dispatch leg takes its worst-case duration.
+    """
+    legs = [leg_range(route, f) for f in ("transit_days", "customs_days", "depot_days", "last_mile_days")]
+    totals = {case: sum(leg[case] for leg in legs) + transit_delay for case in ("best", "likely", "worst")}
+    delivery = {case: business_add(dispatch_date, days, holidays) for case, days in totals.items()}
+    ship_by = {"likely": business_add(target, -totals["likely"], holidays), "safe": business_add(target, -totals["worst"], holidays)}
+    return {"delivery": delivery, "ship_by": ship_by, "post_dispatch_days": totals,
+            "worst_case_slack_days": business_diff(delivery["worst"], target, holidays)}
+
+
 def select_rules(dataset, as_of=None):
     """Select approved evidence or explicitly simulated evidence; never unreviewed rules."""
     when = as_of or dataset["as_of"]
@@ -261,6 +283,8 @@ def generate_plan(dataset, *, parent=None, event=None, repair=None):
                                "duration_sources": [source] + change_sources,
                                "dependencies": [milestones[-1]["id"]] if milestones else []})
         slack = business_diff(projected, cp["target_delivery"], holidays)
+        dispatch_date = next(m["projected_date"] for m in milestones if m["type"] == "dispatch")
+        uncertainty = delivery_range(route, transit_delay, dispatch_date, cp["target_delivery"], holidays)
         missing = [key for key in ("label.languages", "label.mandatory_fields", "label.review_days", "permit.lead_time_business_days", "packaging.duration_days") if key not in values]
         product = data["trial"]["product"]
         temperature_ok = route["storage_min_c"] >= max(product["storage_min_c"], values.get("storage.minimum_c", product["storage_min_c"])) and route["storage_max_c"] <= min(product["storage_max_c"], values.get("storage.maximum_c", product["storage_max_c"]))
@@ -279,6 +303,9 @@ def generate_plan(dataset, *, parent=None, event=None, repair=None):
             reasons.append(f"Only {slack} business days of delivery slack")
         for cause in causes:
             reasons.append(cause["description"])
+        if slack >= 0 and uncertainty["worst_case_slack_days"] < 0:
+            reasons.append(f"Worst case (transit and customs at upper estimates) misses target by {-uncertainty['worst_case_slack_days']} business days; "
+                           f"dispatch by {uncertainty['ship_by']['safe']} to absorb it")
         synthetic_count = sum(r.get("review_status") == "synthetic" for r in rules)
         coverage = sum(r.get("review_status") == "verified" for r in rules) / len(rules) if rules else 0
         hard_block = bool(missing or not routes or not temperature_ok or not group["compatible"] or slack < 0)
@@ -301,7 +328,9 @@ def generate_plan(dataset, *, parent=None, event=None, repair=None):
                     "route_options": routes, "cost_proxy": route["cost_proxy"], "label_group_id": group["id"], "quantity": cp["quantity"],
                     "milestones": milestones, "reasons": reasons, "evidence_refs": evidence, "features": features,
                     "verification_status": "synthetic" if synthetic_count else "verified" if coverage == 1 else "needs_review",
-                    "site": cp.get("site"), "depot": cp.get("depot")}
+                    "site": cp.get("site"), "depot": cp.get("depot"),
+                    "delivery_range": uncertainty["delivery"], "ship_by": uncertainty["ship_by"],
+                    "worst_case_slack_days": uncertainty["worst_case_slack_days"], "gateway_airport": route.get("gateway_airport")}
         shipments.append(shipment)
         for cause in causes:
             starts = set()

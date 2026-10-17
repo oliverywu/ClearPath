@@ -1,0 +1,25 @@
+iso2,economy,dwell_median_days,dwell_mean_days,dwell_iqr_days
+US,United States,4.1,1.2,5.2
+CA,Canada,1.8,1.3,2.2
+JP,Japan,2.6,1.8,3.4
+DE,Germany,2.8,1.5,3.3
+FR,France,2.1,1.3,2.8
+NL,Netherlands,1.6,0.8,3.1
+BE,Belgium,0.9,0.9,1.5
+IT,Italy,3.0,2.6,4.0
+ES,Spain,2.1,1.8,2.9
+AT,Austria,0.9,0.7,1.7
+DK,Denmark,1.3,1.8,2.2
+FI,Finland,1.2,1.7,2.1
+IE,Ireland,1.3,1.6,2.2
+GB,United Kingdom,2.0,1.0,3.0
+CH,Switzerland,1.6,1.0,2.2
+AU,Australia,1.3,0.8,2.0
+NZ,New Zealand,0.8,1.0,1.3
+SG,Singapore,1.6,0.3,2.5
+KR,"Korea, Rep.",1.4,1.0,2.1
+BR,Brazil,2.6,1.7,3.6
+MX,Mexico,1.9,1.9,3.3
+AR,Argentina,1.4,1.4,2.6
+IN,India,3.0,1.9,3.8
+CN,China,3.4,2.5,4.7
