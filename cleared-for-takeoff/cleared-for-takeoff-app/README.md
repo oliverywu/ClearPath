@@ -1,4 +1,4 @@
-# Cleared for Takeoff — frontend (v5)
+# ClearPath — frontend (v5)
 
 Plain HTML/CSS and ES modules. No build step and no dependencies.
 

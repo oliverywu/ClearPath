@@ -1,4 +1,4 @@
-# Cleared for Takeoff
+# ClearPath
 
 A pharmaceutical regulatory AI agent (v1) for international clinical-trial drug shipments.
 It extracts labeling requirements from raw regulatory source text into a structured JSON

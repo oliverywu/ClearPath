@@ -1,4 +1,4 @@
-# Cleared for Takeoff
+# ClearPath
 
 **Problem:** Country-specific regulations and logistics disruptions delay international
 clinical-trial drug shipments, putting patients at risk of missed doses.
@@ -9,7 +9,7 @@ changes before delivery deadlines are missed.
 
 The application includes:
 
-* **Website** — the frontend (`cleared-for-takeoff/cleared-for-takeoff-app`), the only user-facing UI.
+* **Website** — the frontend (in the existing `cleared-for-takeoff/cleared-for-takeoff-app` directory), the only user-facing UI.
 * **Unified API** — the planner (`planner/`) serving every `/api` route, with
   Chalk features (`planner/chalk`, `planner/packages/feature_provider`) and the
   messaging and decision agent (`messaging/`) running in-process.
@@ -21,7 +21,7 @@ Architecture, endpoint map, schema mappings, planner-feature comparison and data
 
 ## How we used the event sponsors
 
-| Sponsor | Use in Cleared for Takeoff |
+| Sponsor | Use in ClearPath |
 |---|---|
 | **Chalk** | Shipment feature definitions calculate projected delivery, safe ship-by dates, slack and risk from planning inputs such as transit, customs timing and holidays. The app can query deployed Chalk features online, checks returned values against its local formulas, and records when it falls back to local calculations. The calendar insight uses the feature values stored with the current plan. |
 | **SpaceX / Grok** | Our team used Grok while building the global shipment visualization and mapping experience, and Grok Imagine to create the demo video shown in our presentation. The running map uses Google Maps/Routes; route hazards come from NASA FIRMS fire detections and GDACS disaster alerts. The app does not call a Grok API at runtime. |

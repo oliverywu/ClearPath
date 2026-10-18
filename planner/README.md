@@ -1,4 +1,4 @@
-# Cleared for Takeoff
+# ClearPath
 
 Local clinical-supply decision support: dated regulatory evidence, compatible label groups, dependency schedules, change scenarios, human approval and audit history. The packaged trial is a **synthetic demonstration** with a four-jurisdiction official evidence slice; it is not legal advice or ready for operational use.
 
@@ -206,7 +206,7 @@ Never share or commit `.env`, API keys, client secrets, or the local `.local/cle
 
 ### Daily teammate workflow
 
-1. Pull the branch: `git pull origin cleared-for-takeoff`.
+1. Pull the current branch: `git pull origin main`.
 2. Start the app with `./start.ps1` in PowerShell or `python start.py` on macOS/Linux.
 3. Open `http://localhost:3000`. Keep the terminal open while using the app.
 4. Import research in **Data & sources**, review evidence in **Requirements & evidence**, and assess resulting dates in **Plans & decisions** and the Control tower calendar.
