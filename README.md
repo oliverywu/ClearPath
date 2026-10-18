@@ -16,8 +16,15 @@ The application includes:
 * **One database** — `.local/cleared.sqlite3` owns proposals, the current plan, approvals,
   evidence, conversations and the audit history.
 
-Architecture, endpoint map, schema mappings, planner-feature comparison and data provenance:
-[`docs/integration.md`](docs/integration.md).
+## Visual overview
+
+The [planner README](planner/README.md) has three diagrams that explain the decision flow:
+
+* [Product decision levels](planner/README.md#product-decision-levels) — inputs, optional AI assistance, reproducible calculations and human approval.
+* [Planner architecture](planner/README.md#architecture) — evidence, planning, proposed plans and notifications.
+* [Operating workflow](planner/README.md#operating-workflow) — how a disruption leads to a reviewed plan change.
+
+For how the website, unified API and planner connect, see the [integration architecture and endpoint map](docs/integration.md).
 
 ## How we used the event sponsors
 
