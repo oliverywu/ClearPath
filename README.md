@@ -1,6 +1,13 @@
 # Cleared for Takeoff
 
-Clinical-trial supply planning with governed plan changes. One application:
+**Problem:** International clinical-trial drug shipments face country-specific regulations and
+logistics disruptions. Delays can put patients at risk of missed doses.
+
+**Solution:** ClearPath combines regulatory and shipment data to flag delivery risks, propose
+adjusted plans, and alert pharmaceutical teams so they can review changes before delivery
+deadlines are missed.
+
+The application includes:
 
 * **Website** — the frontend (`cleared-for-takeoff/cleared-for-takeoff-app`), the only user-facing UI.
 * **Unified API** — the planner (`planner/`) serving every `/api` route, with
