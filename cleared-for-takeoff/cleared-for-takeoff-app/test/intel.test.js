@@ -185,3 +185,27 @@ test('overseas shipment uses an estimated great-circle path with FIRMS checks pe
   assert.equal(out.route.estimatedPath, true); assert.equal(out.tracker.label, 'Estimated position'); assert.equal(out.tracker.progress, 0.62);
   assert.equal(boxCalls, boxes.length); assert.equal(out.firms.status, 'empty'); assert.equal(out.shipment.label, 'Japan');
 });
+
+test('Google Routes quota failure falls back to an estimated path through planned stops (FIRMS still runs)', async () => {
+  const quotaFetch = async () => new Response(JSON.stringify({ error: { message: "Quota exceeded for quota metric 'ComputeRoutes per day'" } }), { status: 429 });
+  const m = new FireMonitor({ shipments: [ship()], store: new IntelStore(), env: { GOOGLE_MAPS_API_KEY: 'k' }, fetchImpl: quotaFetch, now: () => NOW,
+    getFiresImpl: async () => ({ status: 'ok', fires: FIRES, fetchedAt: new Date(NOW).toISOString(), newestObservation: null, errors: [], sources: [], days: 2, message: null }) });
+  const d = await m.run('RX-1042');
+  assert.equal(d.route.routeSource, 'estimated');
+  assert.match(d.route.fallbackReason, /quota reached/);
+  assert.ok(d.route.distanceMeters > 333000 * 1.15 && d.route.distanceMeters < 333000 * 1.25);
+  assert.ok(d.route.traveled.length + d.route.remaining.length > 2);
+  assert.ok(Array.isArray(d.fires) && d.fires.length > 0);
+});
+
+test('successful Google route is cached and reused when Google later fails', async () => {
+  let calls = 0, fail = false;
+  const routes = async () => { calls++; if (fail) throw new Error('Google Routes API rejected the request: Quota exceeded'); return [{ points: ROUTE, distanceMeters: 333000, durationSec: 4 * 3600 }]; };
+  let t = NOW;
+  const m = new FireMonitor({ shipments: [ship()], store: new IntelStore(), env: {}, computeRoutes: routes, now: () => t,
+    getFiresImpl: async () => ({ status: 'ok', fires: [], fetchedAt: null, newestObservation: null, errors: [], sources: [], days: 2, message: null }) });
+  assert.equal((await m.route(ship())).routeSource, 'google');
+  t += 13 * 3600_000; fail = true;
+  const r = await m.route(ship());
+  assert.equal(r.routeSource, 'google-cached'); assert.equal(r.distanceMeters, 333000); assert.equal(calls, 2);
+});

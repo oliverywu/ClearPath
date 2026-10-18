@@ -4,13 +4,36 @@ import { getFires } from './firms.js';
 import { analyzeFires, compareAlternatives, riskRank } from './fire-analysis.js';
 import { estimatePosition } from './tracking.js';
 import { computeRoutes as googleRoutes } from './google-routes.js';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
+const ROUTE_DISK_TTL_MS = 12 * 3600_000;
+/** Human reason for a failed Google route request. */
+export function routeFailureReason(e) {
+  const m = String(e?.message || '');
+  if (/missing GOOGLE_MAPS_API_KEY/i.test(m)) return 'Google route key not set — showing estimated path';
+  if (/quota|RESOURCE_EXHAUSTED|429/i.test(m)) return 'Google route quota reached — showing estimated path';
+  if (/denied|403|not authorized|API key/i.test(m)) return 'Google route request was refused — showing estimated path';
+  return 'Google route unavailable — showing estimated path';
+}
+/** Straight/geodesic path through planned stops; road distance ≈ 1.2 × haversine. */
+export function estimatedRoute(s, reason) {
+  const stops = (s.stops || []).filter(x => Number.isFinite(x.lat) && Number.isFinite(x.lng));
+  if (stops.length < 2) return null;
+  const points = [];
+  for (let i = 1; i < stops.length; i++) { const seg = greatCircle(stops[i - 1], stops[i], 24); points.push(...(i > 1 ? seg.slice(1) : seg)); }
+  const km = cumulativeKm(points).at(-1) * 1.2;
+  const dep = Date.parse(s.departedAt), eta = Date.parse(s.eta);
+  const durationSec = Number.isFinite(dep) && eta > dep ? Math.round((eta - dep) / 1000) : Math.round(km / 80 * 3600);
+  return { points, distanceMeters: Math.round(km * 1000), durationSec, routeSource: 'estimated', fallbackReason: reason };
+}
 import { sendPhotonText, buildAlertText, photonConfig, photonProblems, spaceProblem } from './photon.js';
 import { IntelStore } from './store.js';
 const SEVERITY = { high: 'high', medium: 'medium', low: 'low' };
 
 export class FireMonitor {
-  constructor({ shipments, store = new IntelStore(), env = process.env, fetchImpl = fetch, computeRoutes, getFiresImpl, now = () => Date.now(), corridorKm = Number(env.FIRE_CORRIDOR_KM || 25), firmsDays = Number(env.FIRMS_DAYS || 2) } = {}) {
+  constructor({ shipments, store = new IntelStore(), env = process.env, fetchImpl = fetch, computeRoutes, getFiresImpl, routeCacheFile = null, now = () => Date.now(), corridorKm = Number(env.FIRE_CORRIDOR_KM || 25), firmsDays = Number(env.FIRMS_DAYS || 2) } = {}) {
     Object.assign(this, { shipments, store, env, fetchImpl, now, corridorKm, firmsDays });
+    this.routeCacheFile = routeCacheFile;
     this.computeRoutes = computeRoutes || (args => googleRoutes({ key: env.GOOGLE_MAPS_API_KEY, fetchImpl, ...args }));
     this.getFires = getFiresImpl || ((box, opts) => getFires(box, { key: env.FIRMS_MAP_KEY, fetchImpl, ...opts }));
     this.routeCache = new Map(); this.altCache = new Map(); this.bootAt = now(); this.last = new Map();
@@ -24,9 +47,26 @@ export class FireMonitor {
       const route = { points, distanceMeters: Math.round(km * 1000), durationSec: Math.round(km / 800 * 3600), estimatedPath: true };
       this.routeCache.set(s.id, { at: this.now(), route }); return route;
     }
-    const [route] = await this.computeRoutes({ origin: s.originAddress || s.origin, destination: s.destinationAddress || s.destination, intermediates: (s.stops || []).filter(x => x.via).map(x => ({ lat: x.lat, lng: x.lng })) });
+    const disk = this.readDiskRoutes(), saved = disk[s.id];
+    if (saved && this.now() - saved.at < ROUTE_DISK_TTL_MS) { const route = { ...saved.route, routeSource: 'google-cached' }; this.routeCache.set(s.id, { at: this.now(), route }); return route; }
+    let route;
+    try {
+      [route] = await this.computeRoutes({ origin: s.originAddress || s.origin, destination: s.destinationAddress || s.destination, intermediates: (s.stops || []).filter(x => x.via).map(x => ({ lat: x.lat, lng: x.lng })) });
+      route = { ...route, routeSource: 'google' };
+      disk[s.id] = { at: this.now(), route }; this.writeDiskRoutes(disk);
+    } catch (e) {
+      const reason = routeFailureReason(e);
+      if (saved) route = { ...saved.route, routeSource: 'google-cached', fallbackReason: reason.replace('showing estimated path', 'showing last saved Google route') };
+      else route = estimatedRoute(s, reason);
+      if (!route) throw e;
+      // Retry Google sooner than the normal cache window.
+      this.routeCache.set(s.id, { at: this.now() - 20 * 60_000, route }); return route;
+    }
     this.routeCache.set(s.id, { at: this.now(), route }); return route;
   }
+  readDiskRoutes() { if (!this.routeCacheFile) return this._mem || (this._mem = {}); try { return JSON.parse(readFileSync(this.routeCacheFile, 'utf8')); } catch { return {}; } }
+  writeDiskRoutes(d) { if (!this.routeCacheFile) { this._mem = d; return; } try { mkdirSync(dirname(this.routeCacheFile), { recursive: true }); writeFileSync(this.routeCacheFile, JSON.stringify(d)); } catch {} }
+
   schedule(s, route) {
     if (s.schedule?.mode !== 'relative') return { departedAt: s.departedAt, eta: s.eta, scheduleNote: null };
     const dep = this.bootAt - (s.schedule.departedHoursAgo || 0) * 3600_000;
@@ -107,7 +147,7 @@ export class FireMonitor {
     const warnings = this.store.list().filter(w => w.shipmentId === s.id);
     const result = {
       shipment: { id: s.id, label: s.label || s.id, pathMode: s.pathMode || 'road', milestones: s.milestones || null, product: s.product, study: s.study, origin: s.origin, destination: s.destination, departedAt: sched.departedAt, eta: sched.eta, scheduleNote: sched.scheduleNote, contacts: this.recipients(s).map(c => ({ name: c.name, role: c.role, hasRecipient: !!c.spaceId })) },
-      route: { estimatedPath: !!route.estimatedPath, distanceMeters: route.distanceMeters, durationSec: route.durationSec, origin: route.points[0], destination: route.points[route.points.length - 1], traveled: simplify(sliceRoute(route.points, cum, 0, tracker.traveledKm), 250), remaining: simplify(sliceRoute(route.points, cum, tracker.traveledKm, cum[cum.length - 1]), 250) },
+      route: { estimatedPath: !!route.estimatedPath, routeSource: route.routeSource || (route.estimatedPath ? 'great-circle' : 'google'), fallbackReason: route.fallbackReason || null, distanceMeters: route.distanceMeters, durationSec: route.durationSec, origin: route.points[0], destination: route.points[route.points.length - 1], traveled: simplify(sliceRoute(route.points, cum, 0, tracker.traveledKm), 250), remaining: simplify(sliceRoute(route.points, cum, tracker.traveledKm, cum[cum.length - 1]), 250) },
       tracker,
       firms: { status: firms.status, message: firms.message || null, fetchedAt: firms.fetchedAt, newestObservation: firms.newestObservation, errors: firms.errors, sources: firms.sources, days: firms.days, corridorKm: this.corridorKm, detectionsInBox: firms.fires.length, ignoredFar: analysis.ignoredFar, ignoredOutdated: analysis.ignoredOutdated },
       fires: analysis.fires.map(f => ({ id: f.id, lat: f.lat, lng: f.lng, distanceKm: f.distanceKm, alongKm: f.alongKm, observedAt: f.observedAt, confidence: f.confidence, frpMW: f.frpMW, satellite: f.satellite, instrument: f.instrument, source: f.source, daynight: f.daynight, risk: f.risk, ahead: f.ahead, outdated: f.outdated })),

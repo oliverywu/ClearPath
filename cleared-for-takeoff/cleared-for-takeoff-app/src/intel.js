@@ -49,7 +49,7 @@ async function refresh() {
 }
 function render(d) {
   const t = d.tracker, f = d.firms, open = d.warnings.filter(w => w.status !== 'resolved');
-  $('#ilabel').innerHTML = `<b>${esc(d.shipment.label || d.shipment.id)}</b> · <span class="${t.isLive ? 'ok' : 'est'}">${esc(t.label)}</span>${d.route.estimatedPath ? ' · <span class="est">estimated air/sea path</span>' : ''}`;
+  $('#ilabel').innerHTML = `<b>${esc(d.shipment.label || d.shipment.id)}</b> · <span class="${t.isLive ? 'ok' : 'est'}">${esc(t.label)}</span>${d.route.estimatedPath ? ' · <span class="est">estimated air/sea path</span>' : ''}${d.route.fallbackReason ? ` · <small class="est" style="opacity:.75">${esc(d.route.fallbackReason)}</small>` : ''}`;
   $('#ilabel').title = [t.note, d.shipment.scheduleNote].filter(Boolean).join(' ');
   const ms = d.shipment.milestones;
   const stops = ms?.length ? ms.map(m => `<span class="st-${esc(m.state)}" title="${esc(m.label)} · ${esc(m.state)}"><i></i>${esc(m.label.split(' · ')[0])}</span>`).join('') : t.stops.map(s => `<span class="st-${s.state}" title="${esc(s.name)} · ${s.state}"><i></i>${esc(s.name.split(/[,(]/)[0])}</span>`).join('');

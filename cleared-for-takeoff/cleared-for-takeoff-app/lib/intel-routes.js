@@ -5,7 +5,7 @@ import { FireMonitor } from './monitor.js';
 import { IntelStore } from './store.js';
 export function createIntel(root, env = process.env) {
   const shipments = loadShipments(root);
-  const monitor = new FireMonitor({ shipments, env, store: new IntelStore(path.join(root, '.data/fire-intel.json')) });
+  const monitor = new FireMonitor({ shipments, env, store: new IntelStore(path.join(root, '.data/fire-intel.json')), routeCacheFile: path.join(root, '.data/google-routes-cache.json') });
   let timer = null;
   function start() {
     const has = k => (env[k] ? 'set' : 'not set');
