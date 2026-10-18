@@ -98,7 +98,7 @@ def save_state(state: dict, path: Path = STATE_PATH) -> None:
     path.write_text(json.dumps(trimmed), encoding="utf-8")
 
 
-def _unwrap(obj: Any) -> Any:
+def _unwrap(obj: Any, _max_depth: int = 5) -> Any:
     """Unwrap a Pydantic RootModel (possibly nested) to the underlying value.
 
     The generated Photon client wraps list_messages items in nested
@@ -107,8 +107,20 @@ def _unwrap(obj: Any) -> Any:
     one level deep too. This is a no-op for plain objects (including the
     SimpleNamespace fixtures used in tests), so it is safe to apply
     unconditionally.
+
+    Stops immediately on an unittest.mock object (Mock/MagicMock), and is
+    otherwise bounded by `_max_depth`. A bare Mock/MagicMock auto-vivifies
+    every attribute it's asked for -- including `.root` -- so
+    `hasattr(mock, "root")` is always True and an unbounded walk would spin
+    forever on a test double that never explicitly set a `.root` value
+    (real Photon RootModels unwrap in at most 2-3 hops, so neither guard
+    affects real traffic).
     """
-    while hasattr(obj, "root"):
+    from unittest.mock import NonCallableMock
+
+    for _ in range(_max_depth):
+        if isinstance(obj, NonCallableMock) or not hasattr(obj, "root"):
+            break
         obj = obj.root
     return obj
 
@@ -408,7 +420,7 @@ def _poll_once_locked(
             # shared-line "direct" space rejects parentMessageId with
             # "Replies are not supported for this Space" -- confirmed live).
             # It's optional in the schema, so omit it.
-            send_text_message(
+            sent = send_text_message(
                 client,
                 project_id,
                 space_id=space_id,
@@ -416,12 +428,34 @@ def _poll_once_locked(
                 text=answer,
                 idempotency_key=f"reply:{message.id}",
             )
-            print(f"[photon_bridge] {message.id}: reply sent", file=sys.stderr)
         except Exception as exc:
             print(f"[photon_bridge] send_message failed for {message.id}: {exc}", file=sys.stderr)
             # Deliberately NOT marked processed. The idempotency key above
             # means a retried send for this same message id is safe even if
             # this attempt actually succeeded upstream before raising here.
+            continue
+
+        # Verify the send actually succeeded rather than just assuming no
+        # exception means delivered: Photon can return 200 with a message
+        # resource whose own status is "failed" (e.g. recipient
+        # unreachable). Diagnostics below use only internal Photon
+        # resource ids (pho_msg_...) -- never a phone number or secret.
+        sent_message = _unwrap(sent)
+        sent_id = getattr(sent_message, "id", None)
+        sent_status = getattr(sent_message, "status", None)
+        print(
+            f"[photon_bridge] {message.id}: reply sent (sent_id={sent_id}, status={sent_status})",
+            file=sys.stderr,
+        )
+        if sent_status == "failed":
+            print(
+                f"[photon_bridge] {message.id}: Photon reported send status=failed; "
+                "leaving unprocessed for retry",
+                file=sys.stderr,
+            )
+            # The idempotency key above makes a retried send for this same
+            # message id safe, so it's fine to leave this unmarked and let
+            # the next poll try again.
             continue
 
         try:
