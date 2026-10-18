@@ -47,7 +47,10 @@ EVIDENCE = {
     'type': 'object',
     'required': ['id', 'status', 'title', 'url', 'excerpt', 'sourceTier', 'jurisdiction'],
     'properties': {'id': STR, 'status': EVIDENCE_STATUS, 'title': STR, 'url': STR_OR_NULL, 'excerpt': STR_OR_NULL,
-                   'sourceTier': STR_OR_NULL, 'jurisdiction': STR_OR_NULL, 'requirementKey': STR_OR_NULL},
+                   'sourceTier': STR_OR_NULL, 'jurisdiction': STR_OR_NULL, 'requirementKey': STR_OR_NULL,
+                   'ruleType': STR_OR_NULL, 'operator': STR_OR_NULL, 'effectiveFrom': STR_OR_NULL,
+                   'effectiveTo': STR_OR_NULL, 'retrievedAt': STR_OR_NULL, 'lastVerifiedAt': STR_OR_NULL,
+                   'confidence': NUM, 'value': {}, 'notes': STR_OR_NULL},
 }
 
 PREVIEW_ROW = {'type': 'object', 'required': ['shipmentId', 'before', 'after'],

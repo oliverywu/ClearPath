@@ -3,23 +3,25 @@ import { initLanding, refreshLanding } from './views/landing.js';
 import { renderWarnings } from './views/warnings.js';
 import { renderChats } from './views/chats.js';
 import { renderMonitor } from './views/monitor.js';
+import { renderSources } from './views/sources.js';
 import { initVial } from './vial.js';
 const ptr = initCursor();
 initLanding(ptr);
 initVial();
 let last = '';
-// Hash router: #/  ·  #/warnings  ·  #/warnings/:id  ·  #/max  ·  #/max/:id  (#/chats → #/max)
+// Hash router: #/ · #/warnings/:id · #/sources · #/max/:id · #/monitor
 function route() {
   const [, view = '', id] = (location.hash || '#/').split('/');
   if (view === 'chats') { location.replace('#/max' + (id ? '/' + id : '')); return; } // legacy route
   const name = view === 'max' ? 'chats' : (view || 'landing');
   document.body.dataset.view = name;
-  $('#v-warnings').hidden = name !== 'warnings'; $('#v-chats').hidden = name !== 'chats'; $('#v-monitor').hidden = name !== 'monitor';
+  $('#v-warnings').hidden = name !== 'warnings'; $('#v-chats').hidden = name !== 'chats'; $('#v-monitor').hidden = name !== 'monitor'; $('#v-sources').hidden = name !== 'sources';
   if (name !== last && last && name !== 'landing' && last !== 'landing') burst();
   if (name === 'landing' && last && last !== 'landing') refreshLanding(); // approvals elsewhere change the plan
   if (name === 'warnings') renderWarnings($('#v-warnings'), id, last !== 'warnings');
   if (name === 'chats') renderChats($('#v-chats'), id, last !== 'chats');
   if (name === 'monitor') renderMonitor($('#v-monitor'));
+  if (name === 'sources') renderSources($('#v-sources'), last !== 'sources');
   last = name;
 }
 addEventListener('hashchange', route); route();

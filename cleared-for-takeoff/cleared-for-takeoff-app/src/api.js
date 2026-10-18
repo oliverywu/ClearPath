@@ -108,6 +108,8 @@ export const getProposalComparison = id => http(`/proposals/${encodeURIComponent
 export const getCurrentPlan = () => USE_MOCK ? Promise.resolve(null) : http('/current-plan');
 export const getAuditHistory = (entityIds = []) => USE_MOCK ? Promise.resolve([]) : http(`/audit-history?entityId=${encodeURIComponent(entityIds.join(','))}`);
 export const getEvidence = warningId => USE_MOCK ? Promise.resolve([]) : http(`/evidence?warningId=${encodeURIComponent(warningId)}`);
+/** GET /api/evidence → the active country-rule registry, including source citations. */
+export const getRegulatoryEvidence = () => USE_MOCK ? Promise.resolve([]) : http('/evidence');
 // "Max" aliases (Max is the assistant behind the Photon messaging integration)
 export const getMaxChats = getPhotonChats;
 export const getMaxMessages = getChatMessages;

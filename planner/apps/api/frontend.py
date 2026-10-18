@@ -113,7 +113,10 @@ class Frontend:
         return {'id': rule['id'], 'status': evidence_status(rule), 'title': rule.get('source_title') or rule['requirement_key'],
                 'url': rule.get('source_url'), 'excerpt': rule.get('source_excerpt'), 'sourceTier': rule.get('source_tier'),
                 'jurisdiction': rule.get('jurisdiction'), 'requirementKey': rule.get('requirement_key'), 'kind': 'rule',
-                'effectiveFrom': rule.get('effective_from'), 'value': rule.get('value')}
+                'ruleType': rule.get('rule_type'), 'operator': rule.get('operator'),
+                'effectiveFrom': rule.get('effective_from'), 'effectiveTo': rule.get('effective_to'),
+                'retrievedAt': rule.get('retrieved_at'), 'lastVerifiedAt': rule.get('last_verified_at'),
+                'confidence': rule.get('confidence'), 'value': rule.get('value'), 'notes': rule.get('notes')}
 
     def option(self, view):
         def side(s):
@@ -377,8 +380,11 @@ class Frontend:
     def evidence(self, warning_id=None, country=None):
         if warning_id:
             return self.evidence_for_event(self.repo.event(warning_id.removeprefix('wrn-')))
-        plan = self.current()
-        rules = [r for r in plan.get('rules', []) if not country or r['jurisdiction'] == country.upper()]
+        # The library represents the active research registry, not an immutable
+        # historical plan snapshot. Warning-specific evidence remains tied to
+        # its scenario above, while this view exposes newly curated sources as
+        # soon as the dataset is updated.
+        rules = [r for r in self.dataset().get('rules', []) if not country or r['jurisdiction'] == country.upper()]
         return [self.evidence_from_rule(r) for r in rules]
 
     def chats(self):
