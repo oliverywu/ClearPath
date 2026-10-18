@@ -12,14 +12,29 @@ Clinical-trial supply planning with governed plan changes. One application:
 Architecture, endpoint map, schema mappings, planner-feature comparison and data provenance:
 [`docs/integration.md`](docs/integration.md).
 
+## How we used the event sponsors
+
+| Sponsor | Use in Cleared for Takeoff |
+|---|---|
+| **Chalk** | Shipment feature definitions calculate projected delivery, safe ship-by dates, slack and risk from planning inputs such as transit, customs timing and holidays. The app can query deployed Chalk features online, checks returned values against its local formulas, and records when it falls back to local calculations. The calendar insight uses the feature values stored with the current plan. |
+| **SpaceX / Grok** | Our team used Grok while building the global shipment visualization and mapping experience, and Grok Imagine to create the demo video shown in our presentation. The running map uses Google Maps/Routes; route hazards come from NASA FIRMS fire detections and GDACS disaster alerts. The app does not call a Grok API at runtime. |
+| **Photon** | Photon provides the optional messaging channel for proactive shipment alerts and iMessage replies. The Max conversation connects incoming replies to shipment context, previews proposed fixes and passes approval requests through the planner's role checks. The same workflow is available in the web app without a phone connection. |
+| **Anthropic / Claude** | Claude is used in the regulatory agent to extract cited requirements from source text, compare requirements across jurisdictions and answer free-text questions with retrieved passages when configured. The app separately detects changes between saved regulatory snapshots; plan approvals remain governed by the planner. |
+
+External services require the corresponding credentials and configuration described below; the
+local demo keeps its deterministic planning and web workflow without them.
+
 ## Run it (fresh clone)
 
-Prerequisites: **Python 3.11+** and **Node.js 18+**. No packages need installing for the app itself.
+Prerequisites: **Python 3.11+** and **Node.js 22.13+** (`python --version` or
+`py -3 --version` on Windows, and `node --version`). The core local demo needs no
+Python package installation. Use Node 22.13 or newer even if the launcher accepts
+an older version; the website uses `node:sqlite`.
 
 ```bash
 git clone https://github.com/oliverywu/hackharvard.git
 cd hackharvard
-git checkout connect
+git checkout final
 python start.py            # macOS / Linux  (python3 start.py if needed)
 ```
 
@@ -58,9 +73,23 @@ Open **http://localhost:3000**. Ctrl+C stops both processes. Options: `--check` 
    version 2; Kenji receives a plan-update message; the warning shows `resolved` with the decision
    in its audit history.
 
-## Configuration (optional, server-side only)
+## Configuration (optional)
 
-Copy `planner/.env.example` to `.env` at the repository root (gitignored) to enable:
+`start.py` reads `.env` at the repository root and passes those values to both
+the website and planner API. Copy `planner/.env.example` to root `.env`
+(gitignored), then fill in the services you use. The website can also read its
+own `cleared-for-takeoff/cleared-for-takeoff-app/.env.local`, but that file is
+not passed to the planner API. System environment variables take precedence.
+
+For **Claude answers or inbound Photon messages**, install the optional Python
+dependencies in the same Python environment that runs `start.py`:
+
+```bash
+python -m pip install -r messaging/requirements.txt
+```
+
+On Windows, use `py -3 -m pip` if you launch with `start.ps1` and `py -3` selects
+your Python installation.
 
 | Variable | Effect |
 |---|---|
@@ -72,6 +101,39 @@ Copy `planner/.env.example` to `.env` at the repository root (gitignored) to ena
 
 Never commit `.env`, keys, Photon or Google credentials, local state files or databases
 (all are in `.gitignore`).
+
+### Max on the website and by phone
+
+**Web chat:** Open **Max** at the bottom right of `http://localhost:3000`. The
+`1`/`2`/`APPROVE` decision flow is deliberately rule-based. Free-text questions use
+the local grounded assistant by default; `ANTHROPIC_API_KEY` plus the messaging
+dependencies enables Anna's cited AI answers. Photon is not needed for web chat.
+
+**iMessage:** Photon connects a phone conversation to that same Max workflow. The
+project ID and API key authenticate the application; they do not register your
+personal number or provide an agent number. To set up phone chat:
+
+1. In the Photon dashboard, create a project and a project API key with
+   `project:read` and `project:write` permissions. In its iMessage section,
+   add your phone number or Apple email as a sender identity and assign a
+   shared line. Note the assigned line's number; that is the number you will
+   text. See [messaging/README.md](messaging/README.md#photon-setup-for-the-optional-imessage-bridge)
+   for the Beta dashboard steps. Dashboard labels may differ in Photon 2.0.
+2. Set `PHOTON_PROJECT_ID`, `PHOTON_API_KEY`, and `PHOTON_BRIDGE_ENABLED=true` in
+   the ignored repository-root `.env`. Use the optional dependency install
+   command above for the Python environment that launches the app.
+3. Restart the app and confirm its startup message says `Photon bridge: on`.
+   Leave the app running, then send an iMessage from your registered phone to
+   the assigned Photon line. Max's reply should arrive in that thread.
+
+Your personal phone number is configured in Photon, not in `.env` for
+incoming chat. For outbound shipment alerts, the website uses
+`PHOTON_SENDER_ID` (the sending user) and `PHOTON_SPACE_ID` (the default
+recipient space); set them in its `.env.local` or the repository-root `.env`.
+The integrated planner uses `PHOTON_ALERT_SENDER_ID` when sending an alert to
+an existing Photon chat. These IDs come from the Photon project, not your
+personal phone number. The current local phone bridge has not been verified
+against a live Photon account.
 
 ## Tests
 
