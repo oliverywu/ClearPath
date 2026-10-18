@@ -2,7 +2,7 @@
 // NASA FIRMS detections and potential-disruption segments. Google Maps JS when a browser key exists,
 // otherwise a lightweight SVG map with the same layers.
 import { $, $$, esc } from './ui.js';
-import { loadGoogleMaps, DARK_STYLE } from './map.js';
+import { loadGoogleMaps, DARK_STYLE, USE_DARK_MAP, MAP_UI } from './map.js';
 import { mountEmbed } from './embed-map.js';
 import { getLiveShipments, getShipmentIntel } from './api.js';
 const C = { traveled: '#eceae4', remaining: 'rgba(236,234,228,.38)', risk: '#ff4d2e', fire: '#ff9d45', alt: '#6fb3ff', tracker: '#5fe0a8' };
@@ -75,9 +75,12 @@ async function draw(d) {
   } catch { state.view = embedView($('#imap'), d); }
 }
 function gmapView(g, el, d) {
-  const map = new g.Map(el, { styles: DARK_STYLE, disableDefaultUI: true, zoomControl: true, backgroundColor: '#07070a', gestureHandling: 'cooperative' });
+  const map = new g.Map(el, { ...(USE_DARK_MAP ? { styles: DARK_STYLE, backgroundColor: '#07070a' } : {}), ...MAP_UI });
+  // Colours tuned for the light standard Google map (the SVG fallback keeps the dark palette C).
+  const G = USE_DARK_MAP ? { ...C, hollow: '#0b0b0f', halo: '#07070a' } : { ...C, traveled: '#1a73e8', remaining: '#3c4043', hollow: '#ffffff', halo: '#ffffff' };
+  const info = new g.InfoWindow();
   let layers = [];
-  const dashed = { icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 2, strokeColor: C.remaining }, offset: '0', repeat: '10px' }], strokeOpacity: 0 };
+  const dashed = { icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 2, strokeColor: G.remaining }, offset: '0', repeat: '10px' }], strokeOpacity: 0 };
   class Tracker extends g.OverlayView { constructor() { super(); this.div = document.createElement('div'); this.div.className = 'itrk'; } onAdd() { this.getPanes().overlayMouseTarget.appendChild(this.div); } draw() { const p = this.getProjection()?.fromLatLngToDivPixel(new g.LatLng(this.pos)); if (p) { this.div.style.left = p.x + 'px'; this.div.style.top = p.y + 'px'; } } onRemove() { this.div.remove(); } }
   const trk = new Tracker(); trk.setMap(map);
   let fitted = false;
@@ -86,12 +89,15 @@ function gmapView(g, el, d) {
     const add = l => (layers.push(l), l);
     const geo = !!d.route.estimatedPath;
     add(new g.Polyline({ map, path: d.route.remaining, geodesic: geo, strokeWeight: 3, ...dashed }));
-    add(new g.Polyline({ map, path: d.route.traveled, geodesic: geo, strokeColor: C.traveled, strokeWeight: 3.5, strokeOpacity: .95 }));
+    add(new g.Polyline({ map, path: d.route.traveled, geodesic: geo, strokeColor: G.halo, strokeWeight: 7, strokeOpacity: .9 }));
+    add(new g.Polyline({ map, path: d.route.traveled, geodesic: geo, strokeColor: G.traveled, strokeWeight: 3.5, strokeOpacity: .95 }));
     d.events.filter(e => e.alt?.path).forEach(e => add(new g.Polyline({ map, path: e.alt.path, strokeColor: C.alt, strokeWeight: 2, strokeOpacity: .6 })));
     d.events.filter(e => ['medium', 'high'].includes(e.risk) && !e.outdated).forEach(e => add(new g.Polyline({ map, path: e.segment.path, strokeColor: C.risk, strokeWeight: 6, strokeOpacity: .85, zIndex: 5 })));
-    const dot = (pos, fill, stroke, scale, title) => add(new g.Marker({ map, position: pos, title, icon: { path: g.SymbolPath.CIRCLE, scale, fillColor: fill, fillOpacity: 1, strokeColor: stroke, strokeWeight: 2 } }));
-    d.tracker.stops.forEach(s => dot(s, s.state === 'completed' ? C.traveled : '#0b0b0f', s.kind === 'border' ? C.alt : C.traveled, s.kind === 'origin' || s.kind === 'destination' ? 5 : 3.5, `${s.name} · ${s.state}`));
-    d.fires.forEach(fr => { const m = add(new g.Marker({ map, position: fr, title: `Fire detection · ${fr.distanceKm.toFixed(1)} km from route`, zIndex: 10, icon: { path: g.SymbolPath.FORWARD_CLOSED_ARROW, rotation: 0, scale: 3.2, fillColor: fr.outdated ? '#6d6d78' : C.fire, fillOpacity: 1, strokeColor: '#07070a', strokeWeight: 1 } })); m.addListener('click', () => popFire(fr, d)); });
+    const dot = (pos, fill, stroke, scale, title) => add(new g.Marker({ map, position: pos, title, zIndex: 8, icon: { path: g.SymbolPath.CIRCLE, scale, fillColor: fill, fillOpacity: 1, strokeColor: stroke, strokeWeight: 2 } }));
+    d.tracker.stops.forEach(s => { const m = dot(s, s.state === 'completed' ? G.traveled : G.hollow, s.kind === 'border' ? G.alt : G.traveled, s.kind === 'origin' || s.kind === 'destination' ? 6 : 4.5, `${s.name} · ${s.state}`);
+      // Stops are planned checkpoints; whether one is passed is estimated from the schedule unless GPS is live.
+      m.addListener('click', () => { const when = s.at ? ` · ${new Date(s.at).toLocaleString()}` : ''; info.setContent(`<div style="color:#202124;font:13px system-ui"><b>${esc(s.name)}</b><br>${esc(s.kind)} · ${esc(s.state)}${esc(when)}${d.tracker.isLive ? '' : '<br><i>Passed/upcoming state estimated from schedule</i>'}</div>`); info.open({ map, anchor: m }); map.panTo(s); map.setZoom(Math.max(map.getZoom(), 9)); }); });
+    d.fires.forEach(fr => { const m = add(new g.Marker({ map, position: fr, title: `Fire detection · ${fr.distanceKm.toFixed(1)} km from route`, zIndex: 10, icon: { path: g.SymbolPath.FORWARD_CLOSED_ARROW, rotation: 0, scale: 3.2, fillColor: fr.outdated ? '#6d6d78' : C.fire, fillOpacity: 1, strokeColor: G.halo, strokeWeight: 1 } })); m.addListener('click', () => popFire(fr, d)); });
     trk.pos = d.tracker.position; trk.div.classList.toggle('est', !d.tracker.isLive); trk.div.title = d.tracker.label; trk.draw();
     if (!fitted) { const b = new g.LatLngBounds(); [...d.route.traveled, ...d.route.remaining].forEach(p => b.extend(p)); map.fitBounds(b, 40); fitted = true; }
   }

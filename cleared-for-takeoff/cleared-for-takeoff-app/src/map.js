@@ -24,6 +24,9 @@ export function loadGoogleMaps() {
     });
   })();
 }
+// Set to true to bring back the dark custom map theme; default is the standard Google Maps look.
+export const USE_DARK_MAP = false;
+export const MAP_UI = { disableDefaultUI: true, zoomControl: true, fullscreenControl: true, gestureHandling: "greedy" };
 export const DARK_STYLE = [
   { elementType: 'geometry', stylers: [{ color: '#0b0b0f' }] },
   { elementType: 'labels.text.fill', stylers: [{ color: '#6b6b74' }] },
@@ -42,7 +45,7 @@ export const DARK_STYLE = [
 const lerp = (a, b, t) => ({ lat: a.lat + (b.lat - a.lat) * t, lng: a.lng + (b.lng - a.lng) * t });
 /** Build the map. list = TrackingSummary[] with coords; color(s) → CSS colour; onSelect(id) opens the drawer. Returns { select(id), draw() }. */
 export function buildMap(g, el, list, color, onSelect) {
-  const map = new g.Map(el, { center: { lat: 30, lng: 20 }, zoom: 2, minZoom: 2, styles: DARK_STYLE, disableDefaultUI: true, zoomControl: true, backgroundColor: '#07070a', gestureHandling: 'cooperative', keyboardShortcuts: false });
+  const map = new g.Map(el, { center: { lat: 30, lng: 20 }, zoom: 2, minZoom: 2, ...(USE_DARK_MAP ? { styles: DARK_STYLE, backgroundColor: '#07070a' } : {}), ...MAP_UI, keyboardShortcuts: false });
   const sph = g.geometry?.spherical;
   const along = (a, b, t) => sph ? (p => ({ lat: p.lat(), lng: p.lng() }))(sph.interpolate(new g.LatLng(a), new g.LatLng(b), t)) : lerp(a, b, t);
   class Pulse extends g.OverlayView {
@@ -53,8 +56,8 @@ export function buildMap(g, el, list, color, onSelect) {
   }
   const items = list.map(s => {
     const c = color(s), { origin, destination, current } = s.coords;
-    const line = new g.Polyline({ map, path: [origin], geodesic: true, strokeColor: c, strokeOpacity: .9, strokeWeight: 2 });
-    const dot = pos => new g.Marker({ map, position: pos, clickable: true, title: `${s.countryName} · ${s.id}`, icon: { path: g.SymbolPath.CIRCLE, scale: 4, fillColor: '#0b0b0f', fillOpacity: 1, strokeColor: c, strokeWeight: 2 } });
+    const line = new g.Polyline({ map, path: [origin], geodesic: true, strokeColor: c, strokeOpacity: .95, strokeWeight: 3 });
+    const dot = pos => new g.Marker({ map, position: pos, clickable: true, title: `${s.countryName} · ${s.id}`, icon: { path: g.SymbolPath.CIRCLE, scale: 4, fillColor: USE_DARK_MAP ? '#0b0b0f' : '#ffffff', fillOpacity: 1, strokeColor: c, strokeWeight: 2 } });
     const mo = dot(origin), md = dot(destination); [mo, md, line].forEach(o => o.addListener('click', () => onSelect(s.id)));
     const pulse = new Pulse(current, c, s.id); pulse.setMap(map);
     return { s, line, origin, destination };
