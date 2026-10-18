@@ -47,17 +47,23 @@ class PhotonAlertTests(unittest.TestCase):
         self.photon_bridge = photon_bridge
         self.mock_client = MagicMock()
         self.sent = self.mock_client.projects.send_message
-        self.addCleanup(lambda: setattr(photon_bridge, 'build_photon_client', photon_bridge.build_photon_client))
+        original_build_client = photon_bridge.build_photon_client
+        original_required_env = photon_bridge._required_env
+        self.addCleanup(setattr, photon_bridge, 'build_photon_client', original_build_client)
+        self.addCleanup(setattr, photon_bridge, '_required_env', original_required_env)
         photon_bridge.build_photon_client = lambda: self.mock_client
         photon_bridge._required_env = lambda name: {'PHOTON_PROJECT_ID': 'proj1'}[name]
         os.environ['PHOTON_ALERT_SENDER_ID'] = 'pho_usr_agent_test'
+        self.addCleanup(os.environ.pop, 'PHOTON_ALERT_SENDER_ID', None)
 
         # Give one existing chat a real Photon space, like the live app's human conversation.
         self.service.messaging.store.seed(self.service.governance.roles)
         self.service.repo.db.execute("UPDATE chats SET photon_space_id='pho_spc_demo' WHERE id='max-maya'")
 
     def tearDown(self):
-        self.server.shutdown() if hasattr(self.server, 'shutdown') else None
+        # No serve_forever() loop is ever started in these tests (the service is
+        # driven in-process), so HTTPServer.shutdown() would block forever waiting
+        # for a serving loop that never ran. Nothing to stop here but the db/temp dir.
         self.service.repo.close()
         self.tmp.cleanup()
 
@@ -76,7 +82,7 @@ class PhotonAlertTests(unittest.TestCase):
         text = self.sent.call_args[0][0].body.content.text
         self.assertIn('SIMULATED', text)
         self.assertIn('https://example.org/cleared-synthetic/jp-label-demo', text)
-        self.assertIn('2026-11-01'[:4], text)  # effective date surfaced (short() renders "Nov 1")
+        self.assertIn('effective Nov 1', text)  # effective date surfaced (short() renders no year, matching the rest of the app)
         self.assertIn('Update the Japan label', text)
 
     def test_duplicate_ingest_does_not_resend(self):
