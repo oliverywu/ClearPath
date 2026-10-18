@@ -1,5 +1,6 @@
 import { $, $$, esc, STATUS, fmtDate, load, burst } from '../ui.js';
 import { loadGoogleMaps, buildMap } from '../map.js';
+import { mountEmbed, greatCircle } from '../embed-map.js';
 import { attachLiveShipments } from '../intel.js';
 import { getShipments, getInventory, getWarnings, getCalendar, getDaySchedule, getChalkInsight, getTracking, getTrackingDetail } from '../api.js';
 const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
@@ -133,33 +134,46 @@ async function openTracking(id) {
   } catch (err) { body.innerHTML = `<div class="state err">Couldn’t load tracking: ${esc(err.message)}</div>`; }
 }
 
-/* ---------- Google Maps tracking (falls back to the SVG arcs above) ---------- */
+/* ---------- Google Maps tracking (JS API when the key works, else keyless embed + overlay) ---------- */
+const tlistHtml = list => list.map(s => `<button class="ti2" role="listitem" data-id="${esc(s.id)}" style="--c:${STATUS[s.status][1]}"><i></i><span><b>${esc(s.countryName)}</b><small>${esc(s.statusLabel)}</small></span><em>${s.slackDays}d</em></button>`).join('');
 function mountMap(list) {
-  const fallback = msg => { $('#gmap').hidden = true; $('#routes').hidden = false;
-    if (!$('#mapnote')) $('#routes').insertAdjacentHTML('beforeend', `<p class="mapnote" id="mapnote">${esc(msg)}</p>`); };
-  document.addEventListener('gmaps-auth-failure', () => fallback('Google Maps key rejected — check it in src/config.js'), { once: true });
+  let mode = null; // 'js' | 'embed'
+  const toEmbed = () => { if (mode === 'embed') return; mode = 'embed'; embedMap(list); };
+  document.addEventListener('gmaps-auth-failure', toEmbed, { once: true });
   loadGoogleMaps().then(g => {
+    if (mode) return;
+    mode = 'js';
     const css = getComputedStyle(document.documentElement), color = s => css.getPropertyValue(STATUS[s.status][1].slice(4, -1)).trim() || '#fff';
     $('#routes').hidden = true; $('#gmap').hidden = false;
     let m;
     const pick = id => { m.select(id); $$('#tlist .ti2').forEach(x => x.classList.toggle('sel', x.dataset.id === id)); openTracking(id); };
     m = buildMap(g, $('#map'), list, color, pick);
-    $('#tlist').innerHTML = list.map(s => `<button class="ti2" role="listitem" data-id="${esc(s.id)}" style="--c:${STATUS[s.status][1]}"><i></i><span><b>${esc(s.countryName)}</b><small>${esc(s.statusLabel)}</small></span><em>${s.slackDays}d</em></button>`).join('');
+    $('#tlist').innerHTML = tlistHtml(list);
     $$('#tlist .ti2').forEach(b => b.onclick = () => pick(b.dataset.id));
     attachLiveShipments();
     new IntersectionObserver((es, o) => es.forEach(e => { if (e.isIntersecting) { m.draw(); o.disconnect(); } }), { threshold: .25 }).observe($('#gmap'));
-  }).catch(err => err.message === 'NO_KEY' ? embedMap(list, fallback) : fallback(`Map unavailable (${err.message}) — showing route arcs.`));
+  }).catch(toEmbed);
 }
 
-/* ---------- keyless Google Maps embed (no API key) ---------- */
-const embedSrc = (c, z) => `https://maps.google.com/maps?q=${c.lat},${c.lng}&z=${z}&t=&ie=UTF8&iwloc=&output=embed`;
-function embedMap(list, fallback) {
-  $('#routes').hidden = true; $('#gmap').hidden = false; $('#gmap').classList.add('basic');
-  $('#map').innerHTML = `<iframe id="gframe" title="Google Map of shipments" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${embedSrc({ lat: 30, lng: 20 }, 2)}"></iframe><span class="mapchip">Basic map · add API key for live routes</span>`;
-  const f = $('#gframe'); f.onerror = () => fallback('Map unavailable (offline) — showing route arcs.');
-  $('#tlist').innerHTML = list.map(s => `<button class="ti2" role="listitem" data-id="${esc(s.id)}" style="--c:${STATUS[s.status][1]}"><i></i><span><b>${esc(s.countryName)}</b><small>${esc(s.statusLabel)}</small></span><em>${s.slackDays}d</em></button>`).join('');
-  $$('#tlist .ti2').forEach(b => b.onclick = () => { const s = list.find(x => x.id === b.dataset.id);
-    $$('#tlist .ti2').forEach(x => x.classList.toggle('sel', x === b)); f.src = embedSrc(s.coords.current, 5); openTracking(s.id); });
+/* ---------- keyless Google Maps embed with the routes drawn on top (approximate overlay) ---------- */
+function embedMap(list) {
+  const css = getComputedStyle(document.documentElement), color = s => css.getPropertyValue(STATUS[s.status][1].slice(4, -1)).trim() || '#fff';
+  $('#routes').hidden = true; $('#gmap').hidden = false;
+  const el = $('#map'); el.innerHTML = '';
+  let sel = null;
+  const routes = list.filter(s => s.coords).map(s => ({ s, c: color(s), path: greatCircle(s.coords.origin, s.coords.destination) }));
+  const ptsFor = id => { const r = routes.find(x => x.s.id === id); return r ? [...r.path, r.s.coords.current] : routes.flatMap(x => x.path); };
+  const pathD = (P, pts) => pts.map((p, i) => (i ? 'L' : 'M') + P(p).map(v => v.toFixed(1)).join(' ')).join('');
+  const view = mountEmbed(el, { title: 'Google Map of shipments', note: 'Google Maps · approximate overlay',
+    render: P => routes.map(({ s, c, path }) => { const on = !sel || sel === s.id, [cx, cy] = P(s.coords.current), [ox, oy] = P(s.coords.origin), [dx, dy] = P(s.coords.destination);
+      return `<g class="eroute${sel === s.id ? ' sel' : ''}" data-id="${esc(s.id)}" style="opacity:${on ? 1 : .35}"><title>${esc(s.countryName)} · ${esc(s.id)}</title>
+        <path d="${pathD(P, path)}" class="ehit"/><path d="${pathD(P, path)}" stroke="${c}" stroke-width="${sel === s.id ? 3.5 : 2}" fill="none"/>
+        <circle cx="${ox}" cy="${oy}" r="4" fill="#0b0b0f" stroke="${c}" stroke-width="2"/><circle cx="${dx}" cy="${dy}" r="4" fill="#0b0b0f" stroke="${c}" stroke-width="2"/>
+        <circle cx="${cx}" cy="${cy}" r="9" fill="none" stroke="${c}" stroke-width="1.5" class="epulse"/><circle cx="${cx}" cy="${cy}" r="3.5" fill="${c}"/></g>`; }).join(''),
+    bind: svg => svg.querySelectorAll('.eroute').forEach(g => g.addEventListener('click', () => pick(g.dataset.id))) });
+  function pick(id) { sel = id; view.setView(ptsFor(id)); $$('#tlist .ti2').forEach(x => x.classList.toggle('sel', x.dataset.id === id)); openTracking(id); }
+  view.setView(ptsFor(null));
+  $('#tlist').innerHTML = tlistHtml(list);
+  $$('#tlist .ti2').forEach(b => b.onclick = () => pick(b.dataset.id));
   attachLiveShipments();
-  if (!navigator.onLine) fallback('Map unavailable (offline) — showing route arcs.');
 }

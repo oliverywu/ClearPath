@@ -3,12 +3,15 @@
 // otherwise a lightweight SVG map with the same layers.
 import { $, $$, esc } from './ui.js';
 import { loadGoogleMaps, DARK_STYLE } from './map.js';
+import { mountEmbed } from './embed-map.js';
 import { getLiveShipments, getShipmentIntel } from './api.js';
 const C = { traveled: '#eceae4', remaining: 'rgba(236,234,228,.38)', risk: '#ff4d2e', fire: '#ff9d45', alt: '#6fb3ff', tracker: '#5fe0a8' };
 const et = iso => iso ? new Date(iso).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET' : '—';
 const dur = s => { if (s == null) return '—'; const h = Math.floor(s / 3600), m = Math.round((s % 3600) / 60); return h ? `${h}h ${m}m` : `${m}m`; };
 const FIRMS_MSG = { ok: 'NASA FIRMS live', empty: 'NASA FIRMS: no detections in area', stale: 'NASA FIRMS data outdated', no_key: 'NASA FIRMS key not set', error: 'NASA FIRMS unavailable' };
 let state = { id: null, demo: false, timer: null, view: null };
+// Key rejected after the JS map was built → switch the open panel to the embed + overlay view.
+document.addEventListener('gmaps-auth-failure', () => { if (!state.id || !$('#imap')) return; state.view = null; $('#imap').innerHTML = ''; refresh(); });
 
 const card = s => `<button class="ti2" role="listitem" data-id="${esc(s.id)}" style="--c:${STATUS_C[s.status] || 'var(--ok)'}"><i></i><span><b>${esc(s.label)}<s class="ldot" title="Live route view"></s></b><small>${esc(s.statusLabel || `${s.origin} → ${s.destination}`)}</small></span><em>${s.slackDays ?? '—'}d</em></button>`;
 const STATUS_C = { on_track: 'var(--ok)', at_risk: 'var(--warn)', blocked: 'var(--hot)', no_shipment: 'var(--none)' };
@@ -69,7 +72,7 @@ async function draw(d) {
   if (state.view?.update) { state.view.update(d); return; }
   try {
     const g = await loadGoogleMaps(); state.view = gmapView(g, $('#imap'), d);
-  } catch { state.view = svgView($('#imap'), d); }
+  } catch { state.view = embedView($('#imap'), d); }
 }
 function gmapView(g, el, d) {
   const map = new g.Map(el, { styles: DARK_STYLE, disableDefaultUI: true, zoomControl: true, backgroundColor: '#07070a', gestureHandling: 'cooperative' });
@@ -125,4 +128,24 @@ function svgView(el, d0) {
     $$('[data-fire]', el).forEach(n => n.addEventListener('click', () => popFire(d.fires[+n.dataset.fire], d)));
   }
   update(d); return { update };
+}
+
+/** Keyless Google Maps embed with route, tracker and fire markers drawn on top (Web Mercator, approximate). */
+function embedView(el, d0) {
+  let d = unwrap(d0); el.innerHTML = '';
+  const line = (P, pts) => pts.map((p, i) => (i ? 'L' : 'M') + P(p).map(v => v.toFixed(1)).join(' ')).join('');
+  const v = mountEmbed(el, { title: `Google Map for ${esc(d.shipment.id)}`,
+    note: `${d.route.distanceMeters ? Math.round(d.route.distanceMeters / 1000) + ' km · ' : ''}${d.route.estimatedPath ? 'estimated path · ' : ''}approximate overlay`,
+    render: P => { const risk = d.events.filter(e => ['medium', 'high'].includes(e.risk) && !e.outdated), [tx, ty] = P(d.tracker.position);
+      return `<path d="${line(P, d.route.remaining)}" stroke="${C.remaining}" stroke-width="3" stroke-dasharray="6 7" fill="none"/>
+      <path d="${line(P, d.route.traveled)}" stroke="${C.traveled}" stroke-width="3.5" fill="none"/>
+      ${d.events.filter(e => e.alt?.path).map(e => `<path d="${line(P, e.alt.path)}" stroke="${C.alt}" stroke-width="2" opacity=".6" fill="none"/>`).join('')}
+      ${risk.map(e => `<path d="${line(P, e.segment.path)}" stroke="${C.risk}" stroke-width="7" opacity=".85" stroke-linecap="round" fill="none"/>`).join('')}
+      ${d.tracker.stops.map(st => { const [x, y] = P(st); return `<circle cx="${x}" cy="${y}" r="${st.kind === 'origin' || st.kind === 'destination' ? 5 : 3.5}" fill="${st.state === 'completed' ? C.traveled : '#0b0b0f'}" stroke="${st.kind === 'border' ? C.alt : C.traveled}" stroke-width="2" class="ehot"><title>${esc(st.name)} · ${st.state}</title></circle>`; }).join('')}
+      ${d.fires.map((fr, i) => { const [x, y] = P(fr); return `<path data-fire="${i}" class="ehot" d="M${x} ${y - 7} L${x + 5} ${y + 4} L${x - 5} ${y + 4}Z" fill="${fr.outdated ? '#6d6d78' : C.fire}" stroke="#07070a"><title>Fire detection · ${fr.distanceKm.toFixed(1)} km from route</title></path>`; }).join('')}
+      <circle cx="${tx}" cy="${ty}" r="9" class="strk ehot ${d.tracker.isLive ? '' : 'est'}"><title>${esc(d.tracker.label)}</title></circle><circle cx="${tx}" cy="${ty}" r="3.5" fill="${C.tracker}"/>`; },
+    bind: svg => svg.querySelectorAll('[data-fire]').forEach(n => n.addEventListener('click', () => popFire(d.fires[+n.dataset.fire], d))) });
+  const pts = () => [...d.route.traveled, ...d.route.remaining];
+  v.setView(pts());
+  return { update(n) { d = unwrap(n); v.redraw(); } };
 }

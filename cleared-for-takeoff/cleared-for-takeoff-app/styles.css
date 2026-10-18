@@ -452,3 +452,11 @@ body.drawer-open .drawer{transform:none}body.drawer-open .scrim{opacity:1}
 .ipop[hidden]{display:none}.ipop dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:8px 0}.ipop dt{color:var(--mute)}.ipop .note{color:var(--mute);font-size:10px}.ipop .dx{position:absolute;right:8px;top:4px;font-size:16px}
 .itrk{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;border:2.5px solid #5fe0a8;background:rgba(95,224,168,.25);box-shadow:0 0 14px #5fe0a8}.itrk.est{border-style:dashed}
 .ti2 .ldot{display:inline-block;width:5px;height:5px;margin-left:6px;border-radius:50%;background:var(--ok);vertical-align:middle;text-decoration:none}
+
+/* keyless Google embed + approximate SVG overlay */
+.emap{position:relative}.emap .eframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none;filter:invert(90%) hue-rotate(180deg) brightness(.8) contrast(.9) saturate(.5)}
+.emap .eover{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.eover .eroute,.eover .ehot{pointer-events:auto;cursor:pointer}.eover .ehit{stroke:transparent;stroke-width:14;fill:none}
+.eover .eroute:hover{opacity:1!important}.eover .epulse{animation:epulse 2s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes epulse{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.8);opacity:0}}
+.imap.emap{position:absolute;inset:0;background:#07070a}
