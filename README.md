@@ -1,11 +1,11 @@
 # Cleared for Takeoff
 
-**Problem:** International clinical-trial drug shipments face country-specific regulations and
-logistics disruptions. Delays can put patients at risk of missed doses.
+**Problem:** Country-specific regulations and logistics disruptions delay international
+clinical-trial drug shipments, putting patients at risk of missed doses.
 
-**Solution:** ClearPath combines regulatory and shipment data to flag delivery risks, propose
-adjusted plans, and alert pharmaceutical teams so they can review changes before delivery
-deadlines are missed.
+**Solution:** ClearPath combines regulatory and shipment data to flag delivery risks,
+automatically proposes adjusted plans, and alerts pharmaceutical teams so that they can review
+changes before delivery deadlines are missed.
 
 The application includes:
 
