@@ -2,9 +2,9 @@
 
 Clinical-trial supply planning with governed plan changes. One application:
 
-* **Website** — Garima's frontend (`cleared-for-takeoff/cleared-for-takeoff-app`), the only user-facing UI.
-* **Unified API** — the planner (`planner/`, Oliver + Chihiro) serving every `/api` route, with
-  Chihiro's Chalk features (`planner/chalk`, `planner/packages/feature_provider`) and Anna's
+* **Website** — the frontend (`cleared-for-takeoff/cleared-for-takeoff-app`), the only user-facing UI.
+* **Unified API** — the planner (`planner/`) serving every `/api` route, with
+  Chalk features (`planner/chalk`, `planner/packages/feature_provider`) and the
   messaging and decision agent (`messaging/`) running in-process.
 * **One database** — `.local/cleared.sqlite3` owns proposals, the current plan, approvals,
   evidence, conversations and the audit history.
@@ -32,9 +32,8 @@ Python package installation. Use Node 22.13 or newer even if the launcher accept
 an older version; the website uses `node:sqlite`.
 
 ```bash
-git clone https://github.com/oliverywu/hackharvard.git
-cd hackharvard
-git checkout final
+git clone https://github.com/oliverywu/ClearPath.git
+cd ClearPath
 python start.py            # macOS / Linux  (python3 start.py if needed)
 ```
 
@@ -96,7 +95,7 @@ your Python installation.
 | `CHALK_CLIENT_ID`, `CHALK_CLIENT_SECRET`, `CHALK_ENVIRONMENT`, `CHALK_QUERY_SERVER` | Chalk online feature queries (parity-checked; local fallback otherwise) |
 | `PHOTON_ENABLED=true` + `PHOTON_API_KEY`, `PHOTON_PROJECT_ID`, `PHOTON_AGENT_USER_ID`, `PHOTON_RECIPIENT` | outbound post-approval notifications via Photon |
 | `PHOTON_BRIDGE_ENABLED=true` + `PHOTON_API_KEY`, `PHOTON_PROJECT_ID` | inbound iMessage replies routed to Max (needs `pip install -r messaging/requirements.txt`) |
-| `ANTHROPIC_API_KEY` | Max answers free-text questions with Anna's cited regulation agent |
+| `ANTHROPIC_API_KEY` | Max answers free-text questions with the cited regulation agent |
 | `GOOGLE_MAPS_API_KEY` | route-hazard analysis (Google Routes + GDACS) on the monitor page |
 
 Never commit `.env`, keys, Photon or Google credentials, local state files or databases
@@ -107,7 +106,7 @@ Never commit `.env`, keys, Photon or Google credentials, local state files or da
 **Web chat:** Open **Max** at the bottom right of `http://localhost:3000`. The
 `1`/`2`/`APPROVE` decision flow is deliberately rule-based. Free-text questions use
 the local grounded assistant by default; `ANTHROPIC_API_KEY` plus the messaging
-dependencies enables Anna's cited AI answers. Photon is not needed for web chat.
+dependencies enable cited AI answers from the regulation agent. Photon is not needed for web chat.
 
 **iMessage:** Photon connects a phone conversation to that same Max workflow. The
 project ID and API key authenticate the application; they do not register your
@@ -144,7 +143,7 @@ python run_tests.py              # everything below
 | Suite | Command | What it covers |
 |---|---|---|
 | Planner + integration | `cd planner && python -m unittest discover -s tests` | planner unit/integration/e2e, Chalk outlook, API contracts, adapters, schemas, governance, authorization, idempotency, stale/conflicting approvals, evidence, messaging integration, provenance, provider failure, planner regression and Chalk parity |
-| Messaging | `cd messaging && pip install -r requirements.txt && python -m pytest` | Anna's suite + planner-backed conversation unit tests |
+| Messaging | `cd messaging && pip install -r requirements.txt && python -m pytest` | regulatory agent and planner-backed conversation unit tests |
 | Browser end-to-end | `python -m unittest tests.e2e.test_browser_workflow` | the full workflow in Chromium via `start.py`; API-down error state; `?mock=1` |
 | Fresh clone | `python -m unittest tests.e2e.test_fresh_clone` | clone the committed tree and start it |
 

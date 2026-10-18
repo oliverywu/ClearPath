@@ -84,13 +84,15 @@ On **Data & sources**, the source status list puts failed and changed links firs
 
 ## Start
 
-Prerequisite: **Python 3.11+**. No runtime package installation, Docker, cloud service, model key, Chalk or Photon credentials are needed. The Windows launcher also detects Codex's bundled Python.
+Prerequisites: **Python 3.11+** and **Node.js 22.13+**. The core local demo needs no
+Python package installation, Docker, cloud service, model key, Chalk or Photon
+credentials. See the [root README](../README.md#run-it-fresh-clone) for the full setup.
 
-Clone the team branch on any laptop, then enter the repository:
+Clone the repository, then enter it:
 
 ```powershell
-git clone --branch cleared-for-takeoff https://github.com/oliverywu/hackharvard.git
-cd hackharvard
+git clone https://github.com/oliverywu/ClearPath.git
+cd ClearPath
 ```
 
 From the repository root in PowerShell:
@@ -107,7 +109,7 @@ The command initializes/migrates SQLite, loads the demo if empty, generates the 
 - API: **http://localhost:8000**
 - Database: `.local/cleared.sqlite3`
 
-Both services bind to loopback. Keep the terminal running; Ctrl+C stops both. Normal restart preserves data. Choose alternate ports with `-WebPort 3001 -ApiPort 8001` or Python's `--web-port 3001 --api-port 8001`. An occupied port produces a clear error. `HOST` must be changed explicitly to expose the app beyond the laptop.
+Both services bind to loopback. Keep the terminal running; Ctrl+C stops both. Normal restart preserves data. Choose alternate ports with `--web-port 3001 --api-port 8001` after either launcher command. An occupied port produces a clear error. `HOST` must be changed explicitly to expose the app beyond the laptop.
 
 ## Run the demo
 
