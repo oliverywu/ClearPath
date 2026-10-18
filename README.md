@@ -9,8 +9,9 @@ changes before delivery deadlines are missed.
 
 The application includes:
 
-* **Website** — the frontend (in the existing `cleared-for-takeoff/cleared-for-takeoff-app` directory), the only user-facing UI.
-* **Unified API** — the planner (`planner/`) serving every `/api` route, with
+* **Website** — the frontend (in the existing `cleared-for-takeoff/cleared-for-takeoff-app`
+  directory), the only user-facing UI. Its Node server also handles map and fire-monitor requests.
+* **Unified planner API** — the planner (`planner/`) serving planning and decision routes, with
   Chalk features (`planner/chalk`, `planner/packages/feature_provider`) and the
   messaging and decision agent (`messaging/`) running in-process.
 * **One database** — `.local/cleared.sqlite3` owns proposals, the current plan, approvals,
@@ -18,13 +19,24 @@ The application includes:
 
 ## Visual overview
 
-The [planner README](planner/README.md) has three diagrams that explain the decision flow:
+This diagram shows the current integrated app:
 
-* [Product decision levels](planner/README.md#product-decision-levels) — inputs, optional AI assistance, reproducible calculations and human approval.
-* [Planner architecture](planner/README.md#architecture) — evidence, planning, proposed plans and notifications.
-* [Operating workflow](planner/README.md#operating-workflow) — how a disruption leads to a reviewed plan change.
+```mermaid
+flowchart LR
+    INPUTS["Trial, regulations, routes and deadlines"] --> PLAN["Planner API<br/>calculate dates and risk<br/>optional Chalk queries"]
+    CHANGE["Recorded regulatory or logistics change"] --> PLAN
+    PLAN -->|initial demo baseline| CURRENT["Current plan<br/>saved in SQLite"]
+    PLAN -->|change response| PROPOSALS["Proposed plans"]
+    PROPOSALS --> REVIEW["Human review and approval"] --> CURRENT
+    CURRENT --> WEB["Website<br/>calendar, warnings and Max"]
+    WEB -->|questions and approval requests| PLAN
+    FIRMS["NASA FIRMS + Google Routes"] --> MONITOR["Route risk monitor<br/>potential fire warnings"] --> WEB
+```
 
-For how the website, unified API and planner connect, see the [integration architecture and endpoint map](docs/integration.md).
+Route fire warnings flag potential hazards; they do not automatically change the current plan.
+For endpoint details and the website-to-planner boundary, see the
+[integration architecture](docs/integration.md). The diagrams in the
+[planner README](planner/README.md) describe that module in more detail.
 
 ## How we used the event sponsors
 
