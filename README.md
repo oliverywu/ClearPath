@@ -43,7 +43,9 @@ For endpoint details and the website-to-planner boundary, see the
 | Sponsor | Use in ClearPath |
 |---|---|
 | **Chalk** | Shipment feature definitions calculate projected delivery, safe ship-by dates, slack and risk from planning inputs such as transit, customs timing and holidays. The app can query deployed Chalk features online, checks returned values against its local formulas, and records when it falls back to local calculations. The calendar insight uses the feature values stored with the current plan. |
-| **SpaceX / Grok** | Our team used Grok while building the global shipment visualization and mapping experience, and Grok Imagine to create the demo video shown in our presentation. The running map uses Google Maps/Routes; route hazards come from NASA FIRMS fire detections and GDACS disaster alerts. The app does not call a Grok API at runtime. |
+| **SpaceX / Grok** | Our team used Grok while building the global shipment visualization and mapping experience, and Grok Imagine to create the demo video shown in our presentation. The running map uses Google Maps/Routes; route hazards come from NASA FIRMS fire detections, LANCE One Pager (NASA) GDACS disaster alerts and NASA LANCE NRT Observations for Disaster Risk Reduction (NTRS).
+
+The app does not call a Grok API at runtime. |
 | **Photon** | Photon provides the optional messaging channel for proactive shipment alerts and iMessage replies. The Max conversation connects incoming replies to shipment context, previews proposed fixes and passes approval requests through the planner's role checks. The same workflow is available in the web app without a phone connection. |
 | **Anthropic / Claude** | Claude is used in the regulatory agent to extract cited requirements from source text, compare requirements across jurisdictions and answer free-text questions with retrieved passages when configured. The app separately detects changes between saved regulatory snapshots; plan approvals remain governed by the planner. |
 
