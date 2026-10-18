@@ -329,7 +329,7 @@ body.drawer-open .drawer{transform:none}body.drawer-open .scrim{opacity:1}
 :root{--hw:min(26vw,360px);--cw:min(34vw,500px);--gap:clamp(48px,4.5vw,72px);--gl:calc(50vw - (var(--hw) + var(--gap) + var(--cw)) / 2)}
 .art .img{--w:var(--hw);left:calc(var(--gl) + var(--hw) / 2)}
 .art .notif{left:50%;top:clamp(56px,9vh,96px);transform:translate(-50%,0) translate3d(var(--nx,0),var(--ny,0),0) rotateZ(-6deg) rotateX(var(--nrx,0deg)) rotateY(var(--nry,0deg)) scale(var(--ns,1))}
-.cal{left:calc(var(--gl) + var(--hw) + var(--gap));right:auto;width:var(--cw);top:54%;padding:24px 26px 20px;border-left:0;border-radius:28px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+.cal{left:calc(var(--gl) + var(--hw) + var(--gap));right:auto;width:var(--cw);top:54%;padding:24px 26px 20px;border-left:0;border-radius:28px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.72)}
 .cal .shd{font-size:14px}.cal .shd span{font-size:12px}
 .caln button{width:34px;height:34px;font-size:20px}
 .calg{gap:6px;margin-top:14px}
