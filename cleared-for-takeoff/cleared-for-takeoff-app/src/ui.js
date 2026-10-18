@@ -16,9 +16,14 @@ export async function load(el, fn, render, { emptyMsg = 'Nothing here yet.', lab
 }
 export function burst(x = innerWidth / 2, y = innerHeight / 2) { const w = $('#wipe'); w.style.setProperty('--wx', x + 'px'); w.style.setProperty('--wy', y + 'px'); w.classList.remove('go'); void w.offsetWidth; w.classList.add('go'); }
 export function initCursor() {
-  const c = $('#cur'); let mx = innerWidth / 2, my = innerHeight / 2, cx = mx, cy = my;
-  addEventListener('mousemove', e => { document.body.classList.add('moved'); mx = e.clientX; my = e.clientY; });
+  const c = $('#cur'); let mx = innerWidth / 2, my = innerHeight / 2;
+  addEventListener('pointermove', e => {
+    if (e.pointerType === 'touch') return;
+    document.body.classList.add('moved'); mx = e.clientX; my = e.clientY;
+    c.style.transform = `translate3d(${mx}px,${my}px,0)`;
+    document.documentElement.style.setProperty('--lx', mx / innerWidth * 100 + '%');
+    document.documentElement.style.setProperty('--ly', my / innerHeight * 100 + '%');
+  }, { passive: true });
   document.addEventListener('mouseover', e => c.classList.toggle('mid', !!e.target.closest('button,a,.tile,.wcard,.citem,input')));
-  (function f() { cx += (mx - cx) * .18; cy += (my - cy) * .18; c.style.transform = `translate(${cx}px,${cy}px)`; document.documentElement.style.setProperty('--lx', mx / innerWidth * 100 + '%'); document.documentElement.style.setProperty('--ly', my / innerHeight * 100 + '%'); requestAnimationFrame(f); })();
   return { get mx() { return mx; }, get my() { return my; } };
 }
