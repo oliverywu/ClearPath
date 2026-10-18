@@ -172,11 +172,7 @@ results), planner `test_chalk_outlook.py`, and the insights contract/provenance 
 * Identity is simulated: in the web chat each conversation acts as its participant (Maya, Kenji);
   `POST /api/proposals/:id/approve` trusts the supplied `actorId`. There is no login. Real Photon
   messages carry the sender id, which must be listed in the role registry.
-* The Photon inbound bridge (`PHOTON_BRIDGE_ENABLED=true`) and outbound notifications
-  (`PHOTON_ENABLED=true`) were tested with mocked clients only; no live Photon credentials were available.
-* Chalk online queries were tested with mocked responses only; no live Chalk deployment was available.
-* Route-hazard analysis needs `GOOGLE_MAPS_API_KEY`, and Google driving routes cannot reach overseas
-  destinations (the frontend's original design), so most international shipments return an error.
+* Route-hazard analysis needs `GOOGLE_MAPS_API_KEY`
 * Rule/dataset import flows from the planner's legacy UI still create scenarios without
   `proposal_options`; they are visible in the planner API but cannot be approved through governance.
 * Free-text questions to Max use the planner's grounded assistant; Anna's Claude-based cited Q&A is
