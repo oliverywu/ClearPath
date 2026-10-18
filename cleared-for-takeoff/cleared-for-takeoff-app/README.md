@@ -7,8 +7,10 @@ This server then runs on http://localhost:3000 and proxies every `/api/*` reques
 to the unified planner API (`API_ORIGIN`, default http://127.0.0.1:8000). `USE_MOCK` is false; open with `?mock=1`
 to use the sample JSON in `src/mock/` for isolated frontend work.
 
+Plain HTML/CSS and ES modules. No build step or npm dependencies. Most app content is sample data; the shipment calendar and day schedules now persist in local SQLite.
+
 ## Run
-For live route analysis, run the included Node backend (Node 18+):
+For live route analysis and the persistent schedule calendar, run the included Node backend (Node 22.13+):
 ```bash
 cd cleared-for-takeoff/cleared-for-takeoff-app
 cp .env.example .env.local
@@ -65,7 +67,9 @@ app/
 A non-2xx response throws, and the view shows its error state with a Retry button.
 
 ## Disaster route monitor
-Open **Analyze route hazards** in the shipment section (or navigate to `#/monitor`). The frontend posts the shipment origin, destination, and selected corridor radius to `POST /api/route-analysis`. The backend gets route geometry from Google Routes API, loads and caches recent GDACS GeoJSON events for ten minutes, and returns only events within the selected corridor. It includes GDACS alert level (red/orange/green), event type, location, timestamp, affected area, and details when present. Events older than `DISASTER_MAX_AGE_DAYS` (30 by default) are excluded. The API response includes route distance, duration, route point count, number of events checked, matched events, and analysis timestamp.
+Open **Analyze route hazards** in the shipment section (or navigate to `#/monitor`). Choose a current shipment to check recent GDACS events, or choose one of the sourced historical case studies to see a known past disaster along a Google Maps route. Historical examples are clearly labeled and are not presented as current alerts. The frontend posts the shipment endpoints or historical scenario ID and selected corridor radius to `POST /api/route-analysis`. The backend gets route geometry from Google Routes API, loads and caches recent GDACS GeoJSON events for ten minutes for live shipments, and returns only events within the selected corridor. It includes GDACS alert level (red/orange/green), event type, location, timestamp, affected area, and details when present. Live events older than `DISASTER_MAX_AGE_DAYS` (30 by default) are excluded. Historical examples include a direct GDACS source link. The API response includes route distance, duration, route point count, number of events checked, matched events, analysis mode, and analysis timestamp.
+
+Available historical route examples are the 2023 Türkiye–Syria M7.8 earthquake, the 2021 western Germany floods, and Cyclone Idai's 2019 landfall near Beira, Mozambique. Their event records are in `src/mock/historical-route-examples.json`. The flood map point is an approximate point in the documented affected district, rather than an official event centroid.
 
 The backend validates request fields and returns JSON errors with appropriate HTTP status codes. It does not return the full global GDACS feed to the client. The Google API key stays server side. Route computation uses Google Routes API's `DRIVE` mode, so origin/destination pairs without a drivable route (for example, across oceans) will return an error; air and sea routing need a transport-specific routing provider.
 
@@ -76,6 +80,36 @@ Content-Type: application/json
 
 {"origin":"Boston","destination":"New York","proximityKm":50}
 ```
+
+## Persistent shipment schedule
+
+The calendar and day drawer now read schedule milestones from a local SQLite database at `.data/schedule.sqlite`. On first start, the backend copies the existing sample milestones from `src/mock/day-schedules.json` into the database. New schedule records persist across restarts. The hidden database folder is git-ignored and blocked from static file access; back it up before deleting or replacing it. Node's built-in SQLite support is used, so there is no separate database service or npm dependency to install.
+
+The backend exposes:
+
+- `GET /api/calendar?month=YYYY-MM` — calendar markers for that month
+- `GET /api/schedule/YYYY-MM-DD` — ordered milestones for that day
+- `POST /api/schedule` — create a milestone
+- `PATCH /api/schedule/:id` — update a milestone, including its date/time
+- `DELETE /api/schedule/:id` — remove a milestone
+
+Create request example:
+```json
+{
+  "date": "2026-11-12",
+  "time": "09:30",
+  "type": "customs",
+  "title": "Customs documents due",
+  "shipmentId": "shp-002",
+  "party": "Amara K. · customs broker",
+  "dependencies": [],
+  "status": "scheduled"
+}
+```
+
+Use `dependencies` for prerequisite schedule item IDs. The backend rejects missing prerequisites and circular dependencies.
+
+Send your actual milestones as a CSV or JSON file when ready. Useful columns are shipment ID, milestone title/type, date, time, owner, and status; I can map your existing format into this schema. For now the API is intended for the local prototype and has no user authentication or change history, so it should not be exposed publicly until those are added.
 
 ## Data schemas
 Enums: `status` (shipments/inventory) = `on_track | at_risk | blocked | no_shipment`; warning `severity` = `critical | high | medium | low`; warning `status` = `open | in_review | resolved`; inventory `runs[]` = `on_time | late | missed`.
@@ -111,3 +145,11 @@ Enums: `status` (shipments/inventory) = `on_track | at_risk | blocked | no_shipm
 { "id":"cht-001-m1","from":"them","text":"…","sentAt":"08:02" }
 ```
 `from` is `me` or `them`. `sentAt` is a display string today; an ISO timestamp is fine if you format it in `views/chats.js`.
+
+## Live shipment intelligence (NASA FIRMS + Photon)
+`RX-1042` (Edison, NJ → Toronto, ON via the Peace Bridge) appears at the top of the tracking list next to the map. Clicking it opens the route view: traveled (solid), remaining (dashed), stops, a tracker marker, NASA FIRMS fire detections (orange), at-risk stretches (red), and any Google alternative route (blue).
+- **Position:** there is no live GPS feed, so the marker is labeled *Estimated position* (interpolated from departure and ETA). *Demo mode* simulates movement and is labeled as such. A fresh `gps` fix in `src/mock/live-shipments.json` switches it to *GPS position*.
+- **Fires:** `lib/firms.js` calls the official FIRMS Area API (`VIIRS_SNPP_NRT`, `VIIRS_NOAA20_NRT`, `MODIS_NRT`) for the route's bounding box and caches results for 15 minutes. The 2020 Disasters Portal MapServer is a historical California archive and is not used.
+- **Risk:** detections within `FIRE_CORRIDOR_KM` are graded by distance, confidence and FRP. Medium/high risks become Warnings, always marked *potential* (FIRMS can't confirm road closures). Google `computeAlternativeRoutes` is compared; a revised ETA is shown only when an alternative avoids the area.
+- **Photon:** alerts go to `POST https://api.photon.codes/v1/projects/{PHOTON_PROJECT_ID}/messages`. They show as *submitted* only after Photon accepts them; otherwise they show as *drafted* or *failed* in Max → Shipment alerts and on the warning. Alerts are deduplicated per shipment + event + risk.
+- **Tests:** `npm test` (node:test with fixtures in `test/fixtures`).

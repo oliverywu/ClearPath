@@ -1,0 +1,62 @@
+[
+  {
+    "id": "turkiye-earthquake-2023",
+    "label": "Türkiye · 2023 M7.8 earthquake",
+    "origin": "Gaziantep, Türkiye",
+    "destination": "Kahramanmaraş, Türkiye",
+    "event": {
+      "id": "gdacs-1357372-1487096",
+      "type": "EQ",
+      "title": "M7.8 Türkiye–Syria border earthquake",
+      "country": "Türkiye / Syria",
+      "affectedArea": "Türkiye–Syria border region",
+      "severity": "red",
+      "lat": 37.1736,
+      "lng": 37.032,
+      "radiusKm": 0,
+      "timestamp": "2023-02-06T01:17:00Z",
+      "details": "Magnitude 7.8 earthquake recorded near the Türkiye–Syria border.",
+      "sourceUrl": "https://www.gdacs.org/report.aspx?episodeid=1487096&eventid=1357372&eventtype=EQ"
+    }
+  },
+  {
+    "id": "germany-floods-2021",
+    "label": "Germany · 2021 Ahr Valley floods",
+    "origin": "Cologne, Germany",
+    "destination": "Bad Neuenahr-Ahrweiler, Germany",
+    "event": {
+      "id": "gdacs-1100958",
+      "type": "FL",
+      "title": "Western Germany floods · Ahrweiler affected area",
+      "country": "Germany",
+      "affectedArea": "Ahrweiler district (approximate affected-area point)",
+      "severity": "orange",
+      "lat": 50.543,
+      "lng": 7.111,
+      "radiusKm": 0,
+      "timestamp": "2021-07-14T00:00:00Z",
+      "details": "GDACS reported severe flooding in western Germany in July 2021; Ahrweiler district was among the affected areas. The map point marks the town area, not an official event centroid.",
+      "sourceUrl": "https://www.gdacs.org/report.aspx?eventid=1100958&eventtype=FL"
+    }
+  },
+  {
+    "id": "mozambique-idai-2019",
+    "label": "Mozambique · 2019 Cyclone Idai",
+    "origin": "Dondo, Mozambique",
+    "destination": "Beira, Mozambique",
+    "event": {
+      "id": "gdacs-1000552",
+      "type": "TC",
+      "title": "Cyclone Idai made landfall near Beira",
+      "country": "Mozambique",
+      "affectedArea": "Beira and surrounding area",
+      "severity": "red",
+      "lat": -19.8436,
+      "lng": 34.8389,
+      "radiusKm": 0,
+      "timestamp": "2019-03-14T23:30:00Z",
+      "details": "GDACS classified Idai as a red alert cyclone. It made landfall near Beira, where storm surge and destructive winds were reported.",
+      "sourceUrl": "https://www.gdacs.org/report.aspx?eventid=1000552&eventtype=TC"
+    }
+  }
+]

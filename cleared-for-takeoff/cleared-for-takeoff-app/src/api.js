@@ -16,13 +16,14 @@ async function http(path, opts = {}) {
 }
 /** GET /api/warnings  → Warning[] (newest first) */
 export async function getWarnings() {
-  if (!USE_MOCK) return http('/warnings');
-  return (await mock('warnings')).slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const [m, f] = await Promise.all([USE_MOCK ? mock('warnings') : http('/warnings'), getFireWarnings().catch(() => [])]);
+  return [...f, ...m].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 /** GET /api/warnings/:id → Warning */
 export async function getWarning(id) {
+  const fire = (await getFireWarnings().catch(() => [])).find(x => x.id === id); if (fire) return fire;
   if (!USE_MOCK) return http(`/warnings/${encodeURIComponent(id)}`);
-  const w = (await mock('warnings')).find(x => x.id === id); if (!w) throw new Error(`Warning ${id} not found`); return w;
+  const w = (await getWarnings()).find(x => x.id === id); if (!w) throw new Error(`Warning ${id} not found`); return w;
 }
 /** GET /api/shipments → Shipment[] */
 export async function getShipments() { return USE_MOCK ? mock('shipments') : http('/shipments'); }
@@ -42,16 +43,19 @@ export async function getContext() {
 /** GET /api/photon/chats → Chat[] */
 export async function getPhotonChats() {
   if (!USE_MOCK) return http('/photon/chats');
-  return (await mock('chats')).slice().sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const [c, a] = await Promise.all([mock('chats'), photonAlerts()]);
+  return [...c.slice().sort((x, y) => y.updatedAt.localeCompare(x.updatedAt)), ...(a ? [a.chat] : [])];
 }
 /** GET /api/photon/chats/:id/messages → Message[] (oldest first) */
 export async function getChatMessages(chatId) {
+  if (chatId === 'max-alerts') return (await photonAlerts())?.messages || [];
   if (!USE_MOCK) return http(`/photon/chats/${encodeURIComponent(chatId)}/messages`);
   const all = await mock('messages'); return all[chatId] || [];
 }
 /** POST /api/photon/chats/:id/messages  body {text} → { message: Message, replies: Message[] }
  *  `replies` are Max's responses (may be empty if Max answers later; then poll getChatMessages). */
 export async function sendChatMessage(chatId, text, clientMessageId = newMessageId()) {
+  if (chatId === 'max-alerts') { const at = new Date().toISOString(); return { message: { id: `a-${Date.now()}`, from: 'me', text, sentAt: at }, replies: [{ id: `a-r${Date.now()}`, from: 'max', sentAt: at, text: 'This thread is the automatic Photon alert log. Messages typed here are not sent to recipients.' }] }; }
   // clientMessageId lets the backend dedupe a resend of the same message (no duplicate decisions).
   if (!USE_MOCK) return http(`/photon/chats/${encodeURIComponent(chatId)}/messages`, { method: 'POST', body: JSON.stringify({ text, clientMessageId }) });
   await sleep(); if (q.has('fail')) throw new Error('Simulated send error');
@@ -76,13 +80,23 @@ function scriptedReply(chatId, text) {
 }
 /** GET /api/calendar?month=YYYY-MM → { month, events: CalendarEvent[] } */
 export async function getCalendar(month) {
-  if (!USE_MOCK) return http(`/calendar?month=${encodeURIComponent(month)}`);
-  const all = await mock('calendar'); return all.find(m => m.month === month) || { month, events: [] };
+  return http(`/calendar?month=${encodeURIComponent(month)}`);
 }
 /** GET /api/schedule/:date → DaySchedule { date, items: TimelineItem[] } */
 export async function getDaySchedule(date) {
-  if (!USE_MOCK) return http(`/schedule/${encodeURIComponent(date)}`);
-  const all = await mock('day-schedules'); return { date, items: all[date]?.items || [] };
+  return http(`/schedule/${encodeURIComponent(date)}`);
+}
+/** POST /api/schedule → persisted TimelineItem */
+export async function createScheduleItem(item) {
+  return http('/schedule', { method: 'POST', body: JSON.stringify(item) });
+}
+/** PATCH /api/schedule/:id → updated TimelineItem */
+export async function updateScheduleItem(id, changes) {
+  return http(`/schedule/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(changes) });
+}
+/** DELETE /api/schedule/:id */
+export async function deleteScheduleItem(id) {
+  return http(`/schedule/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 /** GET /api/chalk/insights?date=YYYY-MM-DD → ChalkInsight { date, risk, summary, recommendations[] }
  *  Chalk AI integration point: the backend calls Chalk AI and returns this shape. */
@@ -118,3 +132,20 @@ export const sendMaxMessage = sendChatMessage;
 export async function analyzeShipmentRoute({ origin, destination, proximityKm }) {
   return http('/route-analysis', { method: 'POST', body: JSON.stringify({ origin, destination, proximityKm }) });
 }
+export async function analyzeHistoricalRoute({ scenarioId, proximityKm }) {
+  return http('/route-analysis', { method: 'POST', body: JSON.stringify({ scenarioId, proximityKm }) });
+}
+export async function getHistoricalRouteExamples() {
+  const response = await fetch(new URL('./mock/historical-route-examples.json', import.meta.url));
+  if (!response.ok) throw new Error(`Historical route examples ${response.status}`);
+  return response.json();
+}
+
+/* ---------- live shipment intelligence (Node backend: NASA FIRMS + Google Routes + Photon) ---------- */
+/** GET /api/live-shipments → LiveShipment[] */
+export async function getLiveShipments() { return http('/live-shipments'); }
+/** GET /api/live-shipments/:id/intel[?demo=1] → route, tracker, FIRMS status, fires, events, warnings */
+export async function getShipmentIntel(id, { demo = false } = {}) { return http(`/live-shipments/${encodeURIComponent(id)}/intel${demo ? '?demo=1' : ''}`); }
+/** GET /api/fire-warnings → Warning[] with kind:'fire' (empty when the backend isn't running) */
+export async function getFireWarnings() { try { return await http('/fire-warnings'); } catch { return []; } }
+async function photonAlerts() { try { return await http('/photon/alerts'); } catch { return null; } }

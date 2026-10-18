@@ -2,6 +2,8 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createIntel } from './lib/intel-routes.js';
+import { createScheduleItem, listCalendarEvents, listScheduleDay, removeScheduleItem, updateScheduleItem } from './src/schedule-db.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 // Load developer-local secrets without a runtime dependency. The file is ignored by git.
@@ -22,6 +24,7 @@ const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || '';
 const GDACS_EVENTS_URL = process.env.GDACS_EVENTS_URL || 'https://www.gdacs.org/gdacsapi/api/Events/geteventlist/EVENTS4APP';
 const MAX_EVENT_AGE_DAYS = Number(process.env.DISASTER_MAX_AGE_DAYS || 30);
 const MAX_BODY_BYTES = 16_384;
+const intel = createIntel(ROOT, process.env);
 let eventCache;
 let eventCacheAt = 0;
 
@@ -58,7 +61,7 @@ function normalizeEvent(feature) {
     type,
     title: String(first(p.name, p.title, p.description, `${type} event`)),
     country: String(first(p.country, p.countryname, p.countryName, 'Area not specified')),
-    affectedArea: String(first(p.affectedarea, p.affectedArea, p.countryname, p.countryName, '')),
+    affectedArea: String(first(p.affectedarea, p.affectedArea, p.countryname, p.countryName) || ''),
     severity, lat, lng, radiusKm: Math.max(0, safeNumber(first(p.radius, p.radiusKm, p.severity?.radius)) || 0),
     timestamp, details: String(first(p.description, p.htmldescription, ''))
   };
@@ -108,8 +111,14 @@ function distanceFromRouteKm(event, points) {
   return nearest;
 }
 async function analyzeRoute(body) {
-  const origin = typeof body.origin === 'string' ? body.origin.trim() : '';
-  const destination = typeof body.destination === 'string' ? body.destination.trim() : '';
+  let example = null;
+  if (typeof body.scenarioId === 'string') {
+    const examples = JSON.parse(await readFile(path.join(ROOT, 'src/mock/historical-route-examples.json'), 'utf8'));
+    example = examples.find(item => item.id === body.scenarioId);
+    if (!example) throw Object.assign(new Error('Unknown historical route example.'), { status: 400 });
+  }
+  const origin = example?.origin || (typeof body.origin === 'string' ? body.origin.trim() : '');
+  const destination = example?.destination || (typeof body.destination === 'string' ? body.destination.trim() : '');
   const proximityKm = safeNumber(body.proximityKm);
   if (!origin || !destination || origin.length > 300 || destination.length > 300) throw Object.assign(new Error('Origin and destination are required (maximum 300 characters each).'), { status: 400 });
   if (proximityKm === null || proximityKm < 1 || proximityKm > 500) throw Object.assign(new Error('proximityKm must be between 1 and 500.'), { status: 400 });
@@ -127,7 +136,9 @@ async function analyzeRoute(body) {
   const route = routeData.routes?.[0];
   if (!route?.polyline?.encodedPolyline) throw Object.assign(new Error('Google Routes API returned no route geometry.'), { status: 502 });
   const points = decodePolyline(route.polyline.encodedPolyline);
-  const events = await getEvents();
+  // Historical case studies use sourced GDACS records bundled with the app;
+  // live shipment analyses continue to use the recent-events feed.
+  const events = example ? [example.event] : await getEvents();
   const severityOrder = { red: 0, orange: 1, green: 2 };
   const nearbyEvents = events.map(event => ({ ...event, distanceKm: Number(distanceFromRouteKm(event, points).toFixed(1)) }))
     .filter(event => event.distanceKm <= proximityKm + event.radiusKm)
@@ -135,6 +146,7 @@ async function analyzeRoute(body) {
   return {
     origin, destination, distanceMeters: route.distanceMeters || null, duration: route.duration || null,
     routePointCount: points.length, proximityKm, eventsChecked: events.length, events: nearbyEvents,
+    sourceMode: example ? 'historical-example' : 'live', scenarioLabel: example?.label || null,
     analyzedAt: new Date().toISOString()
   };
 }
@@ -152,6 +164,8 @@ async function serveStatic(req, res, pathname) {
   } catch { send(res, 404, { error: 'Not found.' }); }
 }
 async function proxyApi(req, res, url) {
+  // Guard: if PORT and API_ORIGIN point at this same server, proxying would loop forever.
+  if (new URL(API_ORIGIN).port === String(PORT) && ['127.0.0.1', 'localhost'].includes(new URL(API_ORIGIN).hostname)) return send(res, 502, { error: `Planner API origin ${API_ORIGIN} is this website server. Set PORT=3000 (or API_ORIGIN) and run "python start.py".` });
   let body;
   if (!['GET', 'HEAD'].includes(req.method)) {
     const chunks = []; let size = 0;
@@ -177,6 +191,8 @@ async function proxyApi(req, res, url) {
 }
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  // Shipment intelligence (FIRMS, live tracking, Photon alerts, maps config) is served locally; everything else goes to the planner.
+  if (await intel.handle(req, res, url, send)) return;
   if (url.pathname.startsWith('/api/') && url.pathname !== '/api/route-analysis') return proxyApi(req, res, url);
   if (url.pathname === '/api/route-analysis') {
     if (req.method !== 'POST') return send(res, 405, { error: 'Method not allowed.' }, { Allow: 'POST' });
@@ -188,3 +204,4 @@ const server = http.createServer(async (req, res) => {
 });
 server.listen(PORT, process.env.HOST || '127.0.0.1', () => console.log(`Cleared for Takeoff website http://localhost:${PORT} (API proxied to ${API_ORIGIN})`));
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => server.close(() => process.exit(0)));
+server.on('listening', () => intel.start());

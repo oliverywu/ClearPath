@@ -2,10 +2,13 @@
 import { GOOGLE_MAPS_API_KEY, LOAD_LOCAL_CONFIG } from './config.js';
 async function resolveKey() {
   if (LOAD_LOCAL_CONFIG) { try { const m = await import('./config.local.js'); if (m.GOOGLE_MAPS_API_KEY) return m.GOOGLE_MAPS_API_KEY; } catch {} }
+  // Optional browser (referrer-restricted) key served by the backend from GOOGLE_MAPS_BROWSER_KEY.
+  try { const r = await fetch('/api/maps-config'); if (r.ok) { const { browserKey } = await r.json(); if (browserKey) return browserKey; } } catch {}
   return GOOGLE_MAPS_API_KEY;
 }
 let loading;
 export function loadGoogleMaps() {
+  if (window.__cftMapsRejected) return Promise.reject(new Error('KEY_REJECTED'));
   if (window.google?.maps?.Map) return Promise.resolve(window.google.maps); // already loaded (or a test stub)
   return loading ||= (async () => {
     const key = await resolveKey();
@@ -13,7 +16,7 @@ export function loadGoogleMaps() {
     return new Promise((res, rej) => {
       const done = setTimeout(() => rej(new Error('Google Maps load timed out')), 12000);
       window.__cftMapsReady = () => { clearTimeout(done); res(window.google.maps); };
-      window.gm_authFailure = () => { document.dispatchEvent(new CustomEvent('gmaps-auth-failure')); };
+      window.gm_authFailure = () => { window.__cftMapsRejected = true; loading = Promise.reject(new Error('KEY_REJECTED')); loading.catch(() => {}); clearTimeout(done); rej(new Error('KEY_REJECTED')); document.dispatchEvent(new CustomEvent('gmaps-auth-failure')); };
       const s = document.createElement('script');
       s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly&libraries=geometry&callback=__cftMapsReady`;
       s.async = true; s.onerror = () => { clearTimeout(done); rej(new Error('Google Maps failed to load')); };
