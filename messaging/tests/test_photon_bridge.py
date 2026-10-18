@@ -322,3 +322,41 @@ def test_overlapping_poll_once_calls_do_not_double_answer(monkeypatch, tmp_path)
     )
     client.projects.send_message.assert_called_once()
     assert "pho_msg_14" in state_out["processed_ids"]
+
+
+# --- Reliability: incremental checkpointing (crash between messages) ------
+
+
+def test_on_progress_checkpoints_after_each_message_not_once_per_batch(monkeypatch, tmp_path):
+    """A crash between message 1 and message 2 of a batch must not cause
+    message 1 to be re-fetched and re-sent on the next start. on_progress
+    is how messaging_link.py's bridge loop checkpoints to disk after each
+    message completes, instead of once at the end of the whole poll."""
+    msg1 = make_message("pho_msg_20", created_at="2026-01-01T00:00:01.000Z")
+    msg2 = make_message("pho_msg_21", created_at="2026-01-01T00:00:02.000Z")
+    client = make_client([msg1, msg2])
+    monkeypatch.setattr(photon_bridge, "answer_question", lambda *a, **k: "answer")
+
+    snapshots = []
+    state_out = photon_bridge.poll_once(
+        client, "proj1", [], MagicMock(), fresh_state(),
+        qa_state_path=tmp_path / "qa.json",
+        on_progress=lambda s: snapshots.append(dict(s)),
+    )
+
+    assert len(snapshots) == 2
+    # After message 1 alone, it must already be checkpointed -- without waiting for message 2.
+    assert set(snapshots[0]["processed_ids"]) == {"pho_msg_20"}
+    assert set(snapshots[1]["processed_ids"]) == {"pho_msg_20", "pho_msg_21"}
+    assert set(state_out["processed_ids"]) == {"pho_msg_20", "pho_msg_21"}
+
+
+def test_on_progress_defaults_to_none_and_is_optional(monkeypatch, tmp_path):
+    """Backward compatible: the standalone CLI bridge never passes on_progress."""
+    msg = make_message("pho_msg_22")
+    client = make_client([msg])
+    monkeypatch.setattr(photon_bridge, "answer_question", lambda *a, **k: "answer")
+
+    state = photon_bridge.poll_once(client, "proj1", [], MagicMock(), fresh_state(), qa_state_path=tmp_path / "qa.json")
+
+    assert "pho_msg_22" in state["processed_ids"]

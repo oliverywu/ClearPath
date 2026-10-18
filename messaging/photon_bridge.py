@@ -232,6 +232,7 @@ def poll_once(
     roles: Optional[dict] = None,
     lock_path: Path = LOCK_PATH,
     handler: Optional[Any] = None,
+    on_progress: Optional[Any] = None,
 ) -> dict:
     """Acquire an exclusive, non-blocking lock around one poll cycle.
 
@@ -252,7 +253,7 @@ def poll_once(
         try:
             return _poll_once_locked(client, project_id, regulations, anthropic_client, state,
                                      conversation_state_path=conversation_state_path, audit_log_path=audit_log_path,
-                                     qa_state_path=qa_state_path, roles=roles, handler=handler)
+                                     qa_state_path=qa_state_path, roles=roles, handler=handler, on_progress=on_progress)
         finally:
             _THREAD_LOCK.release()
     lock_file = open(lock_path, "a+")
@@ -278,6 +279,7 @@ def poll_once(
             qa_state_path=qa_state_path,
             roles=roles,
             handler=handler,
+            on_progress=on_progress,
         )
     finally:
         fcntl.flock(lock_file, fcntl.LOCK_UN)
@@ -296,8 +298,18 @@ def _poll_once_locked(
     qa_state_path: Path = QA_STATE_PATH,
     roles: Optional[dict] = None,
     handler: Optional[Any] = None,
+    on_progress: Optional[Any] = None,
 ) -> dict:
     """Fetch new inbound messages, answer each, reply, and return updated state.
+
+    `on_progress(state)`, when given, is called after EACH message that
+    completes its full send (+ optional mark-read) cycle, with the state
+    dict already updated to include that message's id and timestamp. The
+    caller (messaging_link.py's bridge loop) uses this to checkpoint to
+    disk incrementally, so a crash partway through a multi-message batch
+    does not cause already-replied messages to be re-fetched and re-sent
+    on the next start (previously, the whole batch was only persisted once,
+    at the very end of this function).
 
     When `handler` is given (the integrated application), every human text message
     is passed to `handler(space_id, actor_id, text, message_id)` instead of the local
@@ -479,6 +491,12 @@ def _poll_once_locked(
         processed_ids.add(message.id)
         if latest_created_at is None or message.createdAt > latest_created_at:
             latest_created_at = message.createdAt
+
+        if on_progress is not None:
+            # Checkpoint this one message now, not at the end of the whole batch --
+            # a crash on the NEXT message must not cause this already-replied one
+            # to be re-fetched and re-sent on the next start.
+            on_progress({**state, "processed_ids": list(processed_ids), "cursor": latest_created_at or state.get("cursor")})
 
     state["processed_ids"] = list(processed_ids)
     if latest_created_at:
