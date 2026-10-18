@@ -82,10 +82,11 @@ Open **http://localhost:3000**. Ctrl+C stops both processes. Options: `--check` 
 ## Configuration (optional)
 
 `start.py` reads `.env` at the repository root and passes those values to both
-the website and planner API. Copy `planner/.env.example` to root `.env`
-(gitignored), then fill in the services you use. The website can also read its
-own `cleared-for-takeoff/cleared-for-takeoff-app/.env.local`, but that file is
-not passed to the planner API. System environment variables take precedence.
+the website and planner API. Copy the **root** `.env.example` to `.env`
+(gitignored), then fill in the services you use. The examples inside `planner/`
+and `cleared-for-takeoff/cleared-for-takeoff-app/` are for running those parts
+separately. The website can also read its own `.env.local`, but that file is not
+passed to the planner API. System environment variables take precedence.
 
 For **Claude answers or inbound Photon messages**, install the optional Python
 dependencies in the same Python environment that runs `start.py`:
