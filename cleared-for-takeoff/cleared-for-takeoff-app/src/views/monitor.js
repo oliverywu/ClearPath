@@ -41,8 +41,8 @@ export async function renderMonitor(root) {
       const caseLabel = isExample ? analysis.scenarioLabel : `${shipment.id} · ${shipment.study}`;
       const meta = isExample
         ? 'Historical case study · past GDACS event compared with current Google Maps road geometry; this is not a live alert.'
-        : `Checked ${analysis.eventsChecked} recent GDACS events`;
-      result.innerHTML = `<div class="monitor-summary"><div><div class="k">${esc(caseLabel)}</div><h3>${esc(analysis.origin)} <em>→</em> ${esc(analysis.destination)}</h3></div><div class="route-stat"><b>${routeKm} km</b><span>Google Maps route</span></div></div>
+        : (analysis.eventsNote || `Checked ${analysis.eventsChecked} recent GDACS events`);
+      result.innerHTML = `<div class="monitor-summary"><div><div class="k">${esc(caseLabel)}</div><h3>${esc(analysis.origin)} <em>→</em> ${esc(analysis.destination)}</h3></div><div class="route-stat"><b>${routeKm} km</b><span>${analysis.routeMode === 'estimated-corridor' ? 'Estimated air/sea corridor' : 'Google Maps route'}</span></div></div>
         <div class="monitor-meta">${meta} · ${proximityKm} km route corridor · updated ${new Date(analysis.analyzedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
         ${nearby.length ? `<div class="threat-list">${nearby.map(e => `<article class="threat threat-${e.severity}"><span class="threat-dot"></span><div><div class="threat-title">${esc(e.title)}</div><div class="threat-meta">${esc(e.type)} · ${esc(e.country)} · ${e.severity} alert</div>${e.details ? `<p>${esc(e.details)}</p>` : ''}${e.sourceUrl ? `<a class="threat-source" href="${esc(e.sourceUrl)}" target="_blank" rel="noopener noreferrer">GDACS source ↗</a>` : ''}</div><div class="threat-distance"><b>${Math.round(e.distanceKm)} km</b><span>from route</span>${e.timestamp ? `<time>${new Date(e.timestamp).toLocaleDateString()}</time>` : ''}</div></article>`).join('')}</div>` : `<div class="state clear-state">${isExample ? 'This historical event did not fall inside the selected route corridor.' : 'No recent GDACS events intersect this route corridor.'}</div>`}`;
     } catch (error) {

@@ -2,7 +2,8 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createIntel } from './lib/intel-routes.js';
+import { createIntel, loadShipments } from './lib/intel-routes.js';
+import { estimatedCorridor } from './lib/route-corridor.js';
 import { createScheduleItem, listCalendarEvents, listScheduleDay, removeScheduleItem, updateScheduleItem } from './src/schedule-db.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -107,7 +108,11 @@ function segmentDistanceKm(point, a, b) {
 function distanceFromRouteKm(event, points) {
   if (points.length === 1) return pointDistanceKm(event, points[0]);
   let nearest = Infinity;
-  for (let i = 1; i < points.length; i++) nearest = Math.min(nearest, segmentDistanceKm(event, points[i - 1], points[i]));
+  for (let i = 1; i < points.length; i++) {
+    // Skip antimeridian-crossing segments (great-circle corridors); their endpoints still count.
+    if (Math.abs(points[i].lng - points[i - 1].lng) > 180) { nearest = Math.min(nearest, pointDistanceKm(event, points[i])); continue; }
+    nearest = Math.min(nearest, segmentDistanceKm(event, points[i - 1], points[i]));
+  }
   return nearest;
 }
 async function analyzeRoute(body) {
@@ -122,23 +127,40 @@ async function analyzeRoute(body) {
   const proximityKm = safeNumber(body.proximityKm);
   if (!origin || !destination || origin.length > 300 || destination.length > 300) throw Object.assign(new Error('Origin and destination are required (maximum 300 characters each).'), { status: 400 });
   if (proximityKm === null || proximityKm < 1 || proximityKm > 500) throw Object.assign(new Error('proximityKm must be between 1 and 500.'), { status: 400 });
-  if (!GOOGLE_MAPS_API_KEY) throw Object.assign(new Error('Server configuration is missing GOOGLE_MAPS_API_KEY.'), { status: 503 });
-  const response = await fetch(`https://routes.googleapis.com/directions/v2:computeRoutes?key=${encodeURIComponent(GOOGLE_MAPS_API_KEY)}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Goog-FieldMask': 'routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration' },
-    body: JSON.stringify({ origin: { address: origin }, destination: { address: destination }, travelMode: 'DRIVE', polylineQuality: 'HIGH_QUALITY' }),
-    signal: AbortSignal.timeout(20_000)
-  });
-  const routeData = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const detail = routeData.error?.message || `HTTP ${response.status}`;
-    throw Object.assign(new Error(`Google Routes API rejected the request: ${detail}`), { status: 502 });
+  let googleRoute = null, googleProblem = null;
+  if (!GOOGLE_MAPS_API_KEY) googleProblem = 'Server configuration is missing GOOGLE_MAPS_API_KEY.';
+  else {
+    try {
+      const response = await fetch(`https://routes.googleapis.com/directions/v2:computeRoutes?key=${encodeURIComponent(GOOGLE_MAPS_API_KEY)}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Goog-FieldMask': 'routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration' },
+        body: JSON.stringify({ origin: { address: origin }, destination: { address: destination }, travelMode: 'DRIVE', polylineQuality: 'HIGH_QUALITY' }),
+        signal: AbortSignal.timeout(20_000)
+      });
+      const routeData = await response.json().catch(() => ({}));
+      if (!response.ok) googleProblem = `Google Routes API rejected the request: ${routeData.error?.message || `HTTP ${response.status}`}`;
+      else if (!routeData.routes?.[0]?.polyline?.encodedPolyline) googleProblem = 'Google Maps has no road route between these places.';
+      else googleRoute = routeData.routes[0];
+    } catch (error) { googleProblem = `Google Routes API request failed: ${error.message}`; }
   }
-  const route = routeData.routes?.[0];
-  if (!route?.polyline?.encodedPolyline) throw Object.assign(new Error('Google Routes API returned no route geometry.'), { status: 502 });
-  const points = decodePolyline(route.polyline.encodedPolyline);
+  let points, route, routeMode = 'google-road', routeNote = null;
+  if (googleRoute) { route = googleRoute; points = decodePolyline(googleRoute.polyline.encodedPolyline); }
+  else {
+    // Overseas, island or country-level legs cannot be driven: estimate the air/sea leg on a great circle.
+    let known = [];
+    try { known = loadShipments(ROOT); } catch {}
+    const corridor = estimatedCorridor(origin, destination, known);
+    if (!corridor) throw Object.assign(new Error(`${googleProblem} No coordinates are known to estimate an air/sea corridor.`), { status: 502 });
+    points = corridor.points; route = { distanceMeters: corridor.distanceMeters, duration: null };
+    routeMode = 'estimated-corridor'; routeNote = googleProblem;
+  }
   // Historical case studies use sourced GDACS records bundled with the app;
   // live shipment analyses continue to use the recent-events feed.
-  const events = example ? [example.event] : await getEvents();
+  let events = [], eventsNote = null;
+  if (example) events = [example.event];
+  else {
+    try { events = await getEvents(); }
+    catch (error) { eventsNote = `GDACS live feed unavailable (${error.message}); no events could be checked.`; }
+  }
   const severityOrder = { red: 0, orange: 1, green: 2 };
   const nearbyEvents = events.map(event => ({ ...event, distanceKm: Number(distanceFromRouteKm(event, points).toFixed(1)) }))
     .filter(event => event.distanceKm <= proximityKm + event.radiusKm)
@@ -147,6 +169,7 @@ async function analyzeRoute(body) {
     origin, destination, distanceMeters: route.distanceMeters || null, duration: route.duration || null,
     routePointCount: points.length, proximityKm, eventsChecked: events.length, events: nearbyEvents,
     sourceMode: example ? 'historical-example' : 'live', scenarioLabel: example?.label || null,
+    routeMode, routeNote, eventsNote,
     analyzedAt: new Date().toISOString()
   };
 }

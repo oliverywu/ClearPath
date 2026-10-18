@@ -209,3 +209,13 @@ test('successful Google route is cached and reused when Google later fails', asy
   const r = await m.route(ship());
   assert.equal(r.routeSource, 'google-cached'); assert.equal(r.distanceMeters, 333000); assert.equal(calls, 2);
 });
+
+test('route corridor: overseas legs fall back to an estimated great-circle corridor', async () => {
+  const { estimatedCorridor, resolvePlace } = await import('../lib/route-corridor.js');
+  const c = estimatedCorridor('Indianapolis, US', 'Tokyo, JP');
+  assert.ok(c && c.points.length > 100);
+  assert.ok(c.distanceMeters > 10_000_000 && c.distanceMeters < 11_500_000);
+  assert.deepEqual(resolvePlace('Sao Paulo, BR'), resolvePlace('São Paulo'));
+  assert.ok(estimatedCorridor('Boston', 'Canada'));
+  assert.equal(estimatedCorridor('Boston', 'Atlantis'), null);
+});
