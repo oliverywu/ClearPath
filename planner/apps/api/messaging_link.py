@@ -173,8 +173,20 @@ class MessagingLink:
     def seed(self):
         self.store.seed(self.service.governance.roles)
 
-    def open_conversations(self, event_id):
-        """Send the alert for this event to every chat that has not seen it yet."""
+    def open_conversations(self, event_id, *, notify_photon=False):
+        """Send the alert for this event to every chat that has not seen it yet.
+
+        `notify_photon=True` (used only by ingest_event, i.e. a genuinely NEW
+        event detected at runtime -- never the startup/reset backfill over
+        already-registered events) additionally dispatches one real Photon
+        message per chat that has a photon_space_id, so a proactive alert
+        for a brand-new disruption or regulatory change actually reaches the
+        phone, not just the in-app dashboard chat. Best-effort: a missing
+        Photon configuration or a send failure never breaks the alert itself
+        (the in-app chat message is already saved) and is deliberately not
+        retried here -- the governed proposal/evidence state is unaffected
+        either way, since this module never calls decide().
+        """
         if not self.service.governance.current_proposals(event_id):
             return 0
         sent = 0
@@ -182,10 +194,33 @@ class MessagingLink:
             for chat in self.store.chats():
                 if self.store.conversation(chat['id'], event_id):
                     continue
-                for payload in planner_conversation.start_conversation(self.port, chat['id'], event_id):
-                    self.store.add(chat['id'], 'max', payload)
+                messages = [self.store.add(chat['id'], 'max', payload)
+                            for payload in planner_conversation.start_conversation(self.port, chat['id'], event_id)]
                 sent += 1
+                if notify_photon and chat.get('photon_space_id') and messages:
+                    self._send_photon_alert(chat['photon_space_id'], messages)
         return sent
+
+    def _send_photon_alert(self, space_id, messages):
+        text = '\n\n'.join(m.get('text') or (m.get('card') or {}).get('title', '') for m in messages
+                           if m.get('text') or m.get('card'))
+        if not text:
+            return
+        try:
+            import photon_bridge
+            if photon_bridge.Photon is None:
+                return
+            client = photon_bridge.build_photon_client()
+            project_id = photon_bridge._required_env('PHOTON_PROJECT_ID')
+            sender_id = os.environ['PHOTON_ALERT_SENDER_ID']
+            photon_bridge.send_text_message(
+                client, project_id, space_id=space_id, sender_id=sender_id, text=text,
+                # One alert message has one stable id (ChatStore.add's identifier('msg')), so a
+                # retried open_conversations call for the same event+chat is always safe to repeat.
+                idempotency_key=f"alert:{messages[0]['id']}",
+            )
+        except Exception as exc:
+            print(f'[messaging_link] Photon alert send failed for space {space_id}: {exc}', file=sys.stderr)
 
     def receive(self, chat_id, text, *, actor_id=None, external_id=None, channel='web'):
         """Handle one inbound message exactly once per external id."""
@@ -269,7 +304,8 @@ class MessagingLink:
             state = photon_bridge.load_state(Path(state_path))
             while not stop.is_set():
                 state = photon_bridge.poll_once(client, project_id, [], None, state, handler=self.photon_handler,
-                                                lock_path=Path(state_path).with_suffix('.lock'))
+                                                lock_path=Path(state_path).with_suffix('.lock'),
+                                                on_progress=lambda s: photon_bridge.save_state(s, Path(state_path)))
                 photon_bridge.save_state(state, Path(state_path))
                 stop.wait(photon_bridge.POLL_INTERVAL_SECONDS)
         self._poller = (threading.Thread(target=loop, name='photon-bridge', daemon=True), stop)

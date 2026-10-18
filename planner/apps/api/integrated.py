@@ -59,7 +59,7 @@ class IntegratedService(Service):
         body.setdefault('detected_at', now())
         event = super().dispatch('POST', '/api/change-events', {}, body)
         proposals = self.governance.analyze_event(event['id'], actor='impact analyzer')
-        self.messaging.open_conversations(event['id'])
+        self.messaging.open_conversations(event['id'], notify_photon=True)
         warning = self.frontend.warning(self.repo.event(event['id']))
         return {**warning, 'proposalIds': [p['proposal_id'] for p in proposals]}
 

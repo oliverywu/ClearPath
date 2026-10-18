@@ -861,6 +861,15 @@
           "route_id": "demo-DE-express",
           "title": "Reroute through Amsterdam",
           "tradeoffs": "Higher transportation cost proxy and an additional cross-border ground leg."
+        },
+        {
+          "action": "alternative_route",
+          "description": "SIMULATED DEMO OPTION: keep the Boston–Frankfurt air leg but pay for priority depot processing to partially recover the schedule without changing gateways.",
+          "id": "de-expedited-depot",
+          "recommended": false,
+          "route_id": "demo-DE-expedited-depot",
+          "title": "Expedite ground handling at the Frankfurt depot",
+          "tradeoffs": "Smaller schedule recovery than the Amsterdam reroute, at a lower cost premium; no gateway change."
         }
       ],
       "review_status": "synthetic",
@@ -2143,6 +2152,55 @@
         "best": 1,
         "likely": 2,
         "worst": 4
+      },
+      "data_provenance": "modeled"
+    },
+    {
+      "cost_proxy": 1400,
+      "customs_days": 3,
+      "customs_days_range": {
+        "best": 2,
+        "likely": 3,
+        "worst": 7
+      },
+      "data_quality": {
+        "customs_days": "public_benchmark",
+        "depot_days": "simulated",
+        "gateway_airport": "public_reference",
+        "last_mile_days": "simulated",
+        "retrieved_at": "2026-10-17",
+        "transit_days": "simulated"
+      },
+      "depot_days": 2,
+      "gateway_airport": "FRA",
+      "great_circle_km": 5889,
+      "id": "demo-DE-expedited-depot",
+      "jurisdiction": "DE",
+      "last_mile_days": 3,
+      "legs": [
+        {
+          "destination": "Frankfurt Main Airport (FRA)",
+          "mode": "air",
+          "origin": "Boston (BOS)"
+        },
+        {
+          "destination": "Germany depot",
+          "mode": "expedited ground transport",
+          "origin": "FRA"
+        }
+      ],
+      "mode": "air",
+      "name": "BOS → FRA → Germany depot · expedited depot handling",
+      "preferred": false,
+      "source": "SIMULATED DEMO ROUTE for the hackathon walkthrough's second repair option. Same gateway and customs profile as demo-DE-standard; depot_days reduced from 4 to 2 to model paying for priority depot processing instead of changing the air gateway. Not based on an external benchmark.",
+      "storage_max_c": 8,
+      "storage_min_c": 2,
+      "synthetic": true,
+      "transit_days": 3,
+      "transit_days_range": {
+        "best": 2,
+        "likely": 3,
+        "worst": 5
       },
       "data_provenance": "modeled"
     },

@@ -98,7 +98,7 @@ def save_state(state: dict, path: Path = STATE_PATH) -> None:
     path.write_text(json.dumps(trimmed), encoding="utf-8")
 
 
-def _unwrap(obj: Any) -> Any:
+def _unwrap(obj: Any, _max_depth: int = 5) -> Any:
     """Unwrap a Pydantic RootModel (possibly nested) to the underlying value.
 
     The generated Photon client wraps list_messages items in nested
@@ -107,8 +107,20 @@ def _unwrap(obj: Any) -> Any:
     one level deep too. This is a no-op for plain objects (including the
     SimpleNamespace fixtures used in tests), so it is safe to apply
     unconditionally.
+
+    Stops immediately on an unittest.mock object (Mock/MagicMock), and is
+    otherwise bounded by `_max_depth`. A bare Mock/MagicMock auto-vivifies
+    every attribute it's asked for -- including `.root` -- so
+    `hasattr(mock, "root")` is always True and an unbounded walk would spin
+    forever on a test double that never explicitly set a `.root` value
+    (real Photon RootModels unwrap in at most 2-3 hops, so neither guard
+    affects real traffic).
     """
-    while hasattr(obj, "root"):
+    from unittest.mock import NonCallableMock
+
+    for _ in range(_max_depth):
+        if isinstance(obj, NonCallableMock) or not hasattr(obj, "root"):
+            break
         obj = obj.root
     return obj
 
@@ -220,6 +232,7 @@ def poll_once(
     roles: Optional[dict] = None,
     lock_path: Path = LOCK_PATH,
     handler: Optional[Any] = None,
+    on_progress: Optional[Any] = None,
 ) -> dict:
     """Acquire an exclusive, non-blocking lock around one poll cycle.
 
@@ -240,7 +253,7 @@ def poll_once(
         try:
             return _poll_once_locked(client, project_id, regulations, anthropic_client, state,
                                      conversation_state_path=conversation_state_path, audit_log_path=audit_log_path,
-                                     qa_state_path=qa_state_path, roles=roles, handler=handler)
+                                     qa_state_path=qa_state_path, roles=roles, handler=handler, on_progress=on_progress)
         finally:
             _THREAD_LOCK.release()
     lock_file = open(lock_path, "a+")
@@ -266,6 +279,7 @@ def poll_once(
             qa_state_path=qa_state_path,
             roles=roles,
             handler=handler,
+            on_progress=on_progress,
         )
     finally:
         fcntl.flock(lock_file, fcntl.LOCK_UN)
@@ -284,8 +298,18 @@ def _poll_once_locked(
     qa_state_path: Path = QA_STATE_PATH,
     roles: Optional[dict] = None,
     handler: Optional[Any] = None,
+    on_progress: Optional[Any] = None,
 ) -> dict:
     """Fetch new inbound messages, answer each, reply, and return updated state.
+
+    `on_progress(state)`, when given, is called after EACH message that
+    completes its full send (+ optional mark-read) cycle, with the state
+    dict already updated to include that message's id and timestamp. The
+    caller (messaging_link.py's bridge loop) uses this to checkpoint to
+    disk incrementally, so a crash partway through a multi-message batch
+    does not cause already-replied messages to be re-fetched and re-sent
+    on the next start (previously, the whole batch was only persisted once,
+    at the very end of this function).
 
     When `handler` is given (the integrated application), every human text message
     is passed to `handler(space_id, actor_id, text, message_id)` instead of the local
@@ -408,7 +432,7 @@ def _poll_once_locked(
             # shared-line "direct" space rejects parentMessageId with
             # "Replies are not supported for this Space" -- confirmed live).
             # It's optional in the schema, so omit it.
-            send_text_message(
+            sent = send_text_message(
                 client,
                 project_id,
                 space_id=space_id,
@@ -416,12 +440,34 @@ def _poll_once_locked(
                 text=answer,
                 idempotency_key=f"reply:{message.id}",
             )
-            print(f"[photon_bridge] {message.id}: reply sent", file=sys.stderr)
         except Exception as exc:
             print(f"[photon_bridge] send_message failed for {message.id}: {exc}", file=sys.stderr)
             # Deliberately NOT marked processed. The idempotency key above
             # means a retried send for this same message id is safe even if
             # this attempt actually succeeded upstream before raising here.
+            continue
+
+        # Verify the send actually succeeded rather than just assuming no
+        # exception means delivered: Photon can return 200 with a message
+        # resource whose own status is "failed" (e.g. recipient
+        # unreachable). Diagnostics below use only internal Photon
+        # resource ids (pho_msg_...) -- never a phone number or secret.
+        sent_message = _unwrap(sent)
+        sent_id = getattr(sent_message, "id", None)
+        sent_status = getattr(sent_message, "status", None)
+        print(
+            f"[photon_bridge] {message.id}: reply sent (sent_id={sent_id}, status={sent_status})",
+            file=sys.stderr,
+        )
+        if sent_status == "failed":
+            print(
+                f"[photon_bridge] {message.id}: Photon reported send status=failed; "
+                "leaving unprocessed for retry",
+                file=sys.stderr,
+            )
+            # The idempotency key above makes a retried send for this same
+            # message id safe, so it's fine to leave this unmarked and let
+            # the next poll try again.
             continue
 
         try:
@@ -445,6 +491,12 @@ def _poll_once_locked(
         processed_ids.add(message.id)
         if latest_created_at is None or message.createdAt > latest_created_at:
             latest_created_at = message.createdAt
+
+        if on_progress is not None:
+            # Checkpoint this one message now, not at the end of the whole batch --
+            # a crash on the NEXT message must not cause this already-replied one
+            # to be re-fetched and re-sent on the next start.
+            on_progress({**state, "processed_ids": list(processed_ids), "cursor": latest_created_at or state.get("cursor")})
 
     state["processed_ids"] = list(processed_ids)
     if latest_created_at:

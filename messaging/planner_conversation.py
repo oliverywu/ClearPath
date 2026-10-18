@@ -116,10 +116,18 @@ def build_alert(event: dict, options: list[dict], baseline: Optional[dict]) -> l
     accept = next((o for o in options if o["key"] == "accept"), options[-1])
     primary = _primary(accept)
     lines = [f"{_marker(event)}{event['title']}", event.get("description", "")]
+    if event.get("source_url"):
+        # Source + effective date, when the event carries cited evidence (e.g. a
+        # regulatory labeling change) -- never stated as confirmed beyond what
+        # _caption's evidence_status already says (synthetic/needs_review/verified).
+        when = f", effective {short(event['effective_from'])}" if event.get("effective_from") else ""
+        lines.append(f"Source: {event.get('source_title', event['title'])} ({event['source_url']}){when}.")
     if primary:
         before = primary["before"]
+        route = primary["after"].get("route_name")
         lines += [f"Current plan for {primary['country_name']}: delivery {short(before.get('projected_delivery'))}, "
-                  f"slack {before.get('slack_days')} business days ({str(before.get('risk_band', '')).replace('_', ' ')}).",
+                  f"slack {before.get('slack_days')} business days ({str(before.get('risk_band', '')).replace('_', ' ')})."
+                  + (f" Route: {route}." if route else ""),
                   f"Without mitigation: {_row_text(primary)}."]
     extra = max(0, len(accept.get("preview", [])) - 1)
     if extra:
@@ -212,8 +220,13 @@ def start_conversation(port: Any, chat_id: str, event_id: str) -> list[dict]:
 
 
 def handle_message(port: Any, chat_id: str, actor_id: Optional[str], text: str, *, channel: str, message_id: str) -> list[dict]:
-    """Route one inbound message: decision grammar goes to the conversation, the rest to Q&A."""
+    """Route one inbound message: a scoped demo intent first (if enabled), then decision
+    grammar to the conversation, then everything else to Q&A."""
     convo = port.latest_conversation(chat_id)
+    import demo_dialogue  # imported lazily: avoids a circular import (demo_dialogue imports this module)
+    demo_reply = demo_dialogue.handle(port, convo, chat_id, actor_id, text, channel=channel, message_id=message_id)
+    if demo_reply is not None:
+        return demo_reply
     if convo is None or not is_decision_reply(text):
         return [port.answer_question(chat_id, text)]
     return handle_reply(port, convo, actor_id, text, channel=channel, message_id=message_id)
